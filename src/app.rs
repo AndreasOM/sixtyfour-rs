@@ -1,3 +1,8 @@
+use core::ffi::c_uint;
+use core::ffi::c_void;
+use core::ffi::CStr;
+use core::mem::transmute;
+use eframe::glow::HasContext;
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
@@ -7,6 +12,9 @@ pub struct TemplateApp {
 
     #[serde(skip)] // This how you opt-out of serialization of a field
     value: f32,
+    // *mut c_void, Option<extern "system" fn(A) -> Ret
+    #[serde(skip)]
+    gl_get_string: *const c_void,
 }
 
 impl Default for TemplateApp {
@@ -15,6 +23,7 @@ impl Default for TemplateApp {
             // Example stuff:
             label: "Hello World!".to_owned(),
             value: 2.7,
+            gl_get_string: std::ptr::null_mut(),
         }
     }
 }
@@ -27,11 +36,20 @@ impl TemplateApp {
 
         // Load previous app state (if any).
         // Note that you must enable the `persistence` feature for this to work.
-        if let Some(storage) = cc.storage {
-            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+        let mut s: Self = if let Some(storage) = cc.storage {
+            eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default()
+        } else {
+            Default::default()
+        };
+
+        if let Some(get_proc_address) = cc.get_proc_address {
+            //let name = c"glGetString";
+            let name = CStr::from_bytes_with_nul(b"glGetString\0").unwrap();
+            let get_string_addr = get_proc_address(name);
+            s.gl_get_string = get_string_addr;
         }
 
-        Default::default()
+        s
     }
 }
 
@@ -42,7 +60,7 @@ impl eframe::App for TemplateApp {
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
@@ -81,30 +99,32 @@ impl eframe::App for TemplateApp {
 
             ui.separator();
 
-            ui.add(egui::github_link_file!(
-                "https://github.com/emilk/eframe_template/blob/master/",
-                "Source code."
-            ));
-/*
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                powered_by_egui_and_eframe(ui);
-                egui::warn_if_debug_build(ui);
-            });
-*/            
+            if let Some(gl) = frame.gl() {
+                ui.horizontal(|ui| {
+                    //let mut version;// = String::new();
+                    //let mut version2;// = String::new();
+                    let version = unsafe {
+                        let s = gl.get_parameter_string(0x1F02);
+                        format!("{s:?}")
+                    };
+                    let version2 = unsafe {
+                        match transmute::<
+                            *const c_void,
+                            Option<extern "system" fn(c_uint) -> *const u8>,
+                        >(self.gl_get_string)
+                        {
+                            Some(fn_p) => {
+                                let result = fn_p(0x1F02);
+                                let v = CStr::from_ptr(result as *const i8);
+                                format!("{v:?}")
+                            }
+                            None => String::from("Can't get gl string"),
+                        }
+                    };
+                    let s = format!("{version} == {version2}");
+                    ui.label(s);
+                });
+            }
         });
     }
-}
-
-fn powered_by_egui_and_eframe(ui: &mut egui::Ui) {
-    ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 0.0;
-        ui.label("Powered by ");
-        ui.hyperlink_to("egui", "https://github.com/emilk/egui");
-        ui.label(" and ");
-        ui.hyperlink_to(
-            "eframe",
-            "https://github.com/emilk/egui/tree/master/crates/eframe",
-        );
-        ui.label(".");
-    });
 }
