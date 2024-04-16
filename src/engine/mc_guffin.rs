@@ -1,4 +1,5 @@
-use rand::RngCore;
+use rand::Rng;
+
 use crate::RotatingTriangle;
 use color_eyre::eyre::eyre;
 use color_eyre::Result;
@@ -275,31 +276,33 @@ impl McGuffin {
 
     fn do_data(&self) {
         let data: &mut [f32] = &mut [
+             1.0, -1.0, // top right -> bottom right?
+             1.0,  1.0, // top right -> top right?
             -1.0, -1.0, // top left -> bottom left?
-             1.0, -1.0, // top right -> bottom right?
-             1.0, -1.0, // top right -> bottom right?
-             10.0,  10.0, // bottom left -> top right?
-             0.0,  0.0, // bottom right
-            -1.0, -1.0, // top left -> bottom left?
-             1.0, -1.0, // top right -> bottom right?
-             1.0, -1.0, // top right -> bottom right?
-             10.0,  10.0, // bottom left -> top right?
-             0.0,  0.0, // bottom right
+            -1.0,  1.0, // top right -> top left?
         ];
-
+/*
         let mut rng = rand::thread_rng();
 
-        for f in &mut *data {
-            let r = rng.next_u32() as f32;
-
-            *f = r / 1000.0;
+        for i in 0..=5 {
+            data[ i ] = rng.gen_range(-1.0..1.0);
         }
+        */
+        /*
+        for f in &mut *data {
+            //let r = rng.next_u32() as f32;
+            let r: f32 = rng.gen_range(-1.0..1.0);
+
+            *f = r / f32::MAX;
+        }
+        */
 
 
         //let data = [-1.0, -1.0, -1.0, 0.5, 0.5, -1.0, 0.5, 0.5];
-        let size = core::mem::size_of_val(&data);
+        //let size = core::mem::size_of_val(&data);
+        let size = 4 * data.len();
         dbg!(&size);
-        dbg!(data.as_ptr() as *const _);
+        //dbg!(data.as_ptr() as *const _);
         self.call_gl_buffer_data(
             GL_ARRAY_BUFFER,
             size as isize,
@@ -345,9 +348,10 @@ impl McGuffin {
 
         self.call_gl_vertex_attrib_pointer(0, 2, GL_FLOAT, GL_FALSE as u8, 0, core::ptr::null());
 
+        //self.do_data();
         //self.call_gl_disable( GL_CULL_FACE );
-        //self.call_gl_draw_arrays(GL_TRIANGLE_STRIP, 0, 4);
-        self.call_gl_draw_arrays(GL_TRIANGLE_STRIP, 0, 10);
+        self.call_gl_draw_arrays(GL_TRIANGLE_STRIP, 0, 4);
+        //self.call_gl_draw_arrays(GL_TRIANGLE_STRIP, 0, 10);
 
         //self.call_gl_rects( -1, -1, 1, 1 );
         self.check_gl_error(std::line!());
