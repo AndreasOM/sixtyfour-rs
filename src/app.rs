@@ -4,6 +4,8 @@ use core::ffi::c_void;
 use core::ffi::CStr;
 use core::mem::transmute;
 use eframe::glow::HasContext;
+use egui::mutex::Mutex;
+use std::sync::Arc;
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
@@ -18,7 +20,7 @@ pub struct TemplateApp {
     gl_get_string: *const c_void,
 
     #[serde(skip)]
-    mc_guffin: McGuffin,
+    mc_guffin: Arc<Mutex<McGuffin>>,
 }
 
 impl Default for TemplateApp {
@@ -48,7 +50,7 @@ impl TemplateApp {
         };
 
         if let Some(get_proc_address) = cc.get_proc_address {
-            match s.mc_guffin.setup(get_proc_address) {
+            match s.mc_guffin.lock().setup(get_proc_address) {
                 Ok(()) => {}
                 Err(e) => {
                     todo!("McGuffin setup error -> {e:#?}");
@@ -61,10 +63,30 @@ impl TemplateApp {
             s.gl_get_string = get_string_addr;
         }
 
+        let gl = cc
+            .gl
+            .as_ref()
+            .expect("You need to run eframe with the glow backend");
+        s.mc_guffin.lock().setup_rotating_triangle(gl);
         s
     }
 }
 
+impl TemplateApp {
+    fn mc_guffin_painting(&mut self, ui: &mut egui::Ui) {
+        let (rect, _sense) = ui.allocate_exact_size(egui::Vec2::splat(300.0), egui::Sense::drag());
+        let mc_guffin = self.mc_guffin.clone();
+        let callback = egui::PaintCallback {
+            rect,
+            callback: std::sync::Arc::new(eframe::egui_glow::CallbackFn::new(
+                move |_info, painter| {
+                    mc_guffin.lock().paint(painter.gl());
+                },
+            )),
+        };
+        ui.painter().add(callback);
+    }
+}
 impl eframe::App for TemplateApp {
     /// Called by the frame work to save state before shutdown.
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
@@ -73,12 +95,31 @@ impl eframe::App for TemplateApp {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        /*
         match self.mc_guffin.update() {
             Ok(()) => {}
             Err(e) => {
                 todo!("McGuffin update error -> {e:#?}");
             }
         };
+        */
+
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                ui.push_id("42", |ui| ui.label("The triangle is being painted using "));
+
+                ui.spacing_mut().item_spacing.x = 0.0;
+                ui.label("The triangle is being painted using ");
+                ui.hyperlink_to("glow", "https://github.com/grovesNL/glow");
+                ui.label(" (OpenGL).");
+            });
+
+            ui.push_id("mc_guffin", |ui| {
+                egui::Frame::canvas(ui.style()).show(ui, |ui| {
+                    self.mc_guffin_painting(ui);
+                });
+            });
+        });
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
@@ -100,7 +141,7 @@ impl eframe::App for TemplateApp {
                 egui::widgets::global_dark_light_mode_buttons(ui);
             });
         });
-
+        /*
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
             ui.heading("eframe template");
@@ -144,5 +185,6 @@ impl eframe::App for TemplateApp {
                 });
             }
         });
+        */
     }
 }
