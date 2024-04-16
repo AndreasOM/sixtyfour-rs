@@ -1,3 +1,4 @@
+use crate::engine::McGuffin;
 use core::ffi::c_uint;
 use core::ffi::c_void;
 use core::ffi::CStr;
@@ -15,6 +16,9 @@ pub struct TemplateApp {
     // *mut c_void, Option<extern "system" fn(A) -> Ret
     #[serde(skip)]
     gl_get_string: *const c_void,
+
+    #[serde(skip)]
+    mc_guffin: McGuffin,
 }
 
 impl Default for TemplateApp {
@@ -24,6 +28,7 @@ impl Default for TemplateApp {
             label: "Hello World!".to_owned(),
             value: 2.7,
             gl_get_string: std::ptr::null_mut(),
+            mc_guffin: Default::default(),
         }
     }
 }
@@ -43,6 +48,13 @@ impl TemplateApp {
         };
 
         if let Some(get_proc_address) = cc.get_proc_address {
+            match s.mc_guffin.setup(get_proc_address) {
+                Ok(()) => {}
+                Err(e) => {
+                    todo!("McGuffin setup error -> {e:#?}");
+                }
+            };
+
             //let name = c"glGetString";
             let name = CStr::from_bytes_with_nul(b"glGetString\0").unwrap();
             let get_string_addr = get_proc_address(name);
@@ -61,6 +73,12 @@ impl eframe::App for TemplateApp {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        match self.mc_guffin.update() {
+            Ok(()) => {}
+            Err(e) => {
+                todo!("McGuffin update error -> {e:#?}");
+            }
+        };
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
