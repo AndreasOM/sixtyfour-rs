@@ -1,17 +1,29 @@
+use super::gl_wrapper_macro::*;
+#[allow(dead_code)]
 use color_eyre::eyre::eyre;
 use color_eyre::Result;
 use core::ffi::*;
 use core::mem::transmute;
 
-pub type GLEnum = core::ffi::c_uint;
+pub type GLenum = core::ffi::c_uint;
+pub type GLuint = core::ffi::c_uint;
+pub type GLint = core::ffi::c_int;
+pub type GLsizei = core::ffi::c_uint;
+pub type GLchar = core::ffi::c_char;
 
-pub const GL_ARRAY_BUFFER: GLEnum = 0x8892;
-pub const GL_STATIC_DRAW: GLEnum = 0x88E4;
-pub const GL_DYNAMIC_DRAW: GLEnum = 0x88E8;
-pub const GL_FLOAT: GLEnum = 0x1406;
-pub const GL_FALSE: GLEnum = 0x0000;
-pub const GL_TRIANGLE_STRIP: GLEnum = 0x0005;
-pub const GL_CULL_FACE: GLEnum = 0x0B44;
+pub const GL_ARRAY_BUFFER: GLenum = 0x8892;
+pub const GL_STATIC_DRAW: GLenum = 0x88E4;
+pub const GL_DYNAMIC_DRAW: GLenum = 0x88E8;
+pub const GL_FLOAT: GLenum = 0x1406;
+pub const GL_FALSE: GLenum = 0x0000;
+pub const GL_TRUE: GLenum = 0x0001;
+pub const GL_TRIANGLE_STRIP: GLenum = 0x0005;
+pub const GL_CULL_FACE: GLenum = 0x0B44;
+pub const GL_VERTEX_SHADER: GLenum = 0x8B31;
+pub const GL_FRAGMENT_SHADER: GLenum = 0x8B30;
+pub const GL_COMPILE_STATUS: GLenum = 0x8B81;
+pub const GL_LINK_STATUS: GLenum = 0x8B82;
+pub const GL_INFO_LOG_LENGTH: GLenum = 0x8B84;
 
 #[derive(Debug)]
 pub struct GlFunctionPointer {
@@ -63,38 +75,53 @@ unsafe impl Sync for GlFunctionPointer {}
 
 #[derive(Debug, Default)]
 pub struct Gl {
-    glfp_get_error: GlFunctionPointer,
     glfp_rects: GlFunctionPointer,
-    glfp_gen_vertex_arrays: GlFunctionPointer,
-    glfp_bind_vertex_array: GlFunctionPointer,
     glfp_gen_buffers: GlFunctionPointer,
     glfp_bind_buffer: GlFunctionPointer,
     glfp_buffer_data: GlFunctionPointer,
     glfp_enable_vertex_attrib_array: GlFunctionPointer,
     glfp_vertex_attrib_pointer: GlFunctionPointer,
     glfp_draw_arrays: GlFunctionPointer,
-    glfp_disable: GlFunctionPointer,
 
-    glfp_create_shader: GlFunctionPointer,
-    glfp_shader_source: GlFunctionPointer,
-    glfp_compile_shader: GlFunctionPointer,
-    glfp_get_shader_iv: GlFunctionPointer,
     glfp_get_shader_info_log: GlFunctionPointer,
-    glfp_create_program: GlFunctionPointer,
-    glfp_attach_shader: GlFunctionPointer,
-    glfp_link_program: GlFunctionPointer,
-    glfp_get_program_iv: GlFunctionPointer,
+    glfp_get_programiv: GlFunctionPointer,
     glfp_get_program_info_log: GlFunctionPointer,
-    glfp_use_program: GlFunctionPointer,
+    glfps: Glfps,
+}
+
+#[derive(Debug, Default)]
+#[allow(non_snake_case)]
+struct Glfps {
+    glGetError: GlFunctionPointer,
+    glDisable: GlFunctionPointer,
+    glGenVertexArrays: GlFunctionPointer,
+    glBindVertexArray: GlFunctionPointer,
+    glCreateShader: GlFunctionPointer,
+    glShaderSource: GlFunctionPointer,
+    glCompileShader: GlFunctionPointer,
+    glGetShaderiv: GlFunctionPointer,
+    glGetShaderInfoLog: GlFunctionPointer,
+    glCreateProgram: GlFunctionPointer,
+    glAttachShader: GlFunctionPointer,
+    glLinkProgram: GlFunctionPointer,
+    glGetProgramiv: GlFunctionPointer,
+    glUseProgram: GlFunctionPointer,
+    glGetProgramInfoLog: GlFunctionPointer,
 }
 
 impl Gl {
     pub fn load_all(&mut self, get_proc_address: &dyn Fn(&CStr) -> *const c_void) -> Result<()> {
-        self.glfp_get_error.load(get_proc_address, c"glGetError")?;
+        //self.glfp_get_error.load(get_proc_address, c"glGetError")?;
+        self.glfps
+            .glGetError
+            .load(get_proc_address, c"glGetError")?;
+        self.glfps.glDisable.load(get_proc_address, c"glDisable")?;
         self.glfp_rects.load(get_proc_address, c"glRects")?;
-        self.glfp_gen_vertex_arrays
+        self.glfps
+            .glGenVertexArrays
             .load(get_proc_address, c"glGenVertexArrays")?;
-        self.glfp_bind_vertex_array
+        self.glfps
+            .glBindVertexArray
             .load(get_proc_address, c"glBindVertexArray")?;
         self.glfp_gen_buffers
             .load(get_proc_address, c"glGenBuffers")?;
@@ -108,18 +135,67 @@ impl Gl {
             .load(get_proc_address, c"glVertexAttribPointer")?;
         self.glfp_draw_arrays
             .load(get_proc_address, c"glDrawArrays")?;
-        self.glfp_disable.load(get_proc_address, c"glDisable")?;
+
+        self.glfps
+            .glCreateShader
+            .load(get_proc_address, c"glCreateShader")?;
+        self.glfps
+            .glShaderSource
+            .load(get_proc_address, c"glShaderSource")?;
+        self.glfps
+            .glCompileShader
+            .load(get_proc_address, c"glCompileShader")?;
+        self.glfps
+            .glGetShaderiv
+            .load(get_proc_address, c"glGetShaderiv")?;
+        self.glfps
+            .glGetShaderInfoLog
+            .load(get_proc_address, c"glGetShaderInfoLog")?;
+        self.glfp_get_shader_info_log
+            .load(get_proc_address, c"glGetShaderInfoLog")?;
+        self.glfps
+            .glCreateProgram
+            .load(get_proc_address, c"glCreateProgram")?;
+        self.glfps
+            .glAttachShader
+            .load(get_proc_address, c"glAttachShader")?;
+        self.glfps
+            .glLinkProgram
+            .load(get_proc_address, c"glLinkProgram")?;
+        self.glfp_get_programiv
+            .load(get_proc_address, c"glGetProgramiv")?;
+        self.glfp_get_program_info_log
+            .load(get_proc_address, c"glGetProgramInfoLog")?;
+        self.glfps
+            .glGetProgramiv
+            .load(get_proc_address, c"glGetProgramiv")?;
+        self.glfps
+            .glGetProgramInfoLog
+            .load(get_proc_address, c"glGetProgramInfoLog")?;
+        self.glfps
+            .glUseProgram
+            .load(get_proc_address, c"glUseProgram")?;
 
         Ok(())
     }
 
-    pub fn get_error(&self) -> core::ffi::c_uint {
-        unsafe {
-            let fn_p =
-                transmute::<*const c_void, extern "system" fn() -> c_uint>(self.glfp_get_error.f);
-            fn_p()
-        }
-    }
+    create_gl_wrapper!(GLenum glGetError( void ) );
+    create_gl_wrapper!(void glDisable( GLenum cap ));
+    create_gl_wrapper!(void glGenVertexArrays(GLsizei n, GLuint *arrays));
+    create_gl_wrapper!(void glBindVertexArray(GLuint array));
+
+    create_gl_wrapper!(GLuint glCreateShader(GLenum shaderType));
+    create_gl_wrapper!(void glShaderSource(GLuint shader, GLsizei count, const GLchar **string, const GLint *length));
+    create_gl_wrapper!(void glCompileShader(GLuint shader));
+    create_gl_wrapper!(void glGetShaderiv(GLuint shader, GLenum pname, GLint *params));
+    create_gl_wrapper!(void glGetShaderInfoLog(GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog));
+    create_gl_wrapper!(GLuint glCreateProgram(void));
+    create_gl_wrapper!(void glAttachShader(GLuint program, GLuint shader));
+    create_gl_wrapper!(void glLinkProgram(GLuint program));
+    create_gl_wrapper!(void glGetProgramiv(GLuint program, GLenum pname, GLint *params));
+    create_gl_wrapper!(void glGetProgramInfoLog(GLuint program, GLsizei maxLength, GLsizei *length, GLchar *infoLog));
+    create_gl_wrapper!(void glUseProgram(GLuint program));
+
     pub fn rects(&self, x1: i16, y1: i16, x2: i16, y2: i16) {
         unsafe {
             let fn_p = transmute::<
@@ -129,25 +205,6 @@ impl Gl {
             fn_p(x1, y1, x2, y2);
         };
     }
-
-    pub fn gen_vertex_arrays(&self, n: c_int, arrays: *mut c_uint) -> c_void {
-        unsafe {
-            let fn_p = transmute::<*const c_void, extern "system" fn(c_int, *mut c_uint) -> c_void>(
-                self.glfp_gen_vertex_arrays.f,
-            );
-            fn_p(n, arrays)
-        }
-    }
-
-    pub fn bind_vertex_array(&self, array: c_uint) -> c_void {
-        unsafe {
-            let fn_p = transmute::<*const c_void, extern "system" fn(c_uint) -> c_void>(
-                self.glfp_bind_vertex_array.f,
-            );
-            fn_p(array)
-        }
-    }
-
     pub fn gen_buffers(&self, n: c_int, buffers: *mut c_uint) -> c_void {
         unsafe {
             let fn_p = transmute::<*const c_void, extern "system" fn(c_int, *mut c_uint) -> c_void>(
@@ -220,13 +277,4 @@ impl Gl {
         }
     }
     // -> GL_TRIANGLE_STRIP == 0x0005
-
-    pub fn disable(&self, mode: c_uint) -> c_void {
-        unsafe {
-            let fn_p = transmute::<*const c_void, extern "system" fn(c_uint) -> c_void>(
-                self.glfp_disable.f,
-            );
-            fn_p(mode)
-        }
-    }
 }

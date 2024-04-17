@@ -1,9 +1,8 @@
 use crate::engine::McGuffin;
-use core::ffi::c_uint;
+
 use core::ffi::c_void;
 use core::ffi::CStr;
-use core::mem::transmute;
-use eframe::glow::HasContext;
+
 use egui::mutex::Mutex;
 use std::sync::Arc;
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
@@ -62,12 +61,12 @@ impl TemplateApp {
             let get_string_addr = get_proc_address(name);
             s.gl_get_string = get_string_addr;
         }
-
-        let gl = cc
-            .gl
-            .as_ref()
-            .expect("You need to run eframe with the glow backend");
-        s.mc_guffin.lock().setup_rotating_triangle(gl);
+        /*
+                let gl = cc
+                    .gl
+                    .as_ref()
+                    .expect("You need to run eframe with the glow backend");
+        */
         s
     }
 }
@@ -94,7 +93,7 @@ impl eframe::App for TemplateApp {
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         /*
         match self.mc_guffin.update() {
             Ok(()) => {}
