@@ -1,5 +1,3 @@
-use rand::Rng;
-
 use crate::RotatingTriangle;
 use color_eyre::eyre::eyre;
 use color_eyre::Result;
@@ -11,59 +9,11 @@ use core::ffi::c_void;
 use core::ffi::CStr;
 use core::mem::transmute;
 
-const GL_ARRAY_BUFFER: c_uint = 0x8892;
-const GL_STATIC_DRAW: c_uint = 0x88E4;
-const GL_DYNAMIC_DRAW: c_uint = 0x88E8;
-const GL_FLOAT: c_uint = 0x1406;
-const GL_FALSE: c_uint = 0x0000;
-const GL_TRIANGLE_STRIP: c_uint = 0x0005;
-const GL_CULL_FACE: c_uint = 0x0B44;
-
-#[derive(Debug)]
-struct GlFunctionPointer(*const c_void);
-impl Default for GlFunctionPointer {
-    fn default() -> Self {
-        Self(core::ptr::null())
-    }
-}
-
-impl GlFunctionPointer {
-    const fn null() -> Self {
-        Self(core::ptr::null())
-    }
-}
-
-impl GlFunctionPointer {
-    fn load(
-        &mut self,
-        get_proc_address: &dyn Fn(&CStr) -> *const c_void,
-        name: &CStr,
-    ) -> Result<()> {
-        let addr = get_proc_address(name);
-        if addr == core::ptr::null() {
-            Err(eyre!("Failed loading {name:?}").into())
-        } else {
-            self.0 = addr;
-            Ok(())
-        }
-    }
-}
+use super::gl::*;
 
 #[derive(Debug, Default)]
 pub struct McGuffin {
-    // #[gl_call( (i16,i16,i16,i16) -> c_void )]
-    gl_rects: GlFunctionPointer,
-    //gl_rects: extern "system" fn(i16, i16, i16, i16) -> c_void,
-    gl_get_error: GlFunctionPointer,
-    gl_gen_vertex_arrays: GlFunctionPointer,
-    gl_bind_vertex_array: GlFunctionPointer,
-    gl_gen_buffers: GlFunctionPointer,
-    gl_bind_buffer: GlFunctionPointer,
-    gl_buffer_data: GlFunctionPointer,
-    gl_enable_vertex_attrib_array: GlFunctionPointer,
-    gl_vertex_attrib_pointer: GlFunctionPointer,
-    gl_draw_arrays: GlFunctionPointer,
-    gl_disable: GlFunctionPointer,
+    gl: Gl,
 
     vertex_array_id: u32,
     vertex_buffer_id: u32,
@@ -73,138 +23,9 @@ pub struct McGuffin {
 
 unsafe impl Send for McGuffin {}
 
-impl From<GlFunctionPointer> for extern "system" fn(i16, i16, i16, i16) -> c_void {
-    fn from(p: GlFunctionPointer) -> Self {
-        unsafe {
-            transmute::<
-                *const c_void,
-                extern "system" fn(c_short, c_short, c_short, c_short) -> c_void,
-            >(p.0)
-        }
-    }
-}
-
 //static glRects: extern "system" fn(i16, i16, i16, i16) -> c_void = GlFunctionPointer::null().into();
 
 impl McGuffin {
-    fn call_gl_rects(&self, x1: i16, y1: i16, x2: i16, y2: i16) {
-        unsafe {
-            let fn_p = transmute::<
-                *const c_void,
-                extern "system" fn(c_short, c_short, c_short, c_short) -> c_void,
-            >(self.gl_rects.0);
-            fn_p(x1, y1, x2, y2);
-        };
-    }
-
-    fn call_gl_get_error(&self) -> c_uint {
-        unsafe {
-            let fn_p =
-                transmute::<*const c_void, extern "system" fn() -> c_uint>(self.gl_get_error.0);
-            fn_p()
-        }
-    }
-
-    fn call_gl_gen_vertex_arrays(&self, n: c_int, arrays: *mut c_uint) -> c_void {
-        unsafe {
-            let fn_p = transmute::<*const c_void, extern "system" fn(c_int, *mut c_uint) -> c_void>(
-                self.gl_gen_vertex_arrays.0,
-            );
-            fn_p(n, arrays)
-        }
-    }
-
-    fn call_gl_bind_vertex_array(&self, array: c_uint) -> c_void {
-        unsafe {
-            let fn_p = transmute::<*const c_void, extern "system" fn(c_uint) -> c_void>(
-                self.gl_bind_vertex_array.0,
-            );
-            fn_p(array)
-        }
-    }
-
-    fn call_gl_gen_buffers(&self, n: c_int, buffers: *mut c_uint) -> c_void {
-        unsafe {
-            let fn_p = transmute::<*const c_void, extern "system" fn(c_int, *mut c_uint) -> c_void>(
-                self.gl_gen_buffers.0,
-            );
-            fn_p(n, buffers)
-        }
-    }
-
-    fn call_gl_bind_buffer(&self, target: c_uint, buffer: c_uint) -> c_void {
-        unsafe {
-            let fn_p = transmute::<*const c_void, extern "system" fn(c_uint, c_uint) -> c_void>(
-                self.gl_bind_buffer.0,
-            );
-            fn_p(target, buffer)
-        }
-    }
-    // -> GL_ARRAY_BUFFER
-
-    fn call_gl_buffer_data(
-        &self,
-        target: c_uint,
-        size: isize,
-        data: *const c_void,
-        usage: c_uint,
-    ) -> c_void {
-        unsafe {
-            let fn_p = transmute::<
-                *const c_void,
-                extern "system" fn(c_uint, isize, *const c_void, c_uint) -> c_void,
-            >(self.gl_buffer_data.0);
-            fn_p(target, size, data, usage)
-        }
-    }
-    // -> GL_ARRAY_BUFFER == 0x8892, GL_STATIC_DRAW == 0x88E4
-
-    fn call_gl_enable_vertex_attrib_array(&self, index: c_uint) -> c_void {
-        unsafe {
-            let fn_p = transmute::<*const c_void, extern "system" fn(c_uint) -> c_void>(
-                self.gl_enable_vertex_attrib_array.0,
-            );
-            fn_p(index)
-        }
-    }
-
-    fn call_gl_vertex_attrib_pointer(
-        &self,
-        index: c_uint,
-        size: c_int,
-        ttype: c_uint,
-        normalized: c_uchar,
-        stride: c_int,
-        pointer: *const c_void,
-    ) -> c_void {
-        unsafe {
-            let fn_p = transmute::<
-                *const c_void,
-                extern "system" fn(c_uint, c_int, c_uint, c_uchar, c_int, *const c_void) -> c_void,
-            >(self.gl_vertex_attrib_pointer.0);
-            fn_p(index, size, ttype, normalized, stride, pointer)
-        }
-    }
-
-    fn call_gl_draw_arrays(&self, mode: c_uint, first: c_int, count: c_int) -> c_void {
-        unsafe {
-            let fn_p = transmute::<*const c_void, extern "system" fn(c_uint, c_int, c_int) -> c_void>(
-                self.gl_draw_arrays.0,
-            );
-            fn_p(mode, first, count)
-        }
-    }
-    // -> GL_TRIANGLE_STRIP == 0x0005
-
-    fn call_gl_disable(&self, mode: c_uint) -> c_void {
-        unsafe {
-            let fn_p = transmute::<*const c_void, extern "system" fn(c_uint) -> c_void>(
-                self.gl_disable.0,
-            );
-            fn_p(mode)
-        }
-    }
-
     fn load_function(
         get_proc_address: &dyn Fn(&CStr) -> *const c_void,
         name: &CStr,
@@ -220,68 +41,69 @@ impl McGuffin {
         // load the gl functions we need
         // glRects
 
-        self.gl_rects.load(get_proc_address, c"glRects")?;
-        self.gl_get_error.load(get_proc_address, c"glGetError")?;
-        self.gl_gen_vertex_arrays
-            .load(get_proc_address, c"glGenVertexArrays")?;
-        self.gl_bind_vertex_array
-            .load(get_proc_address, c"glBindVertexArray")?;
-        self.gl_gen_buffers
-            .load(get_proc_address, c"glGenBuffers")?;
-        self.gl_bind_buffer
-            .load(get_proc_address, c"glBindBuffer")?;
-        self.gl_buffer_data
-            .load(get_proc_address, c"glBufferData")?;
-        self.gl_enable_vertex_attrib_array
-            .load(get_proc_address, c"glEnableVertexAttribArray")?;
-        self.gl_vertex_attrib_pointer
-            .load(get_proc_address, c"glVertexAttribPointer")?;
-        self.gl_draw_arrays
-            .load(get_proc_address, c"glDrawArrays")?;
-        self.gl_disable
-            .load(get_proc_address, c"glDisable")?;
-
+        self.gl.load_all(get_proc_address)?;
         // create the program (vertex + fragment)
 
         // prepare the buffers
         let mut vertex_array_id = 0;
-        self.call_gl_gen_vertex_arrays(1, &mut vertex_array_id);
+        self.gl.gen_vertex_arrays(1, &mut vertex_array_id);
         dbg!(&vertex_array_id);
-        self.call_gl_bind_vertex_array(vertex_array_id);
+        self.gl.bind_vertex_array(vertex_array_id);
 
         let mut vertex_buffer_id = 0;
-        self.call_gl_gen_buffers(1, &mut vertex_buffer_id);
+        self.gl.gen_buffers(1, &mut vertex_buffer_id);
         self.check_gl_error(std::line!());
 
         dbg!(&vertex_buffer_id);
-        self.call_gl_bind_buffer(GL_ARRAY_BUFFER, vertex_buffer_id);
+        self.gl.bind_buffer(GL_ARRAY_BUFFER, vertex_buffer_id);
         //self.call_gl_bind_buffer( GL_ARRAY_BUFFER, 0 );
         self.check_gl_error(std::line!());
-/*
-        let data = [
-            0.5f32, 1.0,
-            -1.0, -1.0,
-            1.0, -1.0,
-            1.0, -1.0,
-        ];
-*/
+        /*
+                let data = [
+                    0.5f32, 1.0,
+                    -1.0, -1.0,
+                    1.0, -1.0,
+                    1.0, -1.0,
+                ];
+        */
         self.do_data();
 
         self.vertex_array_id = vertex_array_id;
         self.vertex_buffer_id = vertex_buffer_id;
 
+        /*
+                    let (vertex_shader_source, fragment_shader_source) = (
+                        r#"
+                            layout(location=0)in vec2 v;
+                            layout(location=0)out vec2 p;
+                            void main() {
+                                gl_Position = vec4( v, 0.0, 1.0);
+                                p = v;
+                            }
+                        "#,
+                        r#"
+                            precision mediump float;
+                            out vec4 out_color;
+                            layout(location=0)in vec2 p;
+                            void main() {
+                                out_color = vec4( sin( p.x*11 ), sin( p.y*15.0 ), 1., 1.0 );
+                            }
+                        "#,
+                    );
+
+        */
         Ok(())
         //Err( eyre!("test") )
     }
 
     fn do_data(&self) {
         let data: &mut [f32] = &mut [
-             1.0, -1.0, // top right -> bottom right?
-             1.0,  1.0, // top right -> top right?
+            1.0, -1.0, // top right -> bottom right?
+            1.0, 1.0, // top right -> top right?
             -1.0, -1.0, // top left -> bottom left?
-            -1.0,  1.0, // top right -> top left?
+            -1.0, 1.0, // top right -> top left?
         ];
-/*
+        /*
         let mut rng = rand::thread_rng();
 
         for i in 0..=5 {
@@ -297,20 +119,18 @@ impl McGuffin {
         }
         */
 
-
         //let data = [-1.0, -1.0, -1.0, 0.5, 0.5, -1.0, 0.5, 0.5];
         //let size = core::mem::size_of_val(&data);
         let size = 4 * data.len();
         dbg!(&size);
         //dbg!(data.as_ptr() as *const _);
-        self.call_gl_buffer_data(
+        self.gl.buffer_data(
             GL_ARRAY_BUFFER,
             size as isize,
             data.as_ptr() as *const _,
             GL_DYNAMIC_DRAW,
         );
         self.check_gl_error(std::line!());
-
     }
 
     pub fn update(&mut self) -> Result<()> {
@@ -327,9 +147,9 @@ impl McGuffin {
 
         // gl::DrawArrays(gl::TRIANGLES, 0, 6i32);
 
-        self.call_gl_bind_vertex_array(self.vertex_array_id);
+        self.gl.bind_vertex_array(self.vertex_array_id);
         //dbg!(self.vertex_array_id);
-        self.call_gl_bind_buffer(GL_ARRAY_BUFFER, self.vertex_buffer_id);
+        self.gl.bind_buffer(GL_ARRAY_BUFFER, self.vertex_buffer_id);
         //dbg!(self.vertex_buffer_id);
         /*
                 let data = [0.0;8];
@@ -344,13 +164,14 @@ impl McGuffin {
                 );
                 self.check_gl_error(std::line!());
         */
-        self.call_gl_enable_vertex_attrib_array(0); // 0 == pos
+        self.gl.enable_vertex_attrib_array(0); // 0 == pos
 
-        self.call_gl_vertex_attrib_pointer(0, 2, GL_FLOAT, GL_FALSE as u8, 0, core::ptr::null());
+        self.gl
+            .vertex_attrib_pointer(0, 2, GL_FLOAT, GL_FALSE as u8, 0, core::ptr::null());
 
         //self.do_data();
         //self.call_gl_disable( GL_CULL_FACE );
-        self.call_gl_draw_arrays(GL_TRIANGLE_STRIP, 0, 4);
+        self.gl.draw_arrays(GL_TRIANGLE_STRIP, 0, 4);
         //self.call_gl_draw_arrays(GL_TRIANGLE_STRIP, 0, 10);
 
         //self.call_gl_rects( -1, -1, 1, 1 );
@@ -371,7 +192,7 @@ impl McGuffin {
     }
 
     fn check_gl_error(&self, line: u32) {
-        let error = self.call_gl_get_error();
+        let error = self.gl.get_error(); //self.call_gl_get_error();
         match error {
             0 => {}
             0x500 => {
