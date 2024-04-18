@@ -19,6 +19,7 @@ log = "0.4"
 # You only need serde if you want app persistence:
 serde = { version = "1", features = ["derive"] }
 color-eyre = "0.6.3"
+egui_extras = { version = "0.27.2", features = ["syntect"] }
 # rand = "0.8.5"
 
 # native:

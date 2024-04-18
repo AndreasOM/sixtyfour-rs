@@ -51,7 +51,7 @@ impl TemplateApp {
             match s.mc_guffin.lock().setup(get_proc_address) {
                 Ok(()) => {}
                 Err(e) => {
-                    todo!("McGuffin setup error -> {e:#?}");
+                    eprintln!("McGuffin setup error -> {e:#?}");
                 }
             };
         }
@@ -135,6 +135,63 @@ impl eframe::App for TemplateApp {
 
                 for (k, v) in self.properties.iter_mut() {
                     ui.add(egui::Slider::new(&mut *v, 0.0..=100.0).text(k));
+                }
+            });
+
+        egui::Window::new("Shaders")
+            .resizable(true)
+            .hscroll(false)
+            .vscroll(false)
+            .collapsible(false)
+            //.title_bar(false)
+            .show(ctx, |ui| {
+                //self.mc_guffin_painting(ui);
+                {
+                    let mg = self.mc_guffin.lock();
+                    let shader_source = mg.get_shader_source("fragment");
+                    let mut shader_source = String::from(shader_source);
+
+                    let mut theme =
+                        egui_extras::syntax_highlighting::CodeTheme::from_memory(ui.ctx());
+                    ui.collapsing("Theme", |ui| {
+                        ui.group(|ui| {
+                            theme.ui(ui);
+                            theme.clone().store_in_memory(ui.ctx());
+                        });
+                    });
+
+                    let language = "c++";
+
+                    //let shader_source = format!("{:#?}",)
+
+                    let mut layouter = |ui: &egui::Ui, string: &str, wrap_width: f32| {
+                        let mut layout_job = egui_extras::syntax_highlighting::highlight(
+                            ui.ctx(),
+                            &theme,
+                            string,
+                            language,
+                        );
+                        layout_job.wrap.max_width = wrap_width;
+                        ui.fonts(|f| f.layout_job(layout_job))
+                    };
+
+                    egui::ScrollArea::vertical().show(ui, |ui| {
+                        ui.add(
+                            egui::TextEdit::multiline(&mut shader_source)
+                                .code_editor()
+                                .min_size(egui::Vec2::new(500.0, 500.0))
+                                .layouter(&mut layouter)
+                                .frame(true)
+                                .desired_rows(80), /*
+                                                   .font(egui::TextStyle::Monospace) // for cursor height
+                                                   .code_editor()
+                                                   .desired_rows(10)
+                                                   .lock_focus(true)
+                                                   .desired_width(f32::INFINITY)
+                                                   .layouter(&mut layouter)
+                                                   */
+                        );
+                    });
                 }
             });
 
