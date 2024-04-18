@@ -199,7 +199,7 @@ impl McGuffin {
             GL_ARRAY_BUFFER,
             size as isize,
             data.as_ptr() as *const _,
-            GL_DYNAMIC_DRAW,
+            GL_STATIC_DRAW,
         );
         self.check_gl_error(std::line!());
     }

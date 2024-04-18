@@ -113,6 +113,7 @@ struct GlWrapperMacro {
 }
 
 #[derive(Debug, Default)]
+#[allow(non_snake_case)]
 struct Glfps {
     glGetError: GlFunctionPointer,
     glDisable: GlFunctionPointer,
