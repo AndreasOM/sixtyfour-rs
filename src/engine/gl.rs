@@ -10,6 +10,7 @@ pub type GLuint = core::ffi::c_uint;
 pub type GLint = core::ffi::c_int;
 pub type GLsizei = core::ffi::c_uint;
 pub type GLchar = core::ffi::c_char;
+pub type GLfloat = core::ffi::c_float;
 
 pub const GL_ARRAY_BUFFER: GLenum = 0x8892;
 pub const GL_STATIC_DRAW: GLenum = 0x88E4;
@@ -107,6 +108,8 @@ struct Glfps {
     glGetProgramiv: GlFunctionPointer,
     glUseProgram: GlFunctionPointer,
     glGetProgramInfoLog: GlFunctionPointer,
+    glGetUniformLocation: GlFunctionPointer,
+    glProgramUniform1f: GlFunctionPointer,
 }
 
 impl Gl {
@@ -175,6 +178,12 @@ impl Gl {
         self.glfps
             .glUseProgram
             .load(get_proc_address, c"glUseProgram")?;
+        self.glfps
+            .glGetUniformLocation
+            .load(get_proc_address, c"glGetUniformLocation")?;
+        self.glfps
+            .glProgramUniform1f
+            .load(get_proc_address, c"glProgramUniform1f")?;
 
         Ok(())
     }
@@ -195,6 +204,8 @@ impl Gl {
     create_gl_wrapper!(void glGetProgramiv(GLuint program, GLenum pname, GLint *params));
     create_gl_wrapper!(void glGetProgramInfoLog(GLuint program, GLsizei maxLength, GLsizei *length, GLchar *infoLog));
     create_gl_wrapper!(void glUseProgram(GLuint program));
+    create_gl_wrapper!(GLint glGetUniformLocation( GLuint program, const GLchar *name));
+    create_gl_wrapper!(void glProgramUniform1f( GLuint program, GLint location, GLfloat v0));
 
     pub fn rects(&self, x1: i16, y1: i16, x2: i16, y2: i16) {
         unsafe {
