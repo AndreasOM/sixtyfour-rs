@@ -1,3 +1,4 @@
+use crate::engine::ShaderSource;
 use super::gl::*;
 use color_eyre::eyre::eyre;
 use color_eyre::Result;
@@ -15,12 +16,35 @@ pub struct McGuffin {
     program: u32,
     properties: HashMap<String, f32>,
     shader_sources: HashMap<String, ShaderSource>,
+
+    test: String,
 }
 
-#[derive(Debug, Default)]
-struct ShaderSource {
-    pub shader_type: GLenum,
-    pub source: String,
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct StoredMcGuffin {
+    test: String,
+    shader_sources: HashMap<String, ShaderSource>,
+}
+
+impl From<&McGuffin> for StoredMcGuffin {
+    fn from(mc:&McGuffin) -> Self {
+        Self {
+            test: mc.test.clone(),
+            shader_sources: mc.shader_sources.clone(),
+        }
+    }
+}
+
+impl From<StoredMcGuffin> for McGuffin {
+    fn from(smc:StoredMcGuffin) -> Self {
+        let s = Self {
+            test: smc.test,
+            shader_sources: smc.shader_sources,
+            ..Default::default()
+        };
+        dbg!(&s.shader_sources);
+        s
+    }
 }
 
 unsafe impl Send for McGuffin {}
@@ -39,11 +63,38 @@ impl McGuffin {
             Ok(addr)
         }
     }
-    pub fn get_shader_source(&self, name: &str) -> &str {
+    pub fn get_shader_source(&self, name: &str ) -> Option<&ShaderSource> {
+        self.shader_sources.get( name )
+    }
+    pub fn get_mut_shader_source(&mut self, name: &str ) -> Option<&mut ShaderSource> {
+        self.shader_sources.get_mut( name )
+    }
+    pub fn is_shader_source_dirty(&self, name: &str) -> bool {
         if let Some(ss) = self.shader_sources.get(name) {
-            &ss.source
+            ss.dirty()
+        } else {
+            false
+        }
+    }
+    pub fn get_shader_source_source(&self, name: &str) -> &str {
+        if let Some(ss) = self.shader_sources.get(name) {
+            ss.source()
         } else {
             "shader does not exist"
+        }
+    }
+    pub fn replace_shader_source(&mut self, name: &str, source: String) {
+        if let Some(ss) = self.shader_sources.get_mut(name) {
+            ss.update_source(source);
+        } else {
+            eprintln!("ShaderSource {name} not found!");
+        }
+    }
+    pub fn mark_shader_source_clean(&mut self, name: &str) {
+        if let Some(ss) = self.shader_sources.get_mut(name) {
+            ss.mark_clean();
+        } else {
+            eprintln!("ShaderSource {name} not found!");
         }
     }
     fn compile_shader(&mut self, shader_type: GLenum, shader_source: &str) -> Result<GLuint> {
@@ -82,81 +133,79 @@ impl McGuffin {
 
         Ok(shader)
     }
-    fn add_shader_source(&mut self, name: &str, shader_type: GLenum, source: &str) {
-        let ss = ShaderSource {
-            shader_type,
-            source: source.into(),
-        };
 
+    fn link_program(&mut self, vertex_shader: u32, fragment_shader: u32) -> Result<u32> {
+        let program = self.gl.glCreateProgram();
+        self.gl.glAttachShader(program, vertex_shader);
+        self.gl.glAttachShader(program, fragment_shader);
+        self.gl.glLinkProgram(program);
+
+        let mut status: GLint = GL_FALSE as GLint;
+        self.gl.glGetProgramiv(program, GL_LINK_STATUS, &mut status);
+
+        dbg!(status);
+        if status != GL_TRUE as GLint {
+            eprintln!("Failed linking program");
+            let mut len = 0;
+            self.gl
+                .glGetProgramiv(program, GL_INFO_LOG_LENGTH, &mut len);
+            dbg!(len);
+            let mut buf = Vec::with_capacity(len as usize);
+            unsafe { buf.set_len((len as usize) - 1) };
+            let mut len = len as u32;
+            self.gl
+                .glGetProgramInfoLog(program, len, &mut len, buf.as_mut_ptr() as *mut _);
+            let log = String::from_utf8_lossy(&buf);
+            dbg!(log);
+            return Err(eyre!("Failed linking program").into());
+        }
+        self.check_gl_error(std::line!());
+
+        self.program = program;
+        Ok(program)
+    }
+    fn add_shader_source(&mut self, name: &str, shader_type: GLenum, source: &str) {
+        let ss = ShaderSource::new( shader_type, source.into() );
         self.shader_sources.insert(name.into(), ss);
     }
     fn load_shader_sources(&mut self) -> Result<()> {
-        self.add_shader_source(
-            "vertex",
-            GL_VERTEX_SHADER,
-            r#"#version 410
-                            
+        let mut loaded = false;
+        if let Some( ss ) = self.get_mut_shader_source( "vertex") {
+            if let Some( sp ) = ss.save_path() {
+                let _ = ss.reload();
+                loaded = true;
+            }
+        }
+        if !loaded {
+            self.add_shader_source(
+                "vertex",
+                GL_VERTEX_SHADER,
+                &String::from_utf8_lossy(include_bytes!("../../assets/default.vert.glsl")),
+            );
+        }
 
-                            layout(location=0)in vec2 v;
-                            layout(location=0)out vec2 p;
-                            void main() {
-                                gl_Position = vec4( v, 0.0, 1.0);
-                                p = v;
-                            }
-                        "#,
-        );
-        self.add_shader_source( "fragment", GL_VERTEX_SHADER,
-r#"#version 410
-    uniform float fTime;
-    uniform float speed;
-    uniform float scale_red_x;
-    uniform float scale_green_y;
-
-    precision mediump float;
-    out vec4 out_color;
-    layout(location=0)in vec2 p;
-
-    float rand(float n){
-        return fract(sin(n) * 43758.5453123);
-    }
-    float rand(vec2 n) { 
-        return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
-    }
-
-    float noise(float p){
-        float fl = floor(p);
-        float fc = fract(p);
-        return mix(rand(fl), rand(fl + 1.0), fc);
-    }
-    float noise(vec2 n) {
-        const vec2 d = vec2(0.0, 1.0);
-        vec2 b = floor(n), f = smoothstep(vec2(0.0), vec2(1.0), fract(n));
-        return mix(mix(rand(b), rand(b + d.yx), f.x), mix(rand(b + d.xy), rand(b + d.yy), f.x), f.y);
-    }
-    float n1( float x ) {
-        #define hash(v) fract(sin(100.0*v)*4375.5453)
-        float f = fract(x);
-        float p = floor(x);
-
-        f = f*f*(3.0-2.0*f);
-
-        return mix(hash(f),hash(p),f);
-    }
-    
-    void main() {
-        float time = speed*fTime;
-        vec2 n2 = noise2( p + vec2( time*0.03, sin(time*0.032) ));
-        float rn = n2.x*5.0;//noise( p.x ); //n1(p.x);
-        float gn = n2.y*3.0;//n1(p.y);
-        out_color = vec4( sin( time+rn+p.x*scale_red_x ), sin( gn+p.y*scale_green_y ), sin( ( p.x + p.y ) * 3.0 ), 1.0 );
-        //out_color = vec4( rn, rn, rn, 1.0 );
-    }
-"#
-        );
+        let mut loaded = false;
+        if let Some( ss ) = self.get_mut_shader_source( "fragment") {
+            if let Some( sp ) = ss.save_path() {
+                let _ = ss.reload();
+                loaded = true;
+            }
+        }
+        if !loaded {
+            eprintln!("Initialising fragment shader with baked in default");
+            self.add_shader_source(
+                "fragment",
+                GL_FRAGMENT_SHADER,
+                &String::from_utf8_lossy(include_bytes!("../../assets/default.frag.glsl")),
+            );
+        }
 
         Ok(())
     }
     pub fn setup(&mut self, get_proc_address: &dyn Fn(&CStr) -> *const c_void) -> Result<()> {
+        eprintln!("Test is {}", &self.test );
+        self.test = String::from("42");
+        eprintln!("Test is {}", &self.test );
         self.load_shader_sources()?;
 
         // load the gl functions we need
@@ -192,42 +241,24 @@ r#"#version 410
         self.vertex_array_id = vertex_array_id;
         self.vertex_buffer_id = vertex_buffer_id;
 
-        let vertex_shader_source = String::from(self.get_shader_source("vertex"));
-        let fragment_shader_source = String::from(self.get_shader_source("fragment"));
+        self.rebuild_program()?;
+
+        Ok(())
+        //Err( eyre!("test") )
+    }
+
+    pub fn rebuild_program(&mut self) -> Result<()> {
+        let vertex_shader_source = String::from(self.get_shader_source_source("vertex"));
+        let fragment_shader_source = String::from(self.get_shader_source_source("fragment"));
+
+        self.mark_shader_source_clean("vertex");
+        self.mark_shader_source_clean("fragment");
 
         let vertex_shader = self.compile_shader(GL_VERTEX_SHADER, &vertex_shader_source)?;
         let fragment_shader = self.compile_shader(GL_FRAGMENT_SHADER, &fragment_shader_source)?;
 
-        let program = self.gl.glCreateProgram();
-        self.gl.glAttachShader(program, vertex_shader);
-        self.gl.glAttachShader(program, fragment_shader);
-        self.gl.glLinkProgram(program);
-
-        let mut status: GLint = GL_FALSE as GLint;
-        self.gl.glGetProgramiv(program, GL_LINK_STATUS, &mut status);
-
-        dbg!(status);
-        if status != GL_TRUE as GLint {
-            eprintln!("Failed linking program");
-            let mut len = 0;
-            self.gl
-                .glGetProgramiv(program, GL_INFO_LOG_LENGTH, &mut len);
-            dbg!(len);
-            let mut buf = Vec::with_capacity(len as usize);
-            unsafe { buf.set_len((len as usize) - 1) };
-            let mut len = len as u32;
-            self.gl
-                .glGetProgramInfoLog(program, len, &mut len, buf.as_mut_ptr() as *mut _);
-            let log = String::from_utf8_lossy(&buf);
-            dbg!(log);
-            todo!();
-        }
-        self.check_gl_error(std::line!());
-
-        self.program = program;
-
+        self.program = self.link_program(vertex_shader, fragment_shader)?;
         Ok(())
-        //Err( eyre!("test") )
     }
 
     fn do_data(&self) {

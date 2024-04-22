@@ -1,3 +1,4 @@
+use crate::engine::StoredMcGuffin;
 use crate::engine::McGuffin;
 use egui::mutex::Mutex;
 use std::collections::HashMap;
@@ -5,12 +6,10 @@ use std::sync::Arc;
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
+#[serde(into = "StoredTemplateApp")]
+#[serde(from = "StoredTemplateApp")]
+#[derive(Clone)]
 pub struct TemplateApp {
-    label: String,
-
-    #[serde(skip)] // This how you opt-out of serialization of a field
-    value: f32,
-
     #[serde(skip)]
     mc_guffin: Arc<Mutex<McGuffin>>,
 
@@ -18,17 +17,51 @@ pub struct TemplateApp {
 
     #[serde(skip)]
     start_time: std::time::Instant,
+
+    #[serde(skip)]
+    active_shader_type: String,
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct StoredTemplateApp {
+    properties: HashMap<String, f32>,
+    mc_guffin: StoredMcGuffin,
+}
+
+impl Into<StoredTemplateApp> for TemplateApp {
+
+    fn into(self) -> StoredTemplateApp {
+        let mg = self.mc_guffin.lock();
+        let smg: StoredMcGuffin = StoredMcGuffin::from( &(*mg) );
+        StoredTemplateApp {
+            properties: self.properties.clone(),
+            mc_guffin: smg,
+        }
+    }
+}
+
+impl From<StoredTemplateApp> for TemplateApp {
+
+    fn from(sta: StoredTemplateApp) -> TemplateApp {
+        //let mg = self.mc_guffin.lock();
+        //let smg: StoredMcGuffin = StoredMcGuffin::from( &(*mg) );
+        let mg = McGuffin::from( sta.mc_guffin );
+        let mg = Arc::new( Mutex::new( mg ) );
+        TemplateApp {
+            properties: sta.properties.clone(),
+            mc_guffin: mg,
+            ..Default::default()
+        }
+    }
 }
 
 impl Default for TemplateApp {
     fn default() -> Self {
         Self {
-            // Example stuff:
-            label: "Hello World!".to_owned(),
-            value: 2.7,
             mc_guffin: Default::default(),
             properties: Default::default(),
             start_time: std::time::Instant::now(),
+            active_shader_type: String::from("fragment"),
         }
     }
 }
@@ -145,11 +178,32 @@ impl eframe::App for TemplateApp {
             .collapsible(false)
             //.title_bar(false)
             .show(ctx, |ui| {
-                //self.mc_guffin_painting(ui);
-                {
+                ui.horizontal_wrapped(|ui| {
+                    ui.visuals_mut().button_frame = false;
+                    const SHADER_TYPES: &[&str] = &["vertex", "fragment"];
+
                     let mg = self.mc_guffin.lock();
-                    let shader_source = mg.get_shader_source("fragment");
-                    let mut shader_source = String::from(shader_source);
+
+                    for st in SHADER_TYPES {
+                        let dirty = mg.is_shader_source_dirty(*st);
+                        let active = self.active_shader_type == *st;
+                        let name = if dirty {
+                            format!("*{st}")
+                        } else {
+                            String::from(*st)
+                        };
+                        if ui.add(egui::SelectableLabel::new(active, name)).clicked() {
+                            self.active_shader_type = String::from(*st);
+                        }
+                    }
+                });
+                {
+                    let (mut shader_source, dirty) = {
+                        let mg = self.mc_guffin.lock();
+                        let orig_shader_source = mg.get_shader_source_source(&self.active_shader_type);
+                        let dirty = mg.is_shader_source_dirty(&self.active_shader_type);
+                        (String::from(orig_shader_source), dirty)
+                    };
 
                     let mut theme =
                         egui_extras::syntax_highlighting::CodeTheme::from_memory(ui.ctx());
@@ -175,14 +229,60 @@ impl eframe::App for TemplateApp {
                         ui.fonts(|f| f.layout_job(layout_job))
                     };
 
+                    ui.horizontal_wrapped(|ui| {
+                        let mut mg = self.mc_guffin.lock();
+                        let enabled = dirty;
+                        if ui
+                            .add_enabled(enabled, egui::Button::new("Rebuild Program"))
+                            .clicked()
+                        {
+                            let _ = mg.rebuild_program();
+                        }
+                        if let Some( shader_source ) = mg.get_mut_shader_source( &self.active_shader_type ) {
+                            let save_file = if let Some( save_path ) = shader_source.save_path() {
+                                save_path.to_string_lossy().to_string()
+                            } else {
+                                String::from("")
+                            };
+
+                            let enabled = shader_source.save_path().is_some();
+                            if ui
+                                .add_enabled(enabled, egui::Button::new("Save"))
+                                .on_hover_text( save_file )
+                                .clicked()
+                            {
+                                let _ = shader_source.save();
+                            }
+
+                            let enabled = true;
+                            if ui
+                                .add_enabled(enabled, egui::Button::new("Save as..."))
+                                .clicked()
+                            {
+                                let filename = shader_source.default_file_name();
+                                if let Some( file ) = rfd::FileDialog::new()
+                                .set_directory( std::env::current_dir().unwrap_or_else(|_| "/".into() ) )
+                                .set_file_name( filename )
+                                .save_file() {
+
+                                    shader_source.set_save_path( file );
+                                    let _ = shader_source.save();
+                                }
+                            }
+
+                        }
+                    });
                     egui::ScrollArea::vertical().show(ui, |ui| {
-                        ui.add(
+                        let response = ui.add(
                             egui::TextEdit::multiline(&mut shader_source)
                                 .code_editor()
-                                .min_size(egui::Vec2::new(500.0, 500.0))
+                                .min_size(egui::Vec2::new(800.0, 500.0))
                                 .layouter(&mut layouter)
                                 .frame(true)
-                                .desired_rows(80), /*
+                                .desired_rows(80)
+                                .desired_width(f32::INFINITY)
+                                ,
+                                /*
                                                    .font(egui::TextStyle::Monospace) // for cursor height
                                                    .code_editor()
                                                    .desired_rows(10)
@@ -191,6 +291,11 @@ impl eframe::App for TemplateApp {
                                                    .layouter(&mut layouter)
                                                    */
                         );
+
+                        if response.changed() {
+                            let mut mg = self.mc_guffin.lock();
+                            mg.replace_shader_source(&self.active_shader_type, shader_source);
+                        }
                     });
                 }
             });
