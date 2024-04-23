@@ -1,5 +1,6 @@
-use crate::engine::ShaderSource;
 use super::gl::*;
+use crate::engine::Pipeline;
+use crate::engine::ShaderSource;
 use color_eyre::eyre::eyre;
 use color_eyre::Result;
 use core::ffi::c_void;
@@ -13,7 +14,8 @@ pub struct McGuffin {
 
     vertex_array_id: u32,
     vertex_buffer_id: u32,
-    program: u32,
+    pipeline: Pipeline,
+    //program: u32,
     properties: HashMap<String, f32>,
     shader_sources: HashMap<String, ShaderSource>,
 
@@ -27,7 +29,7 @@ pub struct StoredMcGuffin {
 }
 
 impl From<&McGuffin> for StoredMcGuffin {
-    fn from(mc:&McGuffin) -> Self {
+    fn from(mc: &McGuffin) -> Self {
         Self {
             test: mc.test.clone(),
             shader_sources: mc.shader_sources.clone(),
@@ -36,7 +38,7 @@ impl From<&McGuffin> for StoredMcGuffin {
 }
 
 impl From<StoredMcGuffin> for McGuffin {
-    fn from(smc:StoredMcGuffin) -> Self {
+    fn from(smc: StoredMcGuffin) -> Self {
         let s = Self {
             test: smc.test,
             shader_sources: smc.shader_sources,
@@ -52,22 +54,11 @@ unsafe impl Send for McGuffin {}
 //static glRects: extern "system" fn(i16, i16, i16, i16) -> c_void = GlFunctionPointer::null().into();
 
 impl McGuffin {
-    fn load_function(
-        get_proc_address: &dyn Fn(&CStr) -> *const c_void,
-        name: &CStr,
-    ) -> Result<*const c_void> {
-        let addr = get_proc_address(name);
-        if addr == core::ptr::null() {
-            Err(eyre!("Failed loading {name:?}").into())
-        } else {
-            Ok(addr)
-        }
+    pub fn get_shader_source(&self, name: &str) -> Option<&ShaderSource> {
+        self.shader_sources.get(name)
     }
-    pub fn get_shader_source(&self, name: &str ) -> Option<&ShaderSource> {
-        self.shader_sources.get( name )
-    }
-    pub fn get_mut_shader_source(&mut self, name: &str ) -> Option<&mut ShaderSource> {
-        self.shader_sources.get_mut( name )
+    pub fn get_mut_shader_source(&mut self, name: &str) -> Option<&mut ShaderSource> {
+        self.shader_sources.get_mut(name)
     }
     pub fn is_shader_source_dirty(&self, name: &str) -> bool {
         if let Some(ss) = self.shader_sources.get(name) {
@@ -97,81 +88,14 @@ impl McGuffin {
             eprintln!("ShaderSource {name} not found!");
         }
     }
-    fn compile_shader(&mut self, shader_type: GLenum, shader_source: &str) -> Result<GLuint> {
-        // :TODO: verify shader type
-        let shader_source = CString::new(shader_source)?;
-        let shader = self.gl.glCreateShader(shader_type);
-
-        self.gl.glShaderSource(
-            shader,
-            1,
-            &shader_source.as_ptr() as *const *const _,
-            core::ptr::null(),
-        );
-        self.gl.glCompileShader(shader);
-
-        let mut status: GLint = GL_FALSE as GLint;
-        self.gl
-            .glGetShaderiv(shader, GL_COMPILE_STATUS, &mut status);
-
-        dbg!(status);
-        if status != GL_TRUE as GLint {
-            eprintln!("Failed compiling shader");
-            let mut len = 0;
-            self.gl.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &mut len);
-            dbg!(len);
-            let mut buf = Vec::with_capacity(len as usize);
-            unsafe { buf.set_len((len as usize) - 1) };
-            let mut len = len as u32;
-            self.gl
-                .glGetShaderInfoLog(shader, len, &mut len, buf.as_mut_ptr() as *mut _);
-            let log = String::from_utf8_lossy(&buf);
-            dbg!(log);
-            return Err(eyre!("Failed compiling shader!").into());
-        }
-        self.check_gl_error(std::line!());
-
-        Ok(shader)
-    }
-
-    fn link_program(&mut self, vertex_shader: u32, fragment_shader: u32) -> Result<u32> {
-        let program = self.gl.glCreateProgram();
-        self.gl.glAttachShader(program, vertex_shader);
-        self.gl.glAttachShader(program, fragment_shader);
-        self.gl.glLinkProgram(program);
-
-        let mut status: GLint = GL_FALSE as GLint;
-        self.gl.glGetProgramiv(program, GL_LINK_STATUS, &mut status);
-
-        dbg!(status);
-        if status != GL_TRUE as GLint {
-            eprintln!("Failed linking program");
-            let mut len = 0;
-            self.gl
-                .glGetProgramiv(program, GL_INFO_LOG_LENGTH, &mut len);
-            dbg!(len);
-            let mut buf = Vec::with_capacity(len as usize);
-            unsafe { buf.set_len((len as usize) - 1) };
-            let mut len = len as u32;
-            self.gl
-                .glGetProgramInfoLog(program, len, &mut len, buf.as_mut_ptr() as *mut _);
-            let log = String::from_utf8_lossy(&buf);
-            dbg!(log);
-            return Err(eyre!("Failed linking program").into());
-        }
-        self.check_gl_error(std::line!());
-
-        self.program = program;
-        Ok(program)
-    }
     fn add_shader_source(&mut self, name: &str, shader_type: GLenum, source: &str) {
-        let ss = ShaderSource::new( shader_type, source.into() );
+        let ss = ShaderSource::new(shader_type, source.into());
         self.shader_sources.insert(name.into(), ss);
     }
     fn load_shader_sources(&mut self) -> Result<()> {
         let mut loaded = false;
-        if let Some( ss ) = self.get_mut_shader_source( "vertex") {
-            if let Some( sp ) = ss.save_path() {
+        if let Some(ss) = self.get_mut_shader_source("vertex") {
+            if let Some(sp) = ss.save_path() {
                 let _ = ss.reload();
                 loaded = true;
             }
@@ -185,8 +109,8 @@ impl McGuffin {
         }
 
         let mut loaded = false;
-        if let Some( ss ) = self.get_mut_shader_source( "fragment") {
-            if let Some( sp ) = ss.save_path() {
+        if let Some(ss) = self.get_mut_shader_source("fragment") {
+            if let Some(sp) = ss.save_path() {
                 let _ = ss.reload();
                 loaded = true;
             }
@@ -203,9 +127,9 @@ impl McGuffin {
         Ok(())
     }
     pub fn setup(&mut self, get_proc_address: &dyn Fn(&CStr) -> *const c_void) -> Result<()> {
-        eprintln!("Test is {}", &self.test );
+        eprintln!("Test is {}", &self.test);
         self.test = String::from("42");
-        eprintln!("Test is {}", &self.test );
+        eprintln!("Test is {}", &self.test);
         self.load_shader_sources()?;
 
         // load the gl functions we need
@@ -241,23 +165,26 @@ impl McGuffin {
         self.vertex_array_id = vertex_array_id;
         self.vertex_buffer_id = vertex_buffer_id;
 
-        self.rebuild_program()?;
+        self.pipeline.setup(&mut self.gl)?;
+        self.pipeline
+            .rebuild(&mut self.gl, &mut self.shader_sources)?;
+        //self.rebuild_program()?;
 
         Ok(())
         //Err( eyre!("test") )
     }
 
     pub fn rebuild_program(&mut self) -> Result<()> {
-        let vertex_shader_source = String::from(self.get_shader_source_source("vertex"));
-        let fragment_shader_source = String::from(self.get_shader_source_source("fragment"));
+        self.pipeline
+            .rebuild(&mut self.gl, &mut self.shader_sources)
+            .map_err(|e| {
+                eprintln!("Pipeline rebuild failed: {e:?}");
+                e
+            })?;
+        for ss in self.shader_sources.values_mut() {
+            ss.mark_clean();
+        }
 
-        self.mark_shader_source_clean("vertex");
-        self.mark_shader_source_clean("fragment");
-
-        let vertex_shader = self.compile_shader(GL_VERTEX_SHADER, &vertex_shader_source)?;
-        let fragment_shader = self.compile_shader(GL_FRAGMENT_SHADER, &fragment_shader_source)?;
-
-        self.program = self.link_program(vertex_shader, fragment_shader)?;
         Ok(())
     }
 
@@ -312,7 +239,8 @@ impl McGuffin {
 
         // gl::DrawArrays(gl::TRIANGLES, 0, 6i32);
 
-        self.gl.glUseProgram(self.program);
+        self.pipeline.bind(&mut self.gl)?;
+        //self.gl.glUseProgram(self.program);
         self.check_gl_error(std::line!());
 
         self.gl.glBindVertexArray(self.vertex_array_id);
@@ -345,13 +273,7 @@ impl McGuffin {
         // glGetUniformLocation
         // glProgramUniform1f
         for (k, v) in self.properties.iter() {
-            let n = CString::new(String::from(k))?;
-            let l = self.gl.glGetUniformLocation(self.program, n.as_ptr());
-            if l == -1 {
-                eprintln!("Uniform {k} not found");
-            } else {
-                self.gl.glProgramUniform1f(self.program, l, *v);
-            }
+            let _ = self.pipeline.set_property(&mut self.gl, k, *v);
         }
 
         self.gl.draw_arrays(GL_TRIANGLE_STRIP, 0, 4);

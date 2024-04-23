@@ -1,13 +1,11 @@
+use crate::engine::gl::*;
+use color_eyre::eyre::eyre;
+use color_eyre::Result;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
-use crate::engine::gl::*;
-use color_eyre::Result;
-use color_eyre::eyre::eyre;
 
-#[derive(serde::Deserialize, serde::Serialize)]
-#[derive(Debug, Default)]
-#[derive(Clone)]
+#[derive(serde::Deserialize, serde::Serialize, Debug, Default, Clone)]
 #[serde(default)]
 pub struct ShaderSource {
     shader_type: GLenum,
@@ -18,6 +16,9 @@ pub struct ShaderSource {
     #[serde(skip)]
     unsaved: bool,
     save_path: Option<PathBuf>,
+
+    #[serde(skip)]
+    compile_log: Vec<String>,
 }
 
 impl ShaderSource {
@@ -28,8 +29,16 @@ impl ShaderSource {
             dirty: false,
             unsaved: false,
             save_path: None,
+            ..Default::default()
         }
     }
+    pub fn set_compile_log_from_string(&mut self, compile_log: String) {
+        self.compile_log = compile_log.split("\n").map(String::from).collect();
+    }
+    pub fn compile_log(&self) -> &Vec<String> {
+        &self.compile_log
+    }
+
     pub fn shader_type(&self) -> GLenum {
         self.shader_type
     }
@@ -56,13 +65,13 @@ impl ShaderSource {
         self.save_path.as_deref()
     }
 
-    pub fn set_save_path(&mut self, path: PathBuf ) {
-        self.save_path = Some( path );
+    pub fn set_save_path(&mut self, path: PathBuf) {
+        self.save_path = Some(path);
     }
 
     pub fn reload(&mut self) -> Result<()> {
-        if let Some( path ) = &self.save_path {
-            let source = std::fs::read_to_string( path )?;
+        if let Some(path) = &self.save_path {
+            let source = std::fs::read_to_string(path)?;
             self.source = source;
             Ok(())
         } else {
@@ -71,9 +80,9 @@ impl ShaderSource {
     }
 
     pub fn save(&mut self) -> Result<()> {
-        if let Some( path ) = &self.save_path {
+        if let Some(path) = &self.save_path {
             eprintln!("Saving to {path:?}");
-            let mut file = std::fs::File::create( path )?;
+            let mut file = std::fs::File::create(path)?;
             file.write_all(self.source.as_bytes())?;
             self.unsaved = false;
             Ok(())
@@ -83,8 +92,8 @@ impl ShaderSource {
     }
     pub fn default_file_name(&self) -> String {
         match self.shader_type {
-            GL_VERTEX_SHADER => format!("default.vert.glsl" ),
-            GL_FRAGMENT_SHADER => format!("default.frag.glsl" ),
+            GL_VERTEX_SHADER => format!("default.vert.glsl"),
+            GL_FRAGMENT_SHADER => format!("default.frag.glsl"),
             _ => format!("UNDEFINED.glsl"),
         }
     }

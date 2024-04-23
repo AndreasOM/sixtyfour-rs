@@ -1,5 +1,5 @@
-use crate::engine::StoredMcGuffin;
 use crate::engine::McGuffin;
+use crate::engine::StoredMcGuffin;
 use egui::mutex::Mutex;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -29,10 +29,9 @@ pub struct StoredTemplateApp {
 }
 
 impl Into<StoredTemplateApp> for TemplateApp {
-
     fn into(self) -> StoredTemplateApp {
         let mg = self.mc_guffin.lock();
-        let smg: StoredMcGuffin = StoredMcGuffin::from( &(*mg) );
+        let smg: StoredMcGuffin = StoredMcGuffin::from(&(*mg));
         StoredTemplateApp {
             properties: self.properties.clone(),
             mc_guffin: smg,
@@ -41,12 +40,11 @@ impl Into<StoredTemplateApp> for TemplateApp {
 }
 
 impl From<StoredTemplateApp> for TemplateApp {
-
     fn from(sta: StoredTemplateApp) -> TemplateApp {
         //let mg = self.mc_guffin.lock();
         //let smg: StoredMcGuffin = StoredMcGuffin::from( &(*mg) );
-        let mg = McGuffin::from( sta.mc_guffin );
-        let mg = Arc::new( Mutex::new( mg ) );
+        let mg = McGuffin::from(sta.mc_guffin);
+        let mg = Arc::new(Mutex::new(mg));
         TemplateApp {
             properties: sta.properties.clone(),
             mc_guffin: mg,
@@ -200,7 +198,8 @@ impl eframe::App for TemplateApp {
                 {
                     let (mut shader_source, dirty) = {
                         let mg = self.mc_guffin.lock();
-                        let orig_shader_source = mg.get_shader_source_source(&self.active_shader_type);
+                        let orig_shader_source =
+                            mg.get_shader_source_source(&self.active_shader_type);
                         let dirty = mg.is_shader_source_dirty(&self.active_shader_type);
                         (String::from(orig_shader_source), dirty)
                     };
@@ -238,8 +237,10 @@ impl eframe::App for TemplateApp {
                         {
                             let _ = mg.rebuild_program();
                         }
-                        if let Some( shader_source ) = mg.get_mut_shader_source( &self.active_shader_type ) {
-                            let save_file = if let Some( save_path ) = shader_source.save_path() {
+                        if let Some(shader_source) =
+                            mg.get_mut_shader_source(&self.active_shader_type)
+                        {
+                            let save_file = if let Some(save_path) = shader_source.save_path() {
                                 save_path.to_string_lossy().to_string()
                             } else {
                                 String::from("")
@@ -248,10 +249,18 @@ impl eframe::App for TemplateApp {
                             let enabled = shader_source.save_path().is_some();
                             if ui
                                 .add_enabled(enabled, egui::Button::new("Save"))
-                                .on_hover_text( save_file )
+                                .on_hover_text(&save_file)
                                 .clicked()
                             {
                                 let _ = shader_source.save();
+                            }
+
+                            if ui
+                                .add_enabled(enabled, egui::Button::new("Reload"))
+                                .on_hover_text(save_file)
+                                .clicked()
+                            {
+                                let _ = shader_source.reload();
                             }
 
                             let enabled = true;
@@ -260,18 +269,33 @@ impl eframe::App for TemplateApp {
                                 .clicked()
                             {
                                 let filename = shader_source.default_file_name();
-                                if let Some( file ) = rfd::FileDialog::new()
-                                .set_directory( std::env::current_dir().unwrap_or_else(|_| "/".into() ) )
-                                .set_file_name( filename )
-                                .save_file() {
-
-                                    shader_source.set_save_path( file );
+                                if let Some(file) = rfd::FileDialog::new()
+                                    .set_directory(
+                                        std::env::current_dir().unwrap_or_else(|_| "/".into()),
+                                    )
+                                    .set_file_name(filename)
+                                    .save_file()
+                                {
+                                    shader_source.set_save_path(file);
                                     let _ = shader_source.save();
                                 }
                             }
-
                         }
                     });
+                    ui.push_id("Compile Log", |ui| {
+                        egui::ScrollArea::vertical().show(ui, |ui| {
+                            ui.label("Compile Log:");
+                            let mg = self.mc_guffin.lock();
+                            let ss = mg
+                                .get_shader_source(&self.active_shader_type)
+                                .expect("Shader should exist");
+                            let compile_log = ss.compile_log();
+                            for e in compile_log.iter() {
+                                ui.label(e);
+                            }
+                        });
+                    });
+
                     egui::ScrollArea::vertical().show(ui, |ui| {
                         let response = ui.add(
                             egui::TextEdit::multiline(&mut shader_source)
@@ -280,16 +304,15 @@ impl eframe::App for TemplateApp {
                                 .layouter(&mut layouter)
                                 .frame(true)
                                 .desired_rows(80)
-                                .desired_width(f32::INFINITY)
-                                ,
-                                /*
-                                                   .font(egui::TextStyle::Monospace) // for cursor height
-                                                   .code_editor()
-                                                   .desired_rows(10)
-                                                   .lock_focus(true)
-                                                   .desired_width(f32::INFINITY)
-                                                   .layouter(&mut layouter)
-                                                   */
+                                .desired_width(f32::INFINITY),
+                            /*
+                            .font(egui::TextStyle::Monospace) // for cursor height
+                            .code_editor()
+                            .desired_rows(10)
+                            .lock_focus(true)
+                            .desired_width(f32::INFINITY)
+                            .layouter(&mut layouter)
+                            */
                         );
 
                         if response.changed() {

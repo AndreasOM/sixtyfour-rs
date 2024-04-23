@@ -113,6 +113,22 @@ struct Glfps {
 }
 
 impl Gl {
+    pub fn check_gl_error(&self, line: u32) {
+        let error = unsafe { self.glGetError() };
+        match error {
+            0 => {}
+            0x500 => {
+                eprintln!("GL_INVALID_ENUM - Line {line}");
+            }
+            0x0502 => {
+                eprintln!("GL_INVALID_OPERATION - Line {line}");
+            }
+            e => {
+                eprintln!("0x{e:04x?}");
+            }
+        }
+    }
+
     pub fn load_all(&mut self, get_proc_address: &dyn Fn(&CStr) -> *const c_void) -> Result<()> {
         //self.glfp_get_error.load(get_proc_address, c"glGetError")?;
         self.glfps

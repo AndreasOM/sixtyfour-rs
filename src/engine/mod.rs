@@ -7,3 +7,5 @@ mod gl_wrapper_macro;
 
 mod shader_source;
 pub use shader_source::ShaderSource;
+mod pipeline;
+use pipeline::Pipeline;
