@@ -1,6 +1,7 @@
 use super::gl::*;
 use crate::engine::Pipeline;
 use crate::engine::ShaderSource;
+use crate::engine::UniformManager;
 use color_eyre::eyre::eyre;
 use color_eyre::Result;
 use core::ffi::c_void;
@@ -54,6 +55,9 @@ unsafe impl Send for McGuffin {}
 //static glRects: extern "system" fn(i16, i16, i16, i16) -> c_void = GlFunctionPointer::null().into();
 
 impl McGuffin {
+    pub fn uniform_manager(&self) -> &UniformManager {
+        &self.pipeline.uniform_manager()
+    }
     pub fn get_shader_source(&self, name: &str) -> Option<&ShaderSource> {
         self.shader_sources.get(name)
     }

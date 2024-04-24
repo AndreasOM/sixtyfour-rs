@@ -8,7 +8,7 @@ use core::mem::transmute;
 pub type GLenum = core::ffi::c_uint;
 pub type GLuint = core::ffi::c_uint;
 pub type GLint = core::ffi::c_int;
-pub type GLsizei = core::ffi::c_uint;
+pub type GLsizei = core::ffi::c_int;
 pub type GLchar = core::ffi::c_char;
 pub type GLfloat = core::ffi::c_float;
 
@@ -16,6 +16,7 @@ pub const GL_ARRAY_BUFFER: GLenum = 0x8892;
 pub const GL_STATIC_DRAW: GLenum = 0x88E4;
 pub const GL_DYNAMIC_DRAW: GLenum = 0x88E8;
 pub const GL_FLOAT: GLenum = 0x1406;
+pub const GL_FLOAT_VEC3: GLenum = 0x8B51;
 pub const GL_FALSE: GLenum = 0x0000;
 pub const GL_TRUE: GLenum = 0x0001;
 pub const GL_TRIANGLE_STRIP: GLenum = 0x0005;
@@ -25,6 +26,7 @@ pub const GL_FRAGMENT_SHADER: GLenum = 0x8B30;
 pub const GL_COMPILE_STATUS: GLenum = 0x8B81;
 pub const GL_LINK_STATUS: GLenum = 0x8B82;
 pub const GL_INFO_LOG_LENGTH: GLenum = 0x8B84;
+pub const GL_ACTIVE_UNIFORMS: GLenum = 0x8B86;
 
 #[derive(Debug)]
 pub struct GlFunctionPointer {
@@ -110,6 +112,8 @@ struct Glfps {
     glGetProgramInfoLog: GlFunctionPointer,
     glGetUniformLocation: GlFunctionPointer,
     glProgramUniform1f: GlFunctionPointer,
+
+    glGetActiveUniform: GlFunctionPointer,
 }
 
 impl Gl {
@@ -201,6 +205,10 @@ impl Gl {
             .glProgramUniform1f
             .load(get_proc_address, c"glProgramUniform1f")?;
 
+        self.glfps
+            .glGetActiveUniform
+            .load(get_proc_address, c"glGetActiveUniform")?;
+
         Ok(())
     }
 
@@ -222,6 +230,7 @@ impl Gl {
     create_gl_wrapper!(void glUseProgram(GLuint program));
     create_gl_wrapper!(GLint glGetUniformLocation( GLuint program, const GLchar *name));
     create_gl_wrapper!(void glProgramUniform1f( GLuint program, GLint location, GLfloat v0));
+    create_gl_wrapper!(void glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *ttype, GLchar *name));
 
     pub fn rects(&self, x1: i16, y1: i16, x2: i16, y2: i16) {
         unsafe {

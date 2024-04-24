@@ -1,8 +1,9 @@
 use crate::engine::McGuffin;
 use crate::engine::StoredMcGuffin;
+use crate::property_manager::PropertyManager;
 use egui::mutex::Mutex;
-use std::collections::HashMap;
 use std::sync::Arc;
+
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
@@ -13,7 +14,9 @@ pub struct TemplateApp {
     #[serde(skip)]
     mc_guffin: Arc<Mutex<McGuffin>>,
 
-    properties: HashMap<String, f32>,
+    //properties: HashMap<String, f32>,
+    //#[serde(skip)]
+    property_manager: PropertyManager,
 
     #[serde(skip)]
     start_time: std::time::Instant,
@@ -24,7 +27,8 @@ pub struct TemplateApp {
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct StoredTemplateApp {
-    properties: HashMap<String, f32>,
+    //properties: HashMap<String, f32>,
+    property_manager: PropertyManager,
     mc_guffin: StoredMcGuffin,
 }
 
@@ -33,7 +37,8 @@ impl Into<StoredTemplateApp> for TemplateApp {
         let mg = self.mc_guffin.lock();
         let smg: StoredMcGuffin = StoredMcGuffin::from(&(*mg));
         StoredTemplateApp {
-            properties: self.properties.clone(),
+            //properties: self.properties.clone(),
+            property_manager: self.property_manager.clone(),
             mc_guffin: smg,
         }
     }
@@ -46,7 +51,8 @@ impl From<StoredTemplateApp> for TemplateApp {
         let mg = McGuffin::from(sta.mc_guffin);
         let mg = Arc::new(Mutex::new(mg));
         TemplateApp {
-            properties: sta.properties.clone(),
+            //properties: sta.properties.clone(),
+            property_manager: sta.property_manager.clone(),
             mc_guffin: mg,
             ..Default::default()
         }
@@ -57,7 +63,8 @@ impl Default for TemplateApp {
     fn default() -> Self {
         Self {
             mc_guffin: Default::default(),
-            properties: Default::default(),
+            //properties: Default::default(),
+            property_manager: Default::default(),
             start_time: std::time::Instant::now(),
             active_shader_type: String::from("fragment"),
         }
@@ -86,9 +93,13 @@ impl TemplateApp {
                 }
             };
         }
-        s.ensure_property("scale_red_x", 11.0);
-        s.ensure_property("scale_green_y", 15.0);
-        s.ensure_property("speed", 1.0);
+        s.property_manager
+            .ensure_all_properties_from_uniforms(s.mc_guffin.lock().uniform_manager());
+
+        s.property_manager.ensure_property_f32("scale_red_x", 11.0);
+        s.property_manager
+            .ensure_property_f32("scale_green_y", 15.0);
+        s.property_manager.ensure_property_f32("speed", 1.0);
 
         s.start_time = std::time::Instant::now();
 
@@ -99,11 +110,6 @@ impl TemplateApp {
 }
 
 impl TemplateApp {
-    fn ensure_property(&mut self, name: &str, default_value: f32) {
-        if !self.properties.contains_key(name) {
-            self.properties.insert(name.into(), default_value);
-        }
-    }
     fn mc_guffin_painting(&mut self, ui: &mut egui::Ui) {
         let s = ui.available_size();
 
@@ -126,7 +132,7 @@ impl TemplateApp {
         };
         {
             let mut mg = self.mc_guffin.lock();
-            for (k, v) in self.properties.iter_mut() {
+            for (k, v) in self.property_manager.entries_mut().iter_mut() {
                 mg.set_property(k, *v);
             }
 
@@ -164,7 +170,7 @@ impl eframe::App for TemplateApp {
             .show(ctx, |ui| {
                 //self.mc_guffin_painting(ui);
 
-                for (k, v) in self.properties.iter_mut() {
+                for (k, v) in self.property_manager.entries_mut().iter_mut() {
                     ui.add(egui::Slider::new(&mut *v, 0.0..=100.0).text(k));
                 }
             });
@@ -236,6 +242,8 @@ impl eframe::App for TemplateApp {
                             .clicked()
                         {
                             let _ = mg.rebuild_program();
+                            self.property_manager
+                                .ensure_all_properties_from_uniforms(mg.uniform_manager());
                         }
                         if let Some(shader_source) =
                             mg.get_mut_shader_source(&self.active_shader_type)

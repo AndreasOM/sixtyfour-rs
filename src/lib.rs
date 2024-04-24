@@ -7,3 +7,5 @@ mod engine;
 // mod rotating_triangle;
 
 //pub use rotating_triangle::RotatingTriangle;
+
+mod property_manager;
