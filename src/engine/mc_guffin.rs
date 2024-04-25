@@ -9,17 +9,22 @@ use core::ffi::CStr;
 use std::collections::HashMap;
 use std::ffi::CString;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct McGuffin {
+    #[serde(skip)]
     gl: Gl,
 
+    #[serde(skip)]
     vertex_array_id: u32,
+    #[serde(skip)]
     vertex_buffer_id: u32,
+    #[serde(skip)]
     pipeline: Pipeline,
     //program: u32,
     properties: HashMap<String, f32>,
     shader_sources: HashMap<String, ShaderSource>,
 
+    #[serde(skip)]
     test: String,
 }
 

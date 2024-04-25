@@ -9,3 +9,9 @@ mod engine;
 //pub use rotating_triangle::RotatingTriangle;
 
 mod property_manager;
+mod state;
+
+mod mc_guffin_window;
+mod properties_window;
+mod shaders_window;
+mod window;
