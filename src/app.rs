@@ -99,15 +99,15 @@ impl TemplateApp {
         s.state
             .property_manager
             .ensure_all_properties_from_uniforms(s.mc_guffin.lock().uniform_manager());
-/*
-        s.state
-            .property_manager
-            .ensure_property_f32("scale_red_x", 11.0);
-        s.state
-            .property_manager
-            .ensure_property_f32("scale_green_y", 15.0);
-        s.state.property_manager.ensure_property_f32("speed", 1.0);
-*/
+        /*
+                s.state
+                    .property_manager
+                    .ensure_property_f32("scale_red_x", 11.0);
+                s.state
+                    .property_manager
+                    .ensure_property_f32("scale_green_y", 15.0);
+                s.state.property_manager.ensure_property_f32("speed", 1.0);
+        */
         s.start_time = std::time::Instant::now();
 
         // backfill properties as needed
