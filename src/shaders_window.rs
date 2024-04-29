@@ -84,6 +84,20 @@ impl Window for ShadersWindow {
                         ui.fonts(|f| f.layout_job(layout_job))
                     };
 
+                    {
+                        let mut mg = self.mc_guffin.lock();
+                        if let Some(shader_source) =
+                            mg.get_mut_shader_source(&self.active_shader_type)
+                        {
+                            let save_file = if let Some(save_path) = shader_source.save_path() {
+                                save_path.to_string_lossy().to_string()
+                            } else {
+                                String::from("")
+                            };
+                            ui.label(save_file);
+                        }
+                    }
+
                     ui.horizontal_wrapped(|ui| {
                         let mut mg = self.mc_guffin.lock();
                         let enabled = dirty;
@@ -139,7 +153,23 @@ impl Window for ShadersWindow {
                                     let _ = shader_source.save();
                                 }
                             }
-                        }
+                            if ui
+                                .add_enabled(enabled, egui::Button::new("Load from..."))
+                                .clicked()
+                            {
+                                let filename = shader_source.default_file_name();
+                                if let Some(file) = rfd::FileDialog::new()
+                                    .set_directory(
+                                        std::env::current_dir().unwrap_or_else(|_| "/".into()),
+                                    )
+                                    .set_file_name(filename)
+                                    .pick_file()
+                                {
+                                    shader_source.set_save_path(file);
+                                    let _ = shader_source.reload();
+                                }
+                            }
+                        } // shader_source
                     });
                     ui.push_id("Compile Log", |ui| {
                         egui::ScrollArea::vertical().show(ui, |ui| {

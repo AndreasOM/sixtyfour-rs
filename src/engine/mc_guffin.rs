@@ -314,7 +314,7 @@ impl McGuffin {
         }
     }
 
-    pub fn set_property(&mut self, name: &str, value: f32) {
+    pub fn set_property_f32(&mut self, name: &str, value: f32) {
         self.properties.insert(name.into(), value);
     }
 }

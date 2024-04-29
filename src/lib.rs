@@ -15,3 +15,5 @@ mod mc_guffin_window;
 mod properties_window;
 mod shaders_window;
 mod window;
+
+mod property_ui;

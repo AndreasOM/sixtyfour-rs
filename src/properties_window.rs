@@ -1,12 +1,12 @@
-use crate::engine::McGuffin;
+use crate::property_manager::Property;
+use crate::property_ui::PropertyUi;
 use crate::state::State;
 use crate::window::Window;
-use color_eyre::Result;
-use egui::mutex::Mutex;
-use std::sync::Arc;
 
 #[derive(Debug, Default, Clone)]
-pub struct PropertiesWindow {}
+pub struct PropertiesWindow {
+    property_ui: PropertyUi,
+}
 
 impl Window for PropertiesWindow {
     fn name(&self) -> &str {
@@ -23,12 +23,11 @@ impl Window for PropertiesWindow {
             .collapsible(false)
             //.title_bar(false)
             .show(ctx, |ui| {
-                //self.mc_guffin_painting(ui);
-
-                for (k, v) in state.property_manager.entries_mut().iter_mut() {
-                    ui.add(egui::Slider::new(&mut *v, 0.0..=100.0).text(k));
+                for (k, p) in state.property_manager.entries_mut().iter_mut() {
+                    self.property_ui.property(ctx, ui, k, p);
                 }
             });
+        self.property_ui.update(ctx);
     }
 }
 

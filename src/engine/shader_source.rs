@@ -73,6 +73,8 @@ impl ShaderSource {
         if let Some(path) = &self.save_path {
             let source = std::fs::read_to_string(path)?;
             self.source = source;
+            self.dirty = true;
+            self.unsaved = false;
             Ok(())
         } else {
             Err(eyre!("No save path set").into())
