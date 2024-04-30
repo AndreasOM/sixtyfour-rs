@@ -1,4 +1,5 @@
 use crate::engine::UniformManager;
+use crate::engine::UniformType;
 use std::collections::HashMap;
 
 #[derive(Debug, Default, Clone, serde::Deserialize, serde::Serialize)]
@@ -11,6 +12,12 @@ impl Property {
     pub fn default_f32(value: f32) -> Self {
         Self {
             value: PropertyValue::F32 { value },
+            config: PropertyConfig::default_f32(),
+        }
+    }
+    pub fn default_vec3_f32(values: &[f32; 3]) -> Self {
+        Self {
+            value: PropertyValue::Vec3F32 { values: *values },
             config: PropertyConfig::default_f32(),
         }
     }
@@ -36,6 +43,9 @@ pub enum PropertyValue {
     F32 {
         value: f32,
     },
+    Vec3F32 {
+        values: [f32; 3],
+    },
     Bool {
         value: bool,
     },
@@ -50,6 +60,7 @@ pub enum PropertyConfig {
         max_value: f32,
         step_size: f32,
     },
+    ColorRgb {},
     Bool {},
     #[default]
     None,
@@ -85,6 +96,10 @@ impl PropertyManager {
     pub fn get_mut(&mut self, name: &str) -> Option<&mut Property> {
         self.entries.get_mut(name)
     }
+
+    pub fn wipe_all(&mut self) {
+        self.entries.clear();
+    }
     pub fn ensure_property_f32(&mut self, name: &str, default_value: f32) {
         if !self.entries.contains_key(name) {
             self.entries
@@ -94,10 +109,34 @@ impl PropertyManager {
         }
     }
 
+    pub fn ensure_property_vec3_f32(&mut self, name: &str, default_values: &[f32; 3]) {
+        if !self.entries.contains_key(name) {
+            self.entries
+                .insert(name.into(), Property::default_vec3_f32(default_values));
+        } else {
+            // :TODO: ensure type is correct
+        }
+
+        if let Some(p) = self.entries.get_mut(name) {
+            if name.ends_with("_rgb") {
+                match p.config {
+                    PropertyConfig::ColorRgb {} => {}
+                    _ => {
+                        p.config = PropertyConfig::ColorRgb {};
+                    }
+                }
+            }
+        }
+    }
+
     pub fn ensure_all_properties_from_uniforms(&mut self, uniform_manager: &UniformManager) {
-        for (k, _v) in uniform_manager.entries().iter() {
+        for (k, v) in uniform_manager.entries().iter() {
             // :TODO: handle uniform type
-            self.ensure_property_f32(k, 1.0);
+            match v.ttype() {
+                UniformType::Float => self.ensure_property_f32(k, 1.0),
+                UniformType::Vec3Float => self.ensure_property_vec3_f32(k, &[1.0, 1.0, 1.0]),
+                _ => {}
+            }
         }
     }
 }

@@ -21,7 +21,8 @@ pub struct McGuffin {
     #[serde(skip)]
     pipeline: Pipeline,
     //program: u32,
-    properties: HashMap<String, f32>,
+    properties_f32: HashMap<String, f32>,
+    properties_vec3_f32: HashMap<String, [f32; 3]>,
     shader_sources: HashMap<String, ShaderSource>,
 
     #[serde(skip)]
@@ -155,12 +156,12 @@ impl McGuffin {
 
         let mut vertex_buffer_id = 0;
         self.gl.gen_buffers(1, &mut vertex_buffer_id);
-        self.check_gl_error(std::line!());
+        self.gl.check_gl_error(std::file!(), std::line!());
 
         dbg!(&vertex_buffer_id);
         self.gl.bind_buffer(GL_ARRAY_BUFFER, vertex_buffer_id);
         //self.call_gl_bind_buffer( GL_ARRAY_BUFFER, 0 );
-        self.check_gl_error(std::line!());
+        self.gl.check_gl_error(std::file!(), std::line!());
         /*
                 let data = [
                     0.5f32, 1.0,
@@ -231,7 +232,7 @@ impl McGuffin {
             data.as_ptr() as *const _,
             GL_STATIC_DRAW,
         );
-        self.check_gl_error(std::line!());
+        self.gl.check_gl_error(std::file!(), std::line!());
     }
 
     pub fn update(&mut self) -> Result<()> {
@@ -250,7 +251,7 @@ impl McGuffin {
 
         self.pipeline.bind(&mut self.gl)?;
         //self.gl.glUseProgram(self.program);
-        self.check_gl_error(std::line!());
+        self.gl.check_gl_error(std::file!(), std::line!());
 
         self.gl.glBindVertexArray(self.vertex_array_id);
         //dbg!(self.vertex_array_id);
@@ -281,15 +282,20 @@ impl McGuffin {
         // set uniforms
         // glGetUniformLocation
         // glProgramUniform1f
-        for (k, v) in self.properties.iter() {
+        self.gl.check_gl_error(std::file!(), std::line!());
+        for (k, v) in self.properties_f32.iter() {
             let _ = self.pipeline.set_property(&mut self.gl, k, *v);
         }
+        for (k, v) in self.properties_vec3_f32.iter() {
+            let _ = self.pipeline.set_property_vec3_f32(&mut self.gl, k, v);
+        }
+        self.gl.check_gl_error(std::file!(), std::line!());
 
         self.gl.draw_arrays(GL_TRIANGLE_STRIP, 0, 4);
         //self.call_gl_draw_arrays(GL_TRIANGLE_STRIP, 0, 10);
 
         //self.call_gl_rects( -1, -1, 1, 1 );
-        self.check_gl_error(std::line!());
+        self.gl.check_gl_error(std::file!(), std::line!());
         Ok(())
     }
 
@@ -297,24 +303,10 @@ impl McGuffin {
         let _ = self.update();
     }
 
-    fn check_gl_error(&self, line: u32) {
-        //let error = self.gl.get_error(); //self.call_gl_get_error();
-        let error = unsafe { self.gl.glGetError() }; //self.call_gl_get_error();
-        match error {
-            0 => {}
-            0x500 => {
-                eprintln!("GL_INVALID_ENUM - Line {line}");
-            }
-            0x0502 => {
-                eprintln!("GL_INVALID_OPERATION - Line {line}");
-            }
-            e => {
-                eprintln!("0x{e:04x?}");
-            }
-        }
-    }
-
     pub fn set_property_f32(&mut self, name: &str, value: f32) {
-        self.properties.insert(name.into(), value);
+        self.properties_f32.insert(name.into(), value);
+    }
+    pub fn set_property_vec3_f32(&mut self, name: &str, values: &[f32; 3]) {
+        self.properties_vec3_f32.insert(name.into(), *values);
     }
 }

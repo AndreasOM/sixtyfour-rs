@@ -1,9 +1,8 @@
-use crate::property_manager::Property;
 use crate::property_ui::PropertyUi;
 use crate::state::State;
 use crate::window::Window;
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct PropertiesWindow {
     property_ui: PropertyUi,
 }
@@ -23,6 +22,15 @@ impl Window for PropertiesWindow {
             .collapsible(false)
             //.title_bar(false)
             .show(ctx, |ui| {
+                let enabled = true;
+                if ui
+                    .add_enabled(enabled, egui::Button::new("Wipe All!!!"))
+                    .on_hover_text("Danger!!!")
+                    .clicked()
+                {
+                    state.property_manager.wipe_all();
+                }
+
                 for (k, p) in state.property_manager.entries_mut().iter_mut() {
                     self.property_ui.property(ctx, ui, k, p);
                 }

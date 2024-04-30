@@ -1,13 +1,30 @@
 use crate::property_manager::Property;
 use crate::property_manager::PropertyConfig;
-use crate::property_manager::PropertyValue;
+use crate::property_ui_value_vec3_f32::PropertyUiValueVec3F32;
 
-#[derive(Default, Debug, Clone)]
+use crate::property_ui_value_f32::PropertyUiValueF32;
+use crate::PropertyUiValue;
+
+#[derive(Debug)]
 pub struct PropertyUi {
     configuring: Option<(String, PropertyConfig)>,
     applying: Option<(String, PropertyConfig)>,
+    property_ui_values: Vec<Box<dyn PropertyUiValue>>,
 }
 
+impl Default for PropertyUi {
+    fn default() -> Self {
+        let mut property_ui_values: Vec<Box<dyn PropertyUiValue>> = Vec::default();
+        property_ui_values.push(Box::new(PropertyUiValueF32::default()));
+        property_ui_values.push(Box::new(PropertyUiValueVec3F32::default()));
+
+        Self {
+            configuring: Default::default(),
+            applying: Default::default(),
+            property_ui_values,
+        }
+    }
+}
 impl PropertyUi {
     pub fn update(&mut self, ctx: &egui::Context) {
         if let Some(c) = &mut self.configuring {
@@ -50,7 +67,13 @@ impl PropertyUi {
                             }
                         });
                     }
-                    _ => todo!(),
+                    _ => {
+                        let value = format!("Unhandled {:?}", c.1);
+                        ui.label(value);
+                        if ui.add(egui::Button::new("Cancel")).clicked() {
+                            cancel = true;
+                        }
+                    }
                 });
             if close {
                 self.applying = self.configuring.take();
@@ -76,32 +99,26 @@ impl PropertyUi {
             }
         }
 
-        match (&mut property.value, &mut property.config) {
-            (
-                PropertyValue::F32 { value },
-                PropertyConfig::F32 {
-                    min_value,
-                    max_value,
-                    step_size,
-                },
-            ) => {
-                ui.horizontal_wrapped(|ui| {
-                    {
-                        ui.add(
-                            egui::Slider::new(&mut *value, *min_value..=*max_value)
-                                .step_by(*step_size as f64)
-                                .text(name),
-                        );
-                    }
-                    let enabled = self.configuring.is_none();
-                    edit_clicked = ui
-                        .add_enabled(enabled, egui::Button::new("⚙️ "))
-                        .on_hover_text("Configure")
-                        .clicked();
-                });
+        ui.horizontal_wrapped(|ui| {
+            let mut handled = false;
+
+            for v in self.property_ui_values.iter() {
+                if v.update(ui, name, property) {
+                    handled = true;
+                    break;
+                }
             }
-            _ => todo!(),
-        }
+
+            if !handled {
+                let value = format!("Unhandled {:?}", property.value);
+                ui.label(value);
+            }
+            let enabled = self.configuring.is_none();
+            edit_clicked = ui
+                .add_enabled(enabled, egui::Button::new("⚙️ "))
+                .on_hover_text("Configure")
+                .clicked();
+        });
 
         if edit_clicked {
             self.configuring = Some((name.into(), property.config.clone()));

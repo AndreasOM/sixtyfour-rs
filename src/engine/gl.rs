@@ -112,25 +112,30 @@ struct Glfps {
     glGetProgramInfoLog: GlFunctionPointer,
     glGetUniformLocation: GlFunctionPointer,
     glProgramUniform1f: GlFunctionPointer,
+    glProgramUniform3fv: GlFunctionPointer,
 
     glGetActiveUniform: GlFunctionPointer,
 }
 
 impl Gl {
-    pub fn check_gl_error(&self, line: u32) {
+    pub fn check_gl_error(&self, file: &str, line: u32) -> bool {
         let error = unsafe { self.glGetError() };
         match error {
-            0 => {}
+            0 => {
+                return false;
+            }
             0x500 => {
-                eprintln!("GL_INVALID_ENUM - Line {line}");
+                eprintln!("GL_INVALID_ENUM - {file}:{line}");
             }
             0x0502 => {
-                eprintln!("GL_INVALID_OPERATION - Line {line}");
+                eprintln!("GL_INVALID_OPERATION - {file}:{line}");
             }
             e => {
-                eprintln!("0x{e:04x?}");
+                eprintln!("0x{e:04x?} - {file}:{line}");
             }
         }
+
+        true
     }
 
     pub fn load_all(&mut self, get_proc_address: &dyn Fn(&CStr) -> *const c_void) -> Result<()> {
@@ -204,6 +209,9 @@ impl Gl {
         self.glfps
             .glProgramUniform1f
             .load(get_proc_address, c"glProgramUniform1f")?;
+        self.glfps
+            .glProgramUniform3fv
+            .load(get_proc_address, c"glProgramUniform3fv")?;
 
         self.glfps
             .glGetActiveUniform
@@ -230,6 +238,7 @@ impl Gl {
     create_gl_wrapper!(void glUseProgram(GLuint program));
     create_gl_wrapper!(GLint glGetUniformLocation( GLuint program, const GLchar *name));
     create_gl_wrapper!(void glProgramUniform1f( GLuint program, GLint location, GLfloat v0));
+    create_gl_wrapper!(void glProgramUniform3fv( GLuint program, GLint location, GLsizei count, const GLfloat *value));
     create_gl_wrapper!(void glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *ttype, GLchar *name));
 
     pub fn rects(&self, x1: i16, y1: i16, x2: i16, y2: i16) {

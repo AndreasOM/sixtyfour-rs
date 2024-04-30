@@ -11,5 +11,6 @@ mod pipeline;
 use pipeline::Pipeline;
 mod uniform;
 use uniform::Uniform;
+pub use uniform::UniformType;
 mod uniform_manager;
 pub use uniform_manager::UniformManager;

@@ -135,7 +135,10 @@ impl eframe::App for TemplateApp {
             for (k, p) in self.state.property_manager.entries_mut().iter_mut() {
                 match p.value() {
                     PropertyValue::F32 { value, .. } => mg.set_property_f32(k, *value),
-                    _ => todo!(),
+                    PropertyValue::Vec3F32 { values } => mg.set_property_vec3_f32(k, values),
+                    v => {
+                        eprintln!("Update for PropertyValue {v:?} not implemented");
+                    }
                 }
             }
 

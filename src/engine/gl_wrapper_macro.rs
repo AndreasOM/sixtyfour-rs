@@ -65,6 +65,31 @@ macro_rules! create_gl_wrapper {
     			}
     		}
     	};
+        ($return_type:ident $name:ident(
+            $t0:ident $p0:ident,
+            $t1:ident $p1:ident,
+            $t2:ident $p2:ident,
+            const $t3:ident *$p3:ident
+        )) => {
+            #[allow(non_snake_case)]
+            #[allow(dead_code)]
+            pub /*unsafe*/ fn $name(
+                &self,
+                $p0: $t0,
+                $p1: $t1,
+                $p2: $t2,
+                $p3: *const $t3,
+                ) -> $return_type {
+                unsafe {
+                    core::mem::transmute::<*const core::ffi::c_void, extern "system" fn(
+                        $t0,
+                        $t1,
+                        $t2,
+                        *const $t3,
+                        ) -> $return_type>(self.glfps.$name.f)( $p0, $p1, $p2, $p3 )
+                }
+            }
+        };
     	($return_type:ident $name:ident(
     		$t0:ident $p0:ident,
     		$t1:ident $p1:ident,

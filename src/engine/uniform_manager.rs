@@ -8,6 +8,11 @@ pub struct UniformManager {
 }
 
 impl UniformManager {
+    pub fn invalidate_locations(&mut self) {
+        for (_n, u) in self.entries.iter_mut() {
+            u.invalidate_location();
+        }
+    }
     pub fn add_entry<S>(&mut self, name: S, entry: Uniform) -> Option<Uniform>
     where
         S: Into<String>,

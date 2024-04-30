@@ -1,4 +1,5 @@
 use crate::engine::gl::*;
+use crate::engine::uniform::UniformType;
 use crate::engine::ShaderSource;
 use crate::engine::Uniform;
 use crate::engine::UniformManager;
@@ -14,7 +15,7 @@ pub struct Pipeline {
 }
 
 impl Pipeline {
-    pub fn setup(&mut self, gl: &mut Gl) -> Result<()> {
+    pub fn setup(&mut self, _gl: &mut Gl) -> Result<()> {
         Ok(())
     }
     pub fn bind(&mut self, gl: &mut Gl) -> Result<()> {
@@ -27,17 +28,33 @@ impl Pipeline {
 
     pub fn set_property(&mut self, gl: &mut Gl, name: &str, value: f32) -> Result<()> {
         if let Some(u) = self.uniform_manager.get_mut(name) {
-            u.set_f32(gl, self.program, value);
+            match u.ttype() {
+                UniformType::Float => u.set_f32(gl, self.program, value),
+                _ => {}
+            }
         }
-        /*
-        let n = CString::new(String::from(name))?;
-        let l = gl.glGetUniformLocation(self.program, n.as_ptr());
-        if l == -1 {
-            // eprintln!("Uniform {k} not found");
-        } else {
-            gl.glProgramUniform1f(self.program, l, value);
+        if gl.check_gl_error(std::file!(), std::line!()) {
+            eprintln!("Error after setting {name}");
         }
-        */
+
+        Ok(())
+    }
+    pub fn set_property_vec3_f32(
+        &mut self,
+        gl: &mut Gl,
+        name: &str,
+        values: &[f32; 3],
+    ) -> Result<()> {
+        if let Some(u) = self.uniform_manager.get_mut(name) {
+            match u.ttype() {
+                UniformType::Vec3Float => u.set_vec3_f32(gl, self.program, values),
+                _ => {}
+            }
+        }
+        if gl.check_gl_error(std::file!(), std::line!()) {
+            eprintln!("Error after setting {name}");
+        }
+
         Ok(())
     }
     pub fn rebuild(
@@ -98,7 +115,7 @@ impl Pipeline {
         } else {
             shader_source.set_compile_log_from_string(String::new());
         }
-        gl.check_gl_error(std::line!());
+        gl.check_gl_error(std::file!(), std::line!());
 
         Ok(shader)
     }
@@ -131,7 +148,7 @@ impl Pipeline {
             dbg!(log);
             return Err(eyre!("Failed linking program").into());
         }
-        gl.check_gl_error(std::line!());
+        gl.check_gl_error(std::file!(), std::line!());
 
         self.program = program;
 
@@ -143,6 +160,7 @@ impl Pipeline {
         let mut buf = Vec::with_capacity(maxlen);
         unsafe { buf.set_len((maxlen as usize) - 1) };
 
+        self.uniform_manager.invalidate_locations();
         let params = params as GLuint;
         for idx in 0..params {
             //void glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type,
@@ -178,7 +196,11 @@ impl Pipeline {
                     self.uniform_manager.add_entry(name.clone(), u);
                 }
                 GL_FLOAT_VEC3 => {
-                    eprintln!("vec3 not implemented");
+                    let mut u = Uniform::new_vec3_float();
+                    if l != -1 {
+                        u.set_location(l);
+                    }
+                    self.uniform_manager.add_entry(name.clone(), u);
                 }
                 o => {
                     eprintln!("Uniform type 0x{o:04x} is not supported");
