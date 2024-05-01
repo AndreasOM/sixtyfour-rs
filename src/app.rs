@@ -1,5 +1,6 @@
 use crate::engine::McGuffin;
 use crate::mc_guffin_window::McGuffinWindow;
+use crate::resources_window::ResourcesWindow;
 
 use crate::project_window::ProjectWindow;
 use crate::properties_window::PropertiesWindow;
@@ -119,6 +120,7 @@ impl TemplateApp {
 
         s.windows.push(Box::new(PropertiesWindow::default()));
         s.windows.push(Box::new(ProjectWindow::default()));
+        s.windows.push(Box::new(ResourcesWindow::default()));
 
         s
     }
@@ -138,7 +140,7 @@ impl eframe::App for TemplateApp {
         // McGuffin
         {
             let mut mg = self.mc_guffin.lock();
-            mg.update_from_project( &self.state.project );
+            mg.update_from_project(&self.state.project);
 
             let t = self.start_time.elapsed().as_secs_f32();
             mg.set_time(t);

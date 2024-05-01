@@ -66,16 +66,16 @@ impl Window for ProjectWindow {
                     ui.horizontal_wrapped(|ui| {
                         let rp = format!("{r:?}");
                         if ui.button("Pick").clicked() {
-                            picked = Some( r.clone() );
+                            picked = Some(r.clone());
                         }
                         if ui.button("Load").clicked() {
-                            picked = Some( r.clone() );
+                            picked = Some(r.clone());
                             load = true;
                         }
                         ui.label(rp);
                     });
                 }
-                if let Some( picked ) = &picked {
+                if let Some(picked) = &picked {
                     state.set_project_path(picked.into());
                     if load {
                         state.reload_project();

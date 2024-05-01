@@ -1,4 +1,5 @@
 use crate::project::Project;
+use crate::project::ResourceId;
 use std::collections::VecDeque;
 use std::path::Path;
 
@@ -12,9 +13,21 @@ pub struct State {
 
     #[serde(default)]
     recent_project_paths: VecDeque<PathBuf>,
+
+    #[serde(default)]
+    selected_program_id: Option<ResourceId>,
 }
 
 impl State {
+    pub fn select_program_id(&mut self, id: ResourceId) {
+        self.selected_program_id = Some(id);
+    }
+    pub fn deselect_program_id(&mut self) {
+        self.selected_program_id = None;
+    }
+    pub fn selected_program_id(&self) -> Option<&ResourceId> {
+        self.selected_program_id.as_ref()
+    }
     pub fn project_path(&self) -> Option<&Path> {
         self.project_path.as_deref()
     }
@@ -26,7 +39,7 @@ impl State {
             }
         }
 
-        self.recent_project_paths.retain(|p| *p != project_path );
+        self.recent_project_paths.retain(|p| *p != project_path);
 
         self.project_path = Some(project_path);
     }

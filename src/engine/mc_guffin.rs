@@ -1,10 +1,11 @@
-
-use crate::project::PropertyValue;
-use crate::project::Project;
 use super::gl::*;
 use crate::engine::Pipeline;
 use crate::engine::ShaderSource;
 use crate::engine::UniformManager;
+use crate::project::Project;
+use crate::project::PropertyValue;
+use crate::project::Resource;
+use crate::project::ShaderType;
 use color_eyre::eyre::eyre;
 use color_eyre::Result;
 use core::ffi::c_void;
@@ -27,6 +28,9 @@ pub struct McGuffin {
     properties_f32: HashMap<String, f32>,
     properties_vec3_f32: HashMap<String, [f32; 3]>,
     shader_sources: HashMap<String, ShaderSource>,
+
+    #[serde(skip)]
+    project: Project,
 
     #[serde(skip)]
     test: String,
@@ -179,8 +183,11 @@ impl McGuffin {
         self.vertex_buffer_id = vertex_buffer_id;
 
         self.pipeline.setup(&mut self.gl)?;
+        // self.rebuild_program()?;
+        /*
         self.pipeline
             .rebuild(&mut self.gl, &mut self.shader_sources)?;
+            */
         //self.rebuild_program()?;
 
         Ok(())
@@ -188,16 +195,58 @@ impl McGuffin {
     }
 
     pub fn rebuild_program(&mut self) -> Result<()> {
-        self.pipeline
-            .rebuild(&mut self.gl, &mut self.shader_sources)
-            .map_err(|e| {
-                eprintln!("Pipeline rebuild failed: {e:?}");
-                e
-            })?;
-        for ss in self.shader_sources.values_mut() {
-            ss.mark_clean();
+        // update shader sources from project
+        // and check for changes
+
+        let mut program_changed = false;
+        for (_id, r) in self.project.resource_manager.resources() {
+            match r {
+                Resource::Program(rp) => {
+                    for s in rp.shaders() {
+                        let resource_id = s.resource_id();
+                        if let Some(r) = self.project.resource_manager.get(resource_id) {
+                            if let Resource::Text(rt) = r {
+                                if !rt.text().is_empty() {
+                                    //println!("{:?} {rt:?}", s.shader_type());
+                                    match s.shader_type() {
+                                        ShaderType::Fragment => {
+                                            if let Some(fss) =
+                                                self.shader_sources.get_mut("fragment")
+                                            {
+                                                if rt.version() > fss.last_project_version {
+                                                    println!("Fragment shader changed");
+
+                                                    fss.last_project_version = rt.version();
+                                                    fss.update_source(rt.text().to_owned());
+                                                    program_changed = true;
+                                                }
+                                            }
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    //program_changed = true;
+                    break;
+                }
+                _ => {}
+            }
         }
 
+        if program_changed {
+            eprintln!("Program Changed: {program_changed:?}");
+            self.pipeline
+                .rebuild(&mut self.gl, &mut self.shader_sources)
+                .map_err(|e| {
+                    eprintln!("Pipeline rebuild failed: {e:?}");
+                    e
+                })?;
+            for ss in self.shader_sources.values_mut() {
+                ss.mark_clean();
+            }
+        }
         Ok(())
     }
 
@@ -313,8 +362,9 @@ impl McGuffin {
         self.properties_vec3_f32.insert(name.into(), *values);
     }
 
-
-    pub fn update_from_project( &mut self, project: &Project ) {
+    pub fn update_from_project(&mut self, project: &Project) {
+        self.project = (*project).clone();
+        let _ = self.rebuild_program();
         for (k, p) in project.property_manager.entries().iter() {
             match p.value() {
                 PropertyValue::F32 { value, .. } => self.set_property_f32(k, *value),
@@ -324,9 +374,9 @@ impl McGuffin {
                 }
             }
         }
-    }    
+    }
 
-    pub fn set_time(&mut self, time: f32 ) {
+    pub fn set_time(&mut self, time: f32) {
         self.set_property_f32("fTime", time);
     }
 }

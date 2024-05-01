@@ -19,6 +19,9 @@ pub struct ShaderSource {
 
     #[serde(skip)]
     compile_log: Vec<String>,
+
+    #[serde(skip)]
+    pub last_project_version: u32,
 }
 
 impl ShaderSource {

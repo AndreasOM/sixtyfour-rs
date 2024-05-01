@@ -1,5 +1,3 @@
-
-
 use crate::project::Property;
 
 pub trait PropertyUiValue: core::fmt::Debug {

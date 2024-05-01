@@ -1,14 +1,16 @@
 use crate::project::Program;
-use std::collections::HashMap;
 use crate::project::PropertyManager;
+use crate::project::ResourceManager;
 use color_eyre::Result;
+use std::collections::HashMap;
 use std::path::Path;
 
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize, Clone)]
 pub struct Project {
     name: String,
     pub property_manager: PropertyManager,
-    programs: HashMap< String, Program>,
+    pub resource_manager: ResourceManager,
+    //programs: HashMap<String, Program>,
 }
 
 impl Project {

@@ -13,6 +13,7 @@ mod state;
 mod mc_guffin_window;
 mod project_window;
 mod properties_window;
+mod resources_window;
 mod shaders_window;
 mod window;
 
