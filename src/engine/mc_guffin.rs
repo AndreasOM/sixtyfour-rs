@@ -1,3 +1,6 @@
+
+use crate::project::PropertyValue;
+use crate::project::Project;
 use super::gl::*;
 use crate::engine::Pipeline;
 use crate::engine::ShaderSource;
@@ -303,10 +306,27 @@ impl McGuffin {
         let _ = self.update();
     }
 
-    pub fn set_property_f32(&mut self, name: &str, value: f32) {
+    fn set_property_f32(&mut self, name: &str, value: f32) {
         self.properties_f32.insert(name.into(), value);
     }
-    pub fn set_property_vec3_f32(&mut self, name: &str, values: &[f32; 3]) {
+    fn set_property_vec3_f32(&mut self, name: &str, values: &[f32; 3]) {
         self.properties_vec3_f32.insert(name.into(), *values);
+    }
+
+
+    pub fn update_from_project( &mut self, project: &Project ) {
+        for (k, p) in project.property_manager.entries().iter() {
+            match p.value() {
+                PropertyValue::F32 { value, .. } => self.set_property_f32(k, *value),
+                PropertyValue::Vec3F32 { values } => self.set_property_vec3_f32(k, &values),
+                v => {
+                    eprintln!("Update for PropertyValue {v:?} not implemented");
+                }
+            }
+        }
+    }    
+
+    pub fn set_time(&mut self, time: f32 ) {
+        self.set_property_f32("fTime", time);
     }
 }

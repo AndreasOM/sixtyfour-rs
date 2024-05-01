@@ -1,9 +1,9 @@
 use crate::engine::McGuffin;
 use crate::mc_guffin_window::McGuffinWindow;
-use crate::project::Project;
+
 use crate::project_window::ProjectWindow;
 use crate::properties_window::PropertiesWindow;
-use crate::property_manager::PropertyValue;
+
 use crate::shaders_window::ShadersWindow;
 use crate::state::State;
 use crate::window::Window;
@@ -138,19 +138,10 @@ impl eframe::App for TemplateApp {
         // McGuffin
         {
             let mut mg = self.mc_guffin.lock();
-
-            for (k, p) in self.state.project.property_manager.entries_mut().iter_mut() {
-                match p.value() {
-                    PropertyValue::F32 { value, .. } => mg.set_property_f32(k, *value),
-                    PropertyValue::Vec3F32 { values } => mg.set_property_vec3_f32(k, &values),
-                    v => {
-                        eprintln!("Update for PropertyValue {v:?} not implemented");
-                    }
-                }
-            }
+            mg.update_from_project( &self.state.project );
 
             let t = self.start_time.elapsed().as_secs_f32();
-            mg.set_property_f32("fTime", t);
+            mg.set_time(t);
         }
 
         for w in self.windows.iter_mut() {

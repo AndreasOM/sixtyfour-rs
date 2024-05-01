@@ -1,5 +1,5 @@
-use crate::property_manager::Property;
-use crate::property_manager::PropertyConfig;
+use crate::project::Property;
+use crate::project::PropertyConfig;
 use crate::property_ui_value_vec3_f32::PropertyUiValueVec3F32;
 
 use crate::property_ui_value_f32::PropertyUiValueF32;

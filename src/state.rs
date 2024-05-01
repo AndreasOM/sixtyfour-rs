@@ -58,4 +58,8 @@ impl State {
             }
         }
     }
+
+    pub fn clear_project(&mut self) {
+        self.project = Project::default();
+    }
 }

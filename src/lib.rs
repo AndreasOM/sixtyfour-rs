@@ -8,7 +8,6 @@ mod engine;
 
 //pub use rotating_triangle::RotatingTriangle;
 
-mod property_manager;
 mod state;
 
 mod mc_guffin_window;

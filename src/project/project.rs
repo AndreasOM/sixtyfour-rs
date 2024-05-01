@@ -1,4 +1,6 @@
-use crate::property_manager::PropertyManager;
+use crate::project::Program;
+use std::collections::HashMap;
+use crate::project::PropertyManager;
 use color_eyre::Result;
 use std::path::Path;
 
@@ -6,6 +8,7 @@ use std::path::Path;
 pub struct Project {
     name: String,
     pub property_manager: PropertyManager,
+    programs: HashMap< String, Program>,
 }
 
 impl Project {

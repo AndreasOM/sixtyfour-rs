@@ -1,4 +1,6 @@
-use crate::property_manager::Property;
+
+
+use crate::project::Property;
 
 pub trait PropertyUiValue: core::fmt::Debug {
     fn update(&self, ui: &mut egui::Ui, name: &str, property: &mut Property) -> bool;

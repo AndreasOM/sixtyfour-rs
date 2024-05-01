@@ -55,6 +55,9 @@ impl Window for ProjectWindow {
                     if ui.button("Save").clicked() {
                         state.save_project();
                     }
+                    if ui.button("New!").clicked() {
+                        state.clear_project();
+                    }
                 });
                 ui.label("Recent Projects");
                 let mut picked = None;

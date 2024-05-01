@@ -1,6 +1,6 @@
-use crate::property_manager::Property;
-use crate::property_manager::PropertyConfig;
-use crate::property_manager::PropertyValue;
+use crate::project::Property;
+use crate::project::PropertyValue;
+use crate::project::PropertyConfig;
 use crate::PropertyUiValue;
 
 #[derive(Debug, Default)]

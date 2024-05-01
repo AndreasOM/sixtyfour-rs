@@ -93,6 +93,10 @@ impl PropertyManager {
         &mut self.entries
     }
 
+    pub fn entries(&self) -> &HashMap<String, Property> {
+        &self.entries
+    }
+
     pub fn get_mut(&mut self, name: &str) -> Option<&mut Property> {
         self.entries.get_mut(name)
     }
