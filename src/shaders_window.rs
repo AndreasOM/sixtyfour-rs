@@ -107,6 +107,7 @@ impl Window for ShadersWindow {
                         {
                             let _ = mg.rebuild_program();
                             state
+                                .project
                                 .property_manager
                                 .ensure_all_properties_from_uniforms(mg.uniform_manager());
                         }

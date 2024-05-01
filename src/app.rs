@@ -1,5 +1,7 @@
 use crate::engine::McGuffin;
 use crate::mc_guffin_window::McGuffinWindow;
+use crate::project::Project;
+use crate::project_window::ProjectWindow;
 use crate::properties_window::PropertiesWindow;
 use crate::property_manager::PropertyValue;
 use crate::shaders_window::ShadersWindow;
@@ -85,6 +87,7 @@ impl TemplateApp {
             Default::default()
         };
 
+        s.state.reload_project();
         if let Some(get_proc_address) = cc.get_proc_address {
             let mgc = s.mc_guffin.clone();
             match s.mc_guffin.lock().setup(get_proc_address) {
@@ -98,6 +101,7 @@ impl TemplateApp {
             };
         }
         s.state
+            .project
             .property_manager
             .ensure_all_properties_from_uniforms(s.mc_guffin.lock().uniform_manager());
         /*
@@ -114,6 +118,7 @@ impl TemplateApp {
         // backfill properties as needed
 
         s.windows.push(Box::new(PropertiesWindow::default()));
+        s.windows.push(Box::new(ProjectWindow::default()));
 
         s
     }
@@ -123,6 +128,8 @@ impl TemplateApp {}
 impl eframe::App for TemplateApp {
     /// Called by the frame work to save state before shutdown.
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        self.state.save_project();
+
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
 
@@ -132,10 +139,10 @@ impl eframe::App for TemplateApp {
         {
             let mut mg = self.mc_guffin.lock();
 
-            for (k, p) in self.state.property_manager.entries_mut().iter_mut() {
+            for (k, p) in self.state.project.property_manager.entries_mut().iter_mut() {
                 match p.value() {
                     PropertyValue::F32 { value, .. } => mg.set_property_f32(k, *value),
-                    PropertyValue::Vec3F32 { values } => mg.set_property_vec3_f32(k, values),
+                    PropertyValue::Vec3F32 { values } => mg.set_property_vec3_f32(k, &values),
                     v => {
                         eprintln!("Update for PropertyValue {v:?} not implemented");
                     }

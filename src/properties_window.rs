@@ -28,10 +28,10 @@ impl Window for PropertiesWindow {
                     .on_hover_text("Danger!!!")
                     .clicked()
                 {
-                    state.property_manager.wipe_all();
+                    state.project.property_manager.wipe_all();
                 }
 
-                for (k, p) in state.property_manager.entries_mut().iter_mut() {
+                for (k, p) in state.project.property_manager.entries_mut().iter_mut() {
                     self.property_ui.property(ctx, ui, k, p);
                 }
             });
