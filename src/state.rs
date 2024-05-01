@@ -1,5 +1,5 @@
-use crate::project;
 use crate::project::Project;
+use std::collections::VecDeque;
 use std::path::Path;
 
 use std::path::PathBuf;
@@ -9,6 +9,9 @@ pub struct State {
     pub project_path: Option<PathBuf>,
     #[serde(skip)]
     pub project: Project,
+
+    #[serde(default)]
+    recent_project_paths: VecDeque<PathBuf>,
 }
 
 impl State {
@@ -16,7 +19,20 @@ impl State {
         self.project_path.as_deref()
     }
     pub fn set_project_path(&mut self, project_path: PathBuf) {
+        if let Some(old_project_path) = self.project_path.take() {
+            self.recent_project_paths.push_back(old_project_path);
+            while self.recent_project_paths.len() > 5 {
+                self.recent_project_paths.pop_front();
+            }
+        }
+
+        self.recent_project_paths.retain(|p| *p != project_path );
+
         self.project_path = Some(project_path);
+    }
+
+    pub fn recent_project_paths(&self) -> &VecDeque<PathBuf> {
+        &self.recent_project_paths
     }
 
     pub fn save_project(&mut self) {
