@@ -109,46 +109,8 @@ impl McGuffin {
         let ss = ShaderSource::new(shader_type, source.into());
         self.shader_sources.insert(name.into(), ss);
     }
-    fn load_shader_sources(&mut self) -> Result<()> {
-        let mut loaded = false;
-        if let Some(ss) = self.get_mut_shader_source("vertex") {
-            if let Some(sp) = ss.save_path() {
-                let _ = ss.reload();
-                loaded = true;
-            }
-        }
-        if !loaded {
-            self.add_shader_source(
-                "vertex",
-                GL_VERTEX_SHADER,
-                &String::from_utf8_lossy(include_bytes!("../../assets/default.vert.glsl")),
-            );
-        }
 
-        let mut loaded = false;
-        if let Some(ss) = self.get_mut_shader_source("fragment") {
-            if let Some(sp) = ss.save_path() {
-                let _ = ss.reload();
-                loaded = true;
-            }
-        }
-        if !loaded {
-            eprintln!("Initialising fragment shader with baked in default");
-            self.add_shader_source(
-                "fragment",
-                GL_FRAGMENT_SHADER,
-                &String::from_utf8_lossy(include_bytes!("../../assets/default.frag.glsl")),
-            );
-        }
-
-        Ok(())
-    }
     pub fn setup(&mut self, get_proc_address: &dyn Fn(&CStr) -> *const c_void) -> Result<()> {
-        eprintln!("Test is {}", &self.test);
-        self.test = String::from("42");
-        eprintln!("Test is {}", &self.test);
-        self.load_shader_sources()?;
-
         // load the gl functions we need
         // glRects
 
@@ -183,15 +145,8 @@ impl McGuffin {
         self.vertex_buffer_id = vertex_buffer_id;
 
         self.pipeline.setup(&mut self.gl)?;
-        // self.rebuild_program()?;
-        /*
-        self.pipeline
-            .rebuild(&mut self.gl, &mut self.shader_sources)?;
-            */
-        //self.rebuild_program()?;
 
         Ok(())
-        //Err( eyre!("test") )
     }
 
     pub fn rebuild_program(&mut self) -> Result<()> {

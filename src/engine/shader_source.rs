@@ -13,9 +13,6 @@ pub struct ShaderSource {
     source: String,
     #[serde(skip)]
     dirty: bool,
-    #[serde(skip)]
-    unsaved: bool,
-    save_path: Option<PathBuf>,
 
     #[serde(skip)]
     compile_log: Vec<String>,
@@ -30,8 +27,6 @@ impl ShaderSource {
             shader_type,
             source,
             dirty: false,
-            unsaved: false,
-            save_path: None,
             ..Default::default()
         }
     }
@@ -48,9 +43,6 @@ impl ShaderSource {
     pub fn dirty(&self) -> bool {
         self.dirty
     }
-    pub fn unsaved(&self) -> bool {
-        self.unsaved
-    }
 
     pub fn source(&self) -> &str {
         &self.source
@@ -58,48 +50,8 @@ impl ShaderSource {
     pub fn update_source(&mut self, source: String) {
         self.source = source;
         self.dirty = true;
-        self.unsaved = true;
     }
     pub fn mark_clean(&mut self) {
         self.dirty = false;
-    }
-
-    pub fn save_path(&self) -> Option<&Path> {
-        self.save_path.as_deref()
-    }
-
-    pub fn set_save_path(&mut self, path: PathBuf) {
-        self.save_path = Some(path);
-    }
-
-    pub fn reload(&mut self) -> Result<()> {
-        if let Some(path) = &self.save_path {
-            let source = std::fs::read_to_string(path)?;
-            self.source = source;
-            self.dirty = true;
-            self.unsaved = false;
-            Ok(())
-        } else {
-            Err(eyre!("No save path set").into())
-        }
-    }
-
-    pub fn save(&mut self) -> Result<()> {
-        if let Some(path) = &self.save_path {
-            eprintln!("Saving to {path:?}");
-            let mut file = std::fs::File::create(path)?;
-            file.write_all(self.source.as_bytes())?;
-            self.unsaved = false;
-            Ok(())
-        } else {
-            Err(eyre!("No save path set").into())
-        }
-    }
-    pub fn default_file_name(&self) -> String {
-        match self.shader_type {
-            GL_VERTEX_SHADER => format!("default.vert.glsl"),
-            GL_FRAGMENT_SHADER => format!("default.frag.glsl"),
-            _ => format!("UNDEFINED.glsl"),
-        }
     }
 }

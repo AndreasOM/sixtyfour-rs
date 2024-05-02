@@ -4,13 +4,14 @@
 ## In Progress
 
 - [ ] Clean up McGuffin
-	- [ ] Remove shader loading & saving
+	- [x] Remove shader loading & saving
 	- [ ] Remove all traces serialisation
-	
+
 - [ ] Get shader log back into editor
 
 ## ToDo
 
+- [ ] Add builtin minimal shader examples
 - [ ] Store window state
 - [ ] Disable reload & save if no file name is set
 - [ ] Prefill filename in file picker dialog (save & load)
