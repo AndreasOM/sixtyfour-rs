@@ -3,10 +3,10 @@
 
 ## In Progress
 
+- [ ] Add vec2 property
+
 
 ## ToDo
-
-- [ ] Add vec2 property
 
 - [ ] Add line numbers to shader editor
 - [ ] Connect property to click position

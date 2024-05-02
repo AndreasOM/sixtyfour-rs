@@ -23,6 +23,7 @@ pub struct McGuffin {
     vertex_buffer_id: u32,
     pipeline: Pipeline,
     properties_f32: HashMap<String, f32>,
+    properties_vec2_f32: HashMap<String, [f32; 2]>,
     properties_vec3_f32: HashMap<String, [f32; 3]>,
     shader_sources: HashMap<String, ShaderSource>,
 
@@ -308,6 +309,9 @@ impl McGuffin {
         for (k, v) in self.properties_f32.iter() {
             let _ = self.pipeline.set_property(&mut self.gl, k, *v);
         }
+        for (k, v) in self.properties_vec2_f32.iter() {
+            let _ = self.pipeline.set_property_vec2_f32(&mut self.gl, k, v);
+        }
         for (k, v) in self.properties_vec3_f32.iter() {
             let _ = self.pipeline.set_property_vec3_f32(&mut self.gl, k, v);
         }
@@ -328,6 +332,9 @@ impl McGuffin {
     fn set_property_f32(&mut self, name: &str, value: f32) {
         self.properties_f32.insert(name.into(), value);
     }
+    fn set_property_vec2_f32(&mut self, name: &str, values: &[f32; 2]) {
+        self.properties_vec2_f32.insert(name.into(), *values);
+    }
     fn set_property_vec3_f32(&mut self, name: &str, values: &[f32; 3]) {
         self.properties_vec3_f32.insert(name.into(), *values);
     }
@@ -343,6 +350,7 @@ impl McGuffin {
         for (k, p) in project.property_manager.entries().iter() {
             match p.value() {
                 PropertyValue::F32 { value, .. } => self.set_property_f32(k, *value),
+                PropertyValue::Vec2F32 { values } => self.set_property_vec2_f32(k, &values),
                 PropertyValue::Vec3F32 { values } => self.set_property_vec3_f32(k, &values),
                 v => {
                     eprintln!("Update for PropertyValue {v:?} not implemented");

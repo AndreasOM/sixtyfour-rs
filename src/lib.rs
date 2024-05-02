@@ -26,6 +26,7 @@ mod property_ui;
 mod property_ui_value;
 use property_ui_value::PropertyUiValue;
 mod property_ui_value_f32;
+mod property_ui_value_vec2_f32;
 mod property_ui_value_vec3_f32;
 
 mod project;

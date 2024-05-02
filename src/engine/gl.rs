@@ -16,6 +16,7 @@ pub const GL_ARRAY_BUFFER: GLenum = 0x8892;
 pub const GL_STATIC_DRAW: GLenum = 0x88E4;
 pub const GL_DYNAMIC_DRAW: GLenum = 0x88E8;
 pub const GL_FLOAT: GLenum = 0x1406;
+pub const GL_FLOAT_VEC2: GLenum = 0x8B50;
 pub const GL_FLOAT_VEC3: GLenum = 0x8B51;
 pub const GL_FALSE: GLenum = 0x0000;
 pub const GL_TRUE: GLenum = 0x0001;
@@ -112,6 +113,7 @@ struct Glfps {
     glGetProgramInfoLog: GlFunctionPointer,
     glGetUniformLocation: GlFunctionPointer,
     glProgramUniform1f: GlFunctionPointer,
+    glProgramUniform2fv: GlFunctionPointer,
     glProgramUniform3fv: GlFunctionPointer,
 
     glGetActiveUniform: GlFunctionPointer,
@@ -210,6 +212,9 @@ impl Gl {
             .glProgramUniform1f
             .load(get_proc_address, c"glProgramUniform1f")?;
         self.glfps
+            .glProgramUniform2fv
+            .load(get_proc_address, c"glProgramUniform2fv")?;
+        self.glfps
             .glProgramUniform3fv
             .load(get_proc_address, c"glProgramUniform3fv")?;
 
@@ -238,6 +243,7 @@ impl Gl {
     create_gl_wrapper!(void glUseProgram(GLuint program));
     create_gl_wrapper!(GLint glGetUniformLocation( GLuint program, const GLchar *name));
     create_gl_wrapper!(void glProgramUniform1f( GLuint program, GLint location, GLfloat v0));
+    create_gl_wrapper!(void glProgramUniform2fv( GLuint program, GLint location, GLsizei count, const GLfloat *value));
     create_gl_wrapper!(void glProgramUniform3fv( GLuint program, GLint location, GLsizei count, const GLfloat *value));
     create_gl_wrapper!(void glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *ttype, GLchar *name));
 

@@ -40,6 +40,24 @@ impl Pipeline {
 
         Ok(())
     }
+    pub fn set_property_vec2_f32(
+        &mut self,
+        gl: &mut Gl,
+        name: &str,
+        values: &[f32; 2],
+    ) -> Result<()> {
+        if let Some(u) = self.uniform_manager.get_mut(name) {
+            match u.ttype() {
+                UniformType::Vec2Float => u.set_vec2_f32(gl, self.program, values),
+                _ => {}
+            }
+        }
+        if gl.check_gl_error(std::file!(), std::line!()) {
+            eprintln!("Error after setting {name}");
+        }
+
+        Ok(())
+    }
     pub fn set_property_vec3_f32(
         &mut self,
         gl: &mut Gl,
@@ -191,6 +209,13 @@ impl Pipeline {
             match ttype {
                 GL_FLOAT => {
                     let mut u = Uniform::new_float();
+                    if l != -1 {
+                        u.set_location(l);
+                    }
+                    self.uniform_manager.add_entry(name.clone(), u);
+                }
+                GL_FLOAT_VEC2 => {
+                    let mut u = Uniform::new_vec2_float();
                     if l != -1 {
                         u.set_location(l);
                     }

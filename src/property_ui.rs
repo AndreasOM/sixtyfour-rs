@@ -1,6 +1,7 @@
 use crate::command_queue::COMMAND_QUEUE;
 use crate::project::Property;
 use crate::project::PropertyConfig;
+use crate::property_ui_value_vec2_f32::PropertyUiValueVec2F32;
 use crate::property_ui_value_vec3_f32::PropertyUiValueVec3F32;
 use crate::Command;
 
@@ -18,6 +19,7 @@ impl Default for PropertyUi {
     fn default() -> Self {
         let mut property_ui_values: Vec<Box<dyn PropertyUiValue>> = Vec::default();
         property_ui_values.push(Box::new(PropertyUiValueF32::default()));
+        property_ui_values.push(Box::new(PropertyUiValueVec2F32::default()));
         property_ui_values.push(Box::new(PropertyUiValueVec3F32::default()));
 
         Self {

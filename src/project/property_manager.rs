@@ -16,6 +16,12 @@ impl Property {
             config: PropertyConfig::default_f32(),
         }
     }
+    pub fn default_vec2_f32(values: &[f32; 2]) -> Self {
+        Self {
+            value: PropertyValue::Vec2F32 { values: *values },
+            config: PropertyConfig::default_f32(),
+        }
+    }
     pub fn default_vec3_f32(values: &[f32; 3]) -> Self {
         Self {
             value: PropertyValue::Vec3F32 { values: *values },
@@ -43,6 +49,9 @@ impl Property {
 pub enum PropertyValue {
     F32 {
         value: f32,
+    },
+    Vec2F32 {
+        values: [f32; 2],
     },
     Vec3F32 {
         values: [f32; 3],
@@ -119,6 +128,28 @@ impl PropertyManager {
         }
     }
 
+    pub fn ensure_property_vec2_f32(&mut self, name: &str, default_values: &[f32; 2]) {
+        if !self.entries.contains_key(name) {
+            self.entries
+                .insert(name.into(), Property::default_vec2_f32(default_values));
+        } else {
+            // :TODO: ensure type is correct
+        }
+
+        /* :TODO:
+                if let Some(p) = self.entries.get_mut(name) {
+                    if name.ends_with("_rgb") {
+                        match p.config {
+                            PropertyConfig::ColorRgb {} => {}
+                            _ => {
+                                p.config = PropertyConfig::ColorRgb {};
+                            }
+                        }
+                    }
+                }
+        */
+    }
+
     pub fn ensure_property_vec3_f32(&mut self, name: &str, default_values: &[f32; 3]) {
         if !self.entries.contains_key(name) {
             self.entries
@@ -143,8 +174,11 @@ impl PropertyManager {
         for (k, v) in uniform_manager.entries().iter() {
             match v.ttype() {
                 UniformType::Float => self.ensure_property_f32(k, 1.0),
+                UniformType::Vec2Float => self.ensure_property_vec2_f32(k, &[1.0, 1.0]),
                 UniformType::Vec3Float => self.ensure_property_vec3_f32(k, &[1.0, 1.0, 1.0]),
-                _ => {}
+                o => {
+                    eprintln!("No matching property for {o:?}");
+                }
             }
         }
     }
