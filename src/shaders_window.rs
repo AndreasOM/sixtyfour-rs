@@ -1,16 +1,14 @@
-use crate::engine::McGuffin;
+use crate::mc_guffin_container::McGuffinContainer;
 use crate::project::Resource;
 use crate::project::ResourceId;
 use crate::project::ShaderType;
 use crate::state::State;
 use crate::window::Window;
 use color_eyre::Result;
-use egui::mutex::Mutex;
-use std::sync::Arc;
 
-#[derive(Clone)]
+//#[derive(Clone)]
 pub struct ShadersWindow {
-    mc_guffin: Arc<Mutex<McGuffin>>,
+    mc_guffin: McGuffinContainer,
     active_shader_type: String,
 
     active_resource_id: ResourceId,
@@ -286,7 +284,7 @@ impl Window for ShadersWindow {
 }
 
 impl ShadersWindow {
-    pub fn new(mc_guffin: Arc<Mutex<McGuffin>>) -> Self {
+    pub fn new(mc_guffin: McGuffinContainer) -> Self {
         Self {
             mc_guffin,
             active_shader_type: String::from("fragment"),

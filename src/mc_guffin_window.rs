@@ -1,13 +1,12 @@
-use crate::engine::McGuffin;
+use crate::mc_guffin_container::McGuffinContainer;
 use crate::state::State;
 use crate::window::Window;
 use color_eyre::Result;
-use egui::mutex::Mutex;
-use std::sync::Arc;
 
-#[derive(Default, Clone)]
+#[derive(Default)]
 pub struct McGuffinWindow {
-    mc_guffin: Arc<Mutex<McGuffin>>,
+    //mc_guffin: Arc<Mutex<McGuffin>>,
+    mc_guffin: McGuffinContainer,
 }
 
 impl core::fmt::Debug for McGuffinWindow {
@@ -44,7 +43,8 @@ impl McGuffinWindow {
     }
     */
 
-    pub fn new(mc_guffin: Arc<Mutex<McGuffin>>) -> Self {
+    //    pub fn new(mc_guffin: Arc<Mutex<McGuffin>>) -> Self {
+    pub fn new(mc_guffin: McGuffinContainer) -> Self {
         Self { mc_guffin }
     }
     fn mc_guffin_painting(&mut self, ui: &mut egui::Ui) {

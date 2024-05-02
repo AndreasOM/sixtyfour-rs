@@ -1,48 +1,11 @@
-use crate::engine::McGuffin;
+use crate::mc_guffin_container::McGuffinContainer;
 use crate::mc_guffin_window::McGuffinWindow;
-use crate::resources_window::ResourcesWindow;
-
 use crate::project_window::ProjectWindow;
 use crate::properties_window::PropertiesWindow;
-
+use crate::resources_window::ResourcesWindow;
 use crate::shaders_window::ShadersWindow;
 use crate::state::State;
 use crate::window::Window;
-use egui::mutex::Mutex;
-use egui::mutex::MutexGuard;
-use std::sync::Arc;
-
-#[derive(Default)]
-struct McGuffinContainer(Arc<Mutex<McGuffin>>);
-impl McGuffinContainer {
-    pub fn lock(&mut self) -> MutexGuard<'_, McGuffin> {
-        self.0.lock()
-    }
-    pub fn clone(&self) -> Arc<Mutex<McGuffin>> {
-        Arc::clone(&self.0)
-    }
-}
-/*
-impl serde::Serialize for McGuffinContainer {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let mg = self.0.lock();
-        mg.serialize(serializer)
-    }
-}
-
-impl<'de> serde::Deserialize<'de> for McGuffinContainer {
-    fn deserialize<D>(d: D) -> Result<Self, <D as serde::Deserializer<'de>>::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let mg = McGuffin::deserialize(d)?;
-        Ok(Self(Arc::new(Mutex::new(mg))))
-    }
-}
-*/
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]

@@ -8,6 +8,7 @@ mod engine;
 
 //pub use rotating_triangle::RotatingTriangle;
 
+mod mc_guffin_container;
 mod state;
 
 mod mc_guffin_window;

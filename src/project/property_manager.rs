@@ -1,5 +1,6 @@
 use crate::engine::UniformManager;
 use crate::engine::UniformType;
+use std::collections::BTreeMap;
 use std::collections::HashMap;
 
 #[derive(Debug, Default, Clone, serde::Deserialize, serde::Serialize)]
@@ -78,7 +79,8 @@ impl PropertyConfig {
 
 #[derive(Debug, Default, Clone, serde::Deserialize, serde::Serialize)]
 pub struct PropertyManager {
-    entries: HashMap<String, Property>,
+    //    entries: HashMap<String, Property>,
+    entries: BTreeMap<String, Property>,
 }
 
 impl PropertyManager {
@@ -89,11 +91,11 @@ impl PropertyManager {
         self.entries.insert(name.into(), entry)
     }
 
-    pub fn entries_mut(&mut self) -> &mut HashMap<String, Property> {
+    pub fn entries_mut(&mut self) -> &mut BTreeMap<String, Property> {
         &mut self.entries
     }
 
-    pub fn entries(&self) -> &HashMap<String, Property> {
+    pub fn entries(&self) -> &BTreeMap<String, Property> {
         &self.entries
     }
 
