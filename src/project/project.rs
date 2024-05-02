@@ -20,7 +20,8 @@ impl Project {
 
         let data = std::fs::read_to_string(&filename)?;
 
-        let project: Project = ron::from_str(&data)?;
+        let mut project: Project = ron::from_str(&data)?;
+        let _ = project.resource_manager.reload_all();
         Ok(project)
     }
 

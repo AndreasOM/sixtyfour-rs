@@ -64,7 +64,9 @@ impl State {
     pub fn reload_project(&mut self) {
         if let Some(pp) = self.project_path() {
             match Project::try_load(pp) {
-                Ok(project) => self.project = project,
+                Ok(project) => {
+                    self.project = project;
+                }
                 Err(_) => {
                     // :TODO: report
                 }

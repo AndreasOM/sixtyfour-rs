@@ -28,4 +28,13 @@ impl ResourceManager {
         self.resources.insert(id.clone(), resource);
         id
     }
+
+    pub fn reload_all(&mut self) -> bool {
+        let mut any_changes = false;
+        for (_id, r) in self.resources.iter_mut() {
+            any_changes |= r.reload();
+        }
+
+        any_changes
+    }
 }

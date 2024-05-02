@@ -14,6 +14,15 @@ pub enum Resource {
     None,
 }
 
+impl Resource {
+    pub fn reload(&mut self) -> bool {
+        match self {
+            Resource::Text(rt) => rt.reload().is_ok(),
+            _ => false,
+        }
+    }
+}
+
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize, Clone)]
 pub struct ResourceText {
     name: String,

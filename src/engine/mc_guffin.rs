@@ -222,6 +222,18 @@ impl McGuffin {
                                                 }
                                             }
                                         }
+                                        ShaderType::Vertex => {
+                                            if let Some(fss) = self.shader_sources.get_mut("vertex")
+                                            {
+                                                if rt.version() > fss.last_project_version {
+                                                    println!("Vertex shader changed");
+
+                                                    fss.last_project_version = rt.version();
+                                                    fss.update_source(rt.text().to_owned());
+                                                    program_changed = true;
+                                                }
+                                            }
+                                        }
                                         _ => {}
                                     }
                                 }

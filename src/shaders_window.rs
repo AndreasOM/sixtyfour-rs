@@ -152,7 +152,7 @@ impl Window for ShadersWindow {
                                         let enabled = rt.file().is_some();
                                             if ui
                                                 .add_enabled(enabled, egui::Button::new("Reload"))
-                                                //.on_hover_text(save_file)
+                                                .on_hover_text(save_file)
                                                 .clicked()
                                             {
                                                 let _ = rt.reload();
