@@ -144,6 +144,12 @@ impl eframe::App for TemplateApp {
             let mut mg = self.mc_guffin.lock();
             mg.update_from_project(&self.state.project);
 
+            //
+            self.state
+                .project
+                .property_manager
+                .ensure_all_properties_from_uniforms(mg.uniform_manager());
+
             let t = self.start_time.elapsed().as_secs_f32();
             mg.set_time(t);
         }

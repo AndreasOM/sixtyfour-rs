@@ -7,14 +7,17 @@
 
 ## ToDo
 
-- [ ] Write a nice shader ;)
 - [ ] Order properties alphabetically
+- [ ] vec2 position property picker
+- [ ] Connect property to click position
+- [ ] Connect property to hover position
 - [ ] Capture McGuffin errors and show them in the editor
 - [ ] Fix McGuffinContainer .clone()
 - [ ] Add builtin minimal shader examples
 - [ ] Store window state
 - [ ] Disable reload & save if no file name is set
 - [ ] Prefill filename in file picker dialog (save & load)
+- [ ] Add frame time display
 
 ## Later
 - [ ] Rename shaders window
@@ -29,6 +32,8 @@
 	- [x] Remove shader loading & saving
 	- [x] Remove all traces serialisation
 - [x] Get shader log back into editor
+- [x] Get uniforms/properties back to working
+- [x] Write a nice shader ;) -> Mandelbrot
 
 ### before 2024-05-02
 

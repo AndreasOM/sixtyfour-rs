@@ -135,7 +135,6 @@ impl PropertyManager {
 
     pub fn ensure_all_properties_from_uniforms(&mut self, uniform_manager: &UniformManager) {
         for (k, v) in uniform_manager.entries().iter() {
-            // :TODO: handle uniform type
             match v.ttype() {
                 UniformType::Float => self.ensure_property_f32(k, 1.0),
                 UniformType::Vec3Float => self.ensure_property_vec3_f32(k, &[1.0, 1.0, 1.0]),
