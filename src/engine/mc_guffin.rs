@@ -5,11 +5,13 @@ use crate::engine::UniformManager;
 use crate::project::Project;
 use crate::project::PropertyValue;
 use crate::project::Resource;
+use crate::project::ResourceId;
 use crate::project::ShaderType;
 use color_eyre::eyre::eyre;
 use color_eyre::Result;
 use core::ffi::c_void;
 use core::ffi::CStr;
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::ffi::CString;
 
@@ -32,14 +34,26 @@ unsafe impl Send for McGuffin {}
 
 //static glRects: extern "system" fn(i16, i16, i16, i16) -> c_void = GlFunctionPointer::null().into();
 
+//const EMPTY_VEC_STRING: &Vec<String> = &vec![];
+
 impl McGuffin {
     pub fn uniform_manager(&self) -> &UniformManager {
         &self.pipeline.uniform_manager()
     }
-    pub fn get_shader_source(&self, name: &str) -> Option<&ShaderSource> {
+    pub fn get_resource_log(&self, resource_id: &ResourceId) -> Cow<'_, Vec<String>> {
+        for (_n, ss) in self.shader_sources.iter() {
+            if Some(resource_id) == ss.resource_id() {
+                return Cow::Borrowed(ss.compile_log());
+            }
+        }
+        let not_found = vec![format!("Resource '{resource_id}' not found")];
+
+        Cow::Owned(not_found)
+    }
+    fn get_shader_source(&self, name: &str) -> Option<&ShaderSource> {
         self.shader_sources.get(name)
     }
-    pub fn get_mut_shader_source(&mut self, name: &str) -> Option<&mut ShaderSource> {
+    fn get_mut_shader_source(&mut self, name: &str) -> Option<&mut ShaderSource> {
         self.shader_sources.get_mut(name)
     }
     pub fn is_shader_source_dirty(&self, name: &str) -> bool {
@@ -138,16 +152,20 @@ impl McGuffin {
 
                                                     fss.last_project_version = rt.version();
                                                     fss.update_source(rt.text().to_owned());
+                                                    fss.set_resource_id(resource_id);
                                                     program_changed = true;
                                                 }
                                             } else {
                                                 eprintln!("No fragment shader");
-                                                let s = ShaderSource::new(
+                                                let mut s = ShaderSource::new(
                                                     GL_FRAGMENT_SHADER,
                                                     rt.text().to_string(),
                                                 );
+                                                s.last_project_version = rt.version();
+                                                s.set_resource_id(resource_id);
                                                 self.shader_sources
                                                     .insert(String::from("fragment"), s);
+                                                program_changed = true;
                                             }
                                         }
                                         ShaderType::Vertex => {
@@ -158,16 +176,20 @@ impl McGuffin {
 
                                                     fss.last_project_version = rt.version();
                                                     fss.update_source(rt.text().to_owned());
+                                                    fss.set_resource_id(resource_id);
                                                     program_changed = true;
                                                 }
                                             } else {
                                                 eprintln!("No vertex shader");
-                                                let s = ShaderSource::new(
+                                                let mut s = ShaderSource::new(
                                                     GL_VERTEX_SHADER,
                                                     rt.text().to_string(),
                                                 );
+                                                s.last_project_version = rt.version();
+                                                s.set_resource_id(resource_id);
                                                 self.shader_sources
                                                     .insert(String::from("vertex"), s);
+                                                program_changed = true;
                                             }
                                         }
                                         _ => {}

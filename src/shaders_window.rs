@@ -84,6 +84,7 @@ impl Window for ShadersWindow {
                                 if let Some( ( shader_type, resource_id ) ) = new_shader.take() {
                                     rp.add_shader( shader_type, resource_id );
                                 }
+                                ui.separator();
                                 ui.horizontal(|ui|{
                                     for s in rp.shaders() {
                                         /*
@@ -101,6 +102,8 @@ impl Window for ShadersWindow {
                                         }
                                     }
                                 });
+
+                                ui.separator();
 
                                 // editor
                                 if let Some( r ) = state.project.resource_manager.get_mut( &self.active_resource_id ) {
@@ -176,6 +179,25 @@ impl Window for ShadersWindow {
                                             }
 
                                         });
+
+                                        ui.push_id("Compile Log", |ui| {
+                                            egui::ScrollArea::vertical().show(ui, |ui| {
+                                                ui.label("Compile Log:");
+                                                let mg = self.mc_guffin.lock();
+                                                /*
+                                                let ss = mg
+                                                    .get_shader_source(&self.active_shader_type)
+                                                    .expect("Shader should exist");
+                                                let compile_log = ss.compile_log();
+                                                */
+                                                let compile_log = mg.get_resource_log( &self.active_resource_id );
+
+                                                for e in compile_log.iter() {
+                                                    ui.label(e);
+                                                }
+                                            });
+                                        });
+
                                         let theme = egui_extras::syntax_highlighting::CodeTheme::from_memory(ui.ctx());
                                         let language = "c++";
                                         let mut layouter = |ui: &egui::Ui, string: &str, wrap_width: f32| {
@@ -256,62 +278,7 @@ impl Window for ShadersWindow {
                         }
                     }
 
-                    ui.horizontal_wrapped(|ui| {
-                        let mut mg = self.mc_guffin.lock();
-                        let enabled = dirty;
-                        if ui
-                            .add_enabled(enabled, egui::Button::new("Rebuild Program"))
-                            .clicked()
-                        {
-                            let _ = mg.rebuild_program();
-                            state
-                                .project
-                                .property_manager
-                                .ensure_all_properties_from_uniforms(mg.uniform_manager());
-                        }
-                        if let Some(shader_source) =
-                            mg.get_mut_shader_source(&self.active_shader_type)
-                        {
-                        } // shader_source
-                    });
-                    ui.push_id("Compile Log", |ui| {
-                        egui::ScrollArea::vertical().show(ui, |ui| {
-                            ui.label("Compile Log:");
-                            let mg = self.mc_guffin.lock();
-                            let ss = mg
-                                .get_shader_source(&self.active_shader_type)
-                                .expect("Shader should exist");
-                            let compile_log = ss.compile_log();
-                            for e in compile_log.iter() {
-                                ui.label(e);
-                            }
-                        });
-                    });
 
-                    egui::ScrollArea::vertical().show(ui, |ui| {
-                        let response = ui.add(
-                            egui::TextEdit::multiline(&mut shader_source)
-                                .code_editor()
-                                .min_size(egui::Vec2::new(800.0, 500.0))
-                                .layouter(&mut layouter)
-                                .frame(true)
-                                .desired_rows(80)
-                                .desired_width(f32::INFINITY),
-                            /*
-                            .font(egui::TextStyle::Monospace) // for cursor height
-                            .code_editor()
-                            .desired_rows(10)
-                            .lock_focus(true)
-                            .desired_width(f32::INFINITY)
-                            .layouter(&mut layouter)
-                            */
-                        );
-
-                        if response.changed() {
-                            let mut mg = self.mc_guffin.lock();
-                            mg.replace_shader_source(&self.active_shader_type, shader_source);
-                        }
-                    });
                 }
                 */
             });

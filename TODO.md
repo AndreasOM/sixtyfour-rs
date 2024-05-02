@@ -7,7 +7,8 @@
 
 ## ToDo
 
-- [ ] Get shader log back into editor
+- [ ] Write a nice shader ;)
+- [ ] Order properties alphabetically
 - [ ] Capture McGuffin errors and show them in the editor
 - [ ] Fix McGuffinContainer .clone()
 - [ ] Add builtin minimal shader examples
@@ -27,6 +28,7 @@
 - [x] Clean up McGuffin
 	- [x] Remove shader loading & saving
 	- [x] Remove all traces serialisation
+- [x] Get shader log back into editor
 
 ### before 2024-05-02
 
