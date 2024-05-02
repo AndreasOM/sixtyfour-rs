@@ -1,4 +1,5 @@
 use crate::mc_guffin_container::McGuffinContainer;
+use crate::project::PropertyValue;
 use crate::state::State;
 use crate::window::Window;
 use color_eyre::Result;
@@ -22,7 +23,7 @@ impl Window for McGuffinWindow {
     fn is_open(&self) -> bool {
         true
     }
-    fn update(&mut self, ctx: &egui::Context, _state: &mut State) {
+    fn update(&mut self, ctx: &egui::Context, state: &mut State) {
         egui::Window::new("McGuffin")
             .resizable(true)
             .hscroll(false)
@@ -30,7 +31,7 @@ impl Window for McGuffinWindow {
             .collapsible(false)
             //.title_bar(false)
             .show(ctx, |ui| {
-                self.mc_guffin_painting(ui);
+                self.mc_guffin_painting(ui, state);
             });
     }
 }
@@ -47,7 +48,7 @@ impl McGuffinWindow {
     pub fn new(mc_guffin: McGuffinContainer) -> Self {
         Self { mc_guffin }
     }
-    fn mc_guffin_painting(&mut self, ui: &mut egui::Ui) {
+    fn mc_guffin_painting(&mut self, ui: &mut egui::Ui, state: &mut State) {
         let s = ui.available_size();
 
         let mut wanted_size = egui::Vec2::new(256.0, 144.0);
@@ -57,7 +58,7 @@ impl McGuffinWindow {
         let scale = sx.min(sy).max(1.0);
         wanted_size *= scale;
 
-        let (rect, _sense) = ui.allocate_at_least(wanted_size, egui::Sense::drag());
+        let (rect, sense) = ui.allocate_at_least(wanted_size, egui::Sense::click());
         let mc_guffin = self.mc_guffin.clone();
         let callback = egui::PaintCallback {
             rect,
@@ -67,6 +68,22 @@ impl McGuffinWindow {
                 },
             )),
         };
+        if let Some(click_pos) = sense.interact_pointer_pos() {
+            let rs = rect.max - rect.min;
+            let np = ((click_pos - rect.min) / rs) * egui::Vec2::new(2.0, -2.0)
+                + egui::Vec2::new(-1.0, 1.0);
+
+            if let Some(p) = state.project.property_manager.get_mut("fMouseClick") {
+                match p.value_mut() {
+                    PropertyValue::Vec2F32 { ref mut values } => {
+                        values[0] = np.x;
+                        values[1] = np.y;
+                    }
+                    _ => {}
+                }
+            }
+        }
+
         {
             /*
             // :TODO:

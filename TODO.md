@@ -3,13 +3,11 @@
 
 ## In Progress
 
-- [ ] Add vec2 property
 
 
 ## ToDo
 
 - [ ] Add line numbers to shader editor
-- [ ] Connect property to click position
 - [ ] Connect property to hover position
 
 - [ ] vec2 position property picker
@@ -40,6 +38,8 @@
 - [x] Order properties alphabetically
 - [x] Fix McGuffinContainer .clone()
 - [x] Allow deleting of individual properties
+- [x] Add vec2 property
+- [x] Connect property to click position (fMouseClick)
 
 ### before 2024-05-02
 
