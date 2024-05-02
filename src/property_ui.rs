@@ -1,6 +1,8 @@
+use crate::command_queue::COMMAND_QUEUE;
 use crate::project::Property;
 use crate::project::PropertyConfig;
 use crate::property_ui_value_vec3_f32::PropertyUiValueVec3F32;
+use crate::Command;
 
 use crate::property_ui_value_f32::PropertyUiValueF32;
 use crate::PropertyUiValue;
@@ -30,6 +32,7 @@ impl PropertyUi {
         if let Some(c) = &mut self.configuring {
             let mut close = false;
             let mut cancel = false;
+            let mut delete = false;
             let name = format!("Property Configuration: '{}'", c.0);
             egui::Window::new(name)
                 .resizable(true)
@@ -43,6 +46,11 @@ impl PropertyUi {
                         max_value,
                         step_size,
                     } => {
+                        ui.with_layout(egui::Layout::top_down(egui::Align::RIGHT), |ui| {
+                            if ui.add(egui::Button::new("Delete!!!")).clicked() {
+                                delete = true;
+                            }
+                        });
                         ui.add(
                             egui::Slider::new(&mut *min_value, 0.0..=100.0)
                                 .clamp_to_range(false)
@@ -68,6 +76,11 @@ impl PropertyUi {
                         });
                     }
                     _ => {
+                        ui.with_layout(egui::Layout::top_down(egui::Align::RIGHT), |ui| {
+                            if ui.add(egui::Button::new("Delete!!!")).clicked() {
+                                delete = true;
+                            }
+                        });
                         let value = format!("Unhandled {:?}", c.1);
                         ui.label(value);
                         if ui.add(egui::Button::new("Cancel")).clicked() {
@@ -75,6 +88,12 @@ impl PropertyUi {
                         }
                     }
                 });
+            if delete {
+                let _ = COMMAND_QUEUE.send(Command::DeleteProperty {
+                    name: c.0.to_owned(),
+                });
+                close = true;
+            }
             if close {
                 self.applying = self.configuring.take();
             }

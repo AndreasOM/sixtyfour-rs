@@ -91,6 +91,10 @@ impl PropertyManager {
         self.entries.insert(name.into(), entry)
     }
 
+    pub fn delete_entry(&mut self, name: &str) -> Option<Property> {
+        self.entries.remove(name)
+    }
+
     pub fn entries_mut(&mut self) -> &mut BTreeMap<String, Property> {
         &mut self.entries
     }

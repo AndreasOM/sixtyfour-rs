@@ -4,12 +4,15 @@
 ## In Progress
 
 
-
 ## ToDo
 
-- [ ] vec2 position property picker
+- [ ] Add vec2 property
+
+- [ ] Add line numbers to shader editor
 - [ ] Connect property to click position
 - [ ] Connect property to hover position
+
+- [ ] vec2 position property picker
 - [ ] Capture McGuffin errors and show them in the editor
 - [ ] Add builtin minimal shader examples
 - [ ] Store window state
@@ -20,6 +23,7 @@
 ## Later
 - [ ] Rename shaders window
 - [ ] Add code editor theme selection
+- [ ] Replace lazy_static with lazy_cell once stable (e.g. for CommandQueue)
 
 ## Done
 
@@ -35,6 +39,7 @@
 
 - [x] Order properties alphabetically
 - [x] Fix McGuffinContainer .clone()
+- [x] Allow deleting of individual properties
 
 ### before 2024-05-02
 

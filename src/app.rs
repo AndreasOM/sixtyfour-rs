@@ -1,3 +1,4 @@
+use crate::command_queue::COMMAND_QUEUE;
 use crate::mc_guffin_container::McGuffinContainer;
 use crate::mc_guffin_window::McGuffinWindow;
 use crate::project_window::ProjectWindow;
@@ -6,6 +7,7 @@ use crate::resources_window::ResourcesWindow;
 use crate::shaders_window::ShadersWindow;
 use crate::state::State;
 use crate::window::Window;
+use crate::Command;
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -120,6 +122,18 @@ impl eframe::App for TemplateApp {
         for w in self.windows.iter_mut() {
             if w.is_open() {
                 w.update(ctx, &mut self.state);
+            }
+        }
+
+        // handle pending commands
+        while let Some(command) = COMMAND_QUEUE.next() {
+            match command {
+                Command::DeleteProperty { name } => {
+                    self.state.project.property_manager.delete_entry(&name);
+                }
+                o => {
+                    eprintln!("Unhandled command {o:?}");
+                }
             }
         }
 
