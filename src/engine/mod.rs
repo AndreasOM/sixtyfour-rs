@@ -1,6 +1,5 @@
 mod mc_guffin;
 pub use mc_guffin::McGuffin;
-pub use mc_guffin::StoredMcGuffin;
 
 mod gl;
 mod gl_wrapper_macro;

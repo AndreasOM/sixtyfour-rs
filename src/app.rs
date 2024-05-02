@@ -22,7 +22,7 @@ impl McGuffinContainer {
         Arc::clone(&self.0)
     }
 }
-
+/*
 impl serde::Serialize for McGuffinContainer {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -42,11 +42,13 @@ impl<'de> serde::Deserialize<'de> for McGuffinContainer {
         Ok(Self(Arc::new(Mutex::new(mg))))
     }
 }
+*/
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct TemplateApp {
+    #[serde(skip)]
     mc_guffin: McGuffinContainer,
 
     #[serde(skip)]

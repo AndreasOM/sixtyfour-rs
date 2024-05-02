@@ -13,56 +13,21 @@ use core::ffi::CStr;
 use std::collections::HashMap;
 use std::ffi::CString;
 
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Default)]
 pub struct McGuffin {
-    #[serde(skip)]
     gl: Gl,
 
-    #[serde(skip)]
     vertex_array_id: u32,
-    #[serde(skip)]
     vertex_buffer_id: u32,
-    #[serde(skip)]
     pipeline: Pipeline,
-    //program: u32,
     properties_f32: HashMap<String, f32>,
     properties_vec3_f32: HashMap<String, [f32; 3]>,
     shader_sources: HashMap<String, ShaderSource>,
 
-    #[serde(skip)]
     project: Project,
-
-    #[serde(skip)]
-    test: String,
 }
 
-#[derive(serde::Deserialize, serde::Serialize)]
-pub struct StoredMcGuffin {
-    test: String,
-    shader_sources: HashMap<String, ShaderSource>,
-}
-
-impl From<&McGuffin> for StoredMcGuffin {
-    fn from(mc: &McGuffin) -> Self {
-        Self {
-            test: mc.test.clone(),
-            shader_sources: mc.shader_sources.clone(),
-        }
-    }
-}
-
-impl From<StoredMcGuffin> for McGuffin {
-    fn from(smc: StoredMcGuffin) -> Self {
-        let s = Self {
-            test: smc.test,
-            shader_sources: smc.shader_sources,
-            ..Default::default()
-        };
-        dbg!(&s.shader_sources);
-        s
-    }
-}
-
+// :TODO: remove
 unsafe impl Send for McGuffin {}
 
 //static glRects: extern "system" fn(i16, i16, i16, i16) -> c_void = GlFunctionPointer::null().into();
@@ -175,6 +140,14 @@ impl McGuffin {
                                                     fss.update_source(rt.text().to_owned());
                                                     program_changed = true;
                                                 }
+                                            } else {
+                                                eprintln!("No fragment shader");
+                                                let s = ShaderSource::new(
+                                                    GL_FRAGMENT_SHADER,
+                                                    rt.text().to_string(),
+                                                );
+                                                self.shader_sources
+                                                    .insert(String::from("fragment"), s);
                                             }
                                         }
                                         ShaderType::Vertex => {
@@ -187,6 +160,14 @@ impl McGuffin {
                                                     fss.update_source(rt.text().to_owned());
                                                     program_changed = true;
                                                 }
+                                            } else {
+                                                eprintln!("No vertex shader");
+                                                let s = ShaderSource::new(
+                                                    GL_VERTEX_SHADER,
+                                                    rt.text().to_string(),
+                                                );
+                                                self.shader_sources
+                                                    .insert(String::from("vertex"), s);
                                             }
                                         }
                                         _ => {}
@@ -318,7 +299,7 @@ impl McGuffin {
         Ok(())
     }
 
-    pub fn paint(&mut self, gl: &eframe::glow::Context) {
+    pub fn paint(&mut self, _gl: &eframe::glow::Context) {
         let _ = self.update();
     }
 
@@ -331,7 +312,12 @@ impl McGuffin {
 
     pub fn update_from_project(&mut self, project: &Project) {
         self.project = (*project).clone();
-        let _ = self.rebuild_program();
+        match self.rebuild_program() {
+            Ok(_) => {}
+            Err(e) => {
+                eprintln!("Rebuild Program failed: {e:?}");
+            }
+        }
         for (k, p) in project.property_manager.entries().iter() {
             match p.value() {
                 PropertyValue::F32 { value, .. } => self.set_property_f32(k, *value),

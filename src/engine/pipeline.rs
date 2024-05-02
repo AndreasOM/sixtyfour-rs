@@ -4,6 +4,7 @@ use crate::engine::ShaderSource;
 use crate::engine::Uniform;
 use crate::engine::UniformManager;
 use color_eyre::eyre::eyre;
+use color_eyre::eyre::ContextCompat;
 use color_eyre::Result;
 use std::collections::HashMap;
 use std::ffi::CString;
@@ -65,7 +66,7 @@ impl Pipeline {
         let vertex_shader = {
             let vertex_shader_source = shader_sources
                 .get_mut("vertex")
-                .expect("Should have vertex shader");
+                .wrap_err_with(|| format!("Should have vertex shader"))?;
 
             let vertex_shader = self.compile_shader(gl, vertex_shader_source)?;
             vertex_shader

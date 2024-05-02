@@ -1,23 +1,15 @@
 use crate::engine::gl::*;
-use color_eyre::eyre::eyre;
-use color_eyre::Result;
-use std::io::Write;
-use std::path::Path;
-use std::path::PathBuf;
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, Default, Clone)]
-#[serde(default)]
+//#[derive(serde::Deserialize, serde::Serialize, Debug, Default, Clone)]
+//#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct ShaderSource {
     shader_type: GLenum,
-    #[serde(skip)]
     source: String,
-    #[serde(skip)]
     dirty: bool,
 
-    #[serde(skip)]
     compile_log: Vec<String>,
 
-    #[serde(skip)]
     pub last_project_version: u32,
 }
 
