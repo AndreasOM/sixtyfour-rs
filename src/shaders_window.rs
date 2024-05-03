@@ -21,13 +21,39 @@ impl core::fmt::Debug for ShadersWindow {
     }
 }
 
+#[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
+struct ShadersWindowSave {
+    #[serde(default)]
+    active_resource_id: Option<ResourceId>,
+}
+
+impl From<&ShadersWindow> for ShadersWindowSave {
+    fn from(sw: &ShadersWindow) -> Self {
+        Self {
+            active_resource_id: Some(sw.active_resource_id.clone()),
+        }
+    }
+}
 impl Window for ShadersWindow {
     fn name(&self) -> &str {
-        "Properties"
+        "Shaders"
     }
     fn is_open(&self) -> bool {
         true
     }
+    fn serialize(&self) -> String {
+        let save: ShadersWindowSave = self.into();
+
+        ron::ser::to_string(&save).unwrap_or_default()
+    }
+    fn deserialize(&mut self, data: &str) {
+        let mut save: ShadersWindowSave = ron::from_str(&data).unwrap_or_default();
+
+        if let Some(active_resource_id) = save.active_resource_id.take() {
+            self.active_resource_id = active_resource_id
+        }
+    }
+
     fn update(&mut self, ctx: &egui::Context, state: &mut State) {
         let mgc = state.mc_guffin().map(|mgc| mgc.clone());
         egui::Window::new("Shaders")

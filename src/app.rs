@@ -8,13 +8,17 @@ use crate::shaders_window::ShadersWindow;
 use crate::state::State;
 use crate::window::Window;
 use crate::Command;
+use crate::WindowManager;
+use color_eyre::Result;
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct TemplateApp {
+    //    #[serde(skip)]
+    //    windows: Vec<Box<dyn Window>>,
     #[serde(skip)]
-    windows: Vec<Box<dyn Window>>,
+    window_manager: WindowManager,
 
     state: State,
 
@@ -25,7 +29,8 @@ pub struct TemplateApp {
 impl Default for TemplateApp {
     fn default() -> Self {
         Self {
-            windows: Default::default(),
+            //windows: Default::default(),
+            window_manager: Default::default(),
             state: Default::default(),
             start_time: std::time::Instant::now(),
         }
@@ -43,7 +48,19 @@ impl TemplateApp {
         // Load previous app state (if any).
         // Note that you must enable the `persistence` feature for this to work.
         let mut s: Self = if let Some(storage) = cc.storage {
-            eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default()
+            let mut s: Self = eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+
+            s.window_manager.add(Box::new(McGuffinWindow::default()));
+            s.window_manager.add(Box::new(ShadersWindow::default()));
+            s.window_manager.add(Box::new(PropertiesWindow::default()));
+            s.window_manager.add(Box::new(ProjectWindow::default()));
+            s.window_manager.add(Box::new(ResourcesWindow::default()));
+
+            let app_save: AppSave =
+                eframe::get_value(storage, &format!("{}-custom", eframe::APP_KEY))
+                    .unwrap_or_default();
+            let _ = s.apply_app_save(app_save);
+            s
         } else {
             Default::default()
         };
@@ -75,23 +92,45 @@ impl TemplateApp {
 
         s.start_time = std::time::Instant::now();
 
-        s.windows.push(Box::new(McGuffinWindow::default()));
-        s.windows.push(Box::new(ShadersWindow::default()));
-        s.windows.push(Box::new(PropertiesWindow::default()));
-        s.windows.push(Box::new(ProjectWindow::default()));
-        s.windows.push(Box::new(ResourcesWindow::default()));
-
         s
     }
 }
 
-impl TemplateApp {}
+#[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
+struct AppSave {
+    window_manager: String,
+}
+
+impl AppSave {}
+
+impl TemplateApp {
+    fn apply_app_save(&mut self, app_save: AppSave) -> Result<()> {
+        eprintln!("AppSave: {app_save:?}");
+        self.window_manager.deserialize(&app_save.window_manager);
+        Ok(())
+    }
+    fn as_app_save(&self) -> Result<AppSave> {
+        let mut app_save = AppSave::default();
+        app_save.window_manager = self.window_manager.serialize();
+
+        Ok(app_save)
+    }
+}
 impl eframe::App for TemplateApp {
     /// Called by the frame work to save state before shutdown.
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         self.state.save_project();
 
         eframe::set_value(storage, eframe::APP_KEY, self);
+
+        match self.as_app_save() {
+            Ok(app_save) => {
+                eframe::set_value(storage, &format!("{}-custom", eframe::APP_KEY), &app_save)
+            }
+            Err(e) => {
+                eprintln!("Failed saving custom AppSave {e:?}");
+            }
+        }
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
@@ -112,7 +151,7 @@ impl eframe::App for TemplateApp {
             }
         }
 
-        for w in self.windows.iter_mut() {
+        for w in self.window_manager.iter_mut() {
             if w.is_open() {
                 w.update(ctx, &mut self.state);
             }

@@ -3,7 +3,6 @@
 
 ## In Progress
 
-- [ ] Store window state
 
 ## ToDo
 
@@ -22,6 +21,8 @@
 - [ ] Implement clone for McGuffinContainer
 - [ ] Add versioning to UniformManager
 
+- [ ] Add fullscreen mode
+
 ## Later
 - [ ] Rename shaders window
 - [ ] Add code editor theme selection
@@ -32,6 +33,7 @@
 ### 2024-05-03
 - [x] Disable McGuffin window dragging
 - [x] Connect property to hover position
+- [x] Store window state
 
 ### 2024-05-02
 - [x] Show filename as tooltip on reload button

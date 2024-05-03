@@ -22,6 +22,8 @@ mod properties_window;
 mod resources_window;
 mod shaders_window;
 mod window;
+mod window_manager;
+use window_manager::WindowManager;
 
 mod property_ui;
 mod property_ui_value;
