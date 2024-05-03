@@ -71,6 +71,7 @@ impl Window for ShadersWindow {
             .vscroll(false)
             .collapsible(false)
             //.title_bar(false)
+            .open( &mut self.is_open )
             .show(ctx, |ui| {
                 if let Some( selected_program_id ) = state.selected_program_id().cloned() {
                     ui.label( format!("{selected_program_id}"));

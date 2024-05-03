@@ -26,6 +26,7 @@ impl Window for PropertiesWindow {
             .vscroll(false)
             .collapsible(false)
             //.title_bar(false)
+            .open(&mut self.is_open)
             .show(ctx, |ui| {
                 let enabled = true;
                 if ui

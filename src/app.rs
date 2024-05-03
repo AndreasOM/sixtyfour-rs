@@ -155,24 +155,39 @@ impl eframe::App for TemplateApp {
                 mg.set_time(t);
             }
         }
-        egui::TopBottomPanel::top("menu_panel")
-            //.resizable(true)
-            //.min_height(32.0)
-            .show(ctx, |ui| {
-                ui.horizontal(|ui| {
-                    if ui.button("Windows").clicked() {
-                        if let Some(_windows_menu) = self.windows_menu.take() {
-                        } else {
-                            let wm = WindowsMenu::default();
+        if !self.state.mc_guffin_is_fullscreen {
+            egui::TopBottomPanel::top("menu_panel")
+                //.resizable(true)
+                //.min_height(32.0)
+                .show(ctx, |ui| {
+                    ui.horizontal(|ui| {
+                        if ui.button("Windows").clicked() {
+                            if let Some(_windows_menu) = self.windows_menu.take() {
+                            } else {
+                                let wm = WindowsMenu::default();
 
-                            self.windows_menu = Some(wm);
+                                self.windows_menu = Some(wm);
+                            }
                         }
-                    }
-                });
-            });
 
-        if let Some(windows_menu) = &mut self.windows_menu {
-            windows_menu.update(ctx, &mut self.state, &mut self.window_manager);
+                        if ui.button("Fullscreen").clicked() {
+                            if self.state.mc_guffin_is_fullscreen {
+                                self.state.mc_guffin_is_fullscreen = false;
+                            } else {
+                                self.state.mc_guffin_is_fullscreen = true;
+                            }
+                        }
+                        /*
+                        if self.state.mc_guffin_is_fullscreen {
+                            ui.label("(fullscreen)");
+                        }
+                        */
+                    });
+                });
+
+            if let Some(windows_menu) = &mut self.windows_menu {
+                windows_menu.update(ctx, &mut self.state, &mut self.window_manager);
+            }
         }
 
         for w in self.window_manager.iter_mut() {
@@ -186,6 +201,10 @@ impl eframe::App for TemplateApp {
             match command {
                 Command::DeleteProperty { name } => {
                     self.state.project.property_manager.delete_entry(&name);
+                }
+                Command::LeaveFullscreen => {
+                    // :TODO: side effects
+                    self.state.mc_guffin_is_fullscreen = false;
                 }
                 o => {
                     eprintln!("Unhandled command {o:?}");

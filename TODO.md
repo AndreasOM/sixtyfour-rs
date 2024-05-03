@@ -4,7 +4,6 @@
 ## In Progress
 
 
-
 ## ToDo
 
 - [ ] Add line numbers to shader editor
@@ -22,7 +21,7 @@
 - [ ] Implement clone for McGuffinContainer
 - [ ] Add versioning to UniformManager
 
-- [ ] Add fullscreen mode
+- [ ] Fix McGuffin size after returning from fullscreen mode
 
 ## Later
 - [ ] Rename shaders window
@@ -37,6 +36,8 @@
 - [x] Store window state
 
 - [x] Add menu and allow window visibility management
+- [x] Add close button to windows
+- [x] Add fullscreen mode
 
 ### 2024-05-02
 - [x] Show filename as tooltip on reload button

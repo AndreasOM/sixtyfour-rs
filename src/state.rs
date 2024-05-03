@@ -22,6 +22,9 @@ pub struct State {
     #[serde(default)]
     selected_program_id: Option<ResourceId>,
 
+    #[serde(default)]
+    pub mc_guffin_is_fullscreen: bool,
+
     #[serde(skip)]
     pub window_manager: WindowManager,
 }

@@ -27,6 +27,7 @@ impl Window for ResourcesWindow {
             .vscroll(false)
             .collapsible(false)
             //.title_bar(false)
+            .open(&mut self.is_open)
             .show(ctx, |ui| {
                 let mut selected_program_id = None;
                 let mut deselect_program_id = false;
