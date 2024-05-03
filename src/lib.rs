@@ -13,6 +13,7 @@ use command::Command;
 mod command_queue;
 
 mod mc_guffin_container;
+use mc_guffin_container::McGuffinContainer;
 mod state;
 
 mod mc_guffin_window;

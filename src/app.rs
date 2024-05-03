@@ -14,14 +14,8 @@ use crate::Command;
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct TemplateApp {
     #[serde(skip)]
-    mc_guffin: McGuffinContainer,
-
-    #[serde(skip)]
     windows: Vec<Box<dyn Window>>,
 
-    //properties: HashMap<String, f32>,
-    //#[serde(skip)]
-    //property_manager: PropertyManager,
     state: State,
 
     #[serde(skip)]
@@ -31,7 +25,6 @@ pub struct TemplateApp {
 impl Default for TemplateApp {
     fn default() -> Self {
         Self {
-            mc_guffin: Default::default(),
             windows: Default::default(),
             state: Default::default(),
             start_time: std::time::Instant::now(),
@@ -57,34 +50,33 @@ impl TemplateApp {
 
         s.state.reload_project();
         if let Some(get_proc_address) = cc.get_proc_address {
-            let mgc = s.mc_guffin.clone();
-            match s.mc_guffin.lock().setup(get_proc_address) {
+            let mgc = McGuffinContainer::default();
+            //let mgc = s.mc_guffin.clone();
+            let mgc2 = mgc.clone();
+            match mgc.lock().setup(get_proc_address) {
                 Ok(()) => {
-                    s.windows.push(Box::new(McGuffinWindow::new(mgc.clone())));
-                    s.windows.push(Box::new(ShadersWindow::new(mgc.clone())));
+                    s.state.set_mc_guffin(mgc2);
                 }
                 Err(e) => {
                     eprintln!("McGuffin setup error -> {e:#?}");
                 }
             };
         }
-        s.state
-            .project
-            .property_manager
-            .ensure_all_properties_from_uniforms(s.mc_guffin.lock().uniform_manager());
         /*
-                s.state
-                    .property_manager
-                    .ensure_property_f32("scale_red_x", 11.0);
-                s.state
-                    .property_manager
-                    .ensure_property_f32("scale_green_y", 15.0);
-                s.state.property_manager.ensure_property_f32("speed", 1.0);
+        // not program load at this point, so no uniforms to create properties from
+        if let Some( mgc ) = s.state.mc_guffin_cloned() {
+            eprintln!("Ensuring all properties");
+            s.state
+                .project
+                .property_manager
+                .ensure_all_properties_from_uniforms(mgc.lock().uniform_manager());
+        }
         */
+
         s.start_time = std::time::Instant::now();
 
-        // backfill properties as needed
-
+        s.windows.push(Box::new(McGuffinWindow::default()));
+        s.windows.push(Box::new(ShadersWindow::default()));
         s.windows.push(Box::new(PropertiesWindow::default()));
         s.windows.push(Box::new(ProjectWindow::default()));
         s.windows.push(Box::new(ResourcesWindow::default()));
@@ -106,17 +98,18 @@ impl eframe::App for TemplateApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // McGuffin
         {
-            let mut mg = self.mc_guffin.lock();
-            mg.update_from_project(&self.state.project);
+            if let Some(mgc) = self.state.mc_guffin_cloned() {
+                let mut mg = mgc.lock();
+                mg.update_from_project(&self.state.project);
 
-            //
-            self.state
-                .project
-                .property_manager
-                .ensure_all_properties_from_uniforms(mg.uniform_manager());
+                self.state
+                    .project
+                    .property_manager
+                    .ensure_all_properties_from_uniforms(mg.uniform_manager());
 
-            let t = self.start_time.elapsed().as_secs_f32();
-            mg.set_time(t);
+                let t = self.start_time.elapsed().as_secs_f32();
+                mg.set_time(t);
+            }
         }
 
         for w in self.windows.iter_mut() {

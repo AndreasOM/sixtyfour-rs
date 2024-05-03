@@ -13,3 +13,9 @@ impl McGuffinContainer {
         Self(Arc::clone(&self.0))
     }
 }
+
+impl core::fmt::Debug for McGuffinContainer {
+    fn fmt(&self, _: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+        Ok(())
+    }
+}

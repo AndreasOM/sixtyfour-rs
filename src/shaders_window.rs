@@ -8,7 +8,6 @@ use color_eyre::Result;
 
 //#[derive(Clone)]
 pub struct ShadersWindow {
-    mc_guffin: McGuffinContainer,
     active_shader_type: String,
 
     active_resource_id: ResourceId,
@@ -30,6 +29,7 @@ impl Window for ShadersWindow {
         true
     }
     fn update(&mut self, ctx: &egui::Context, state: &mut State) {
+        let mgc = state.mc_guffin().map(|mgc| mgc.clone());
         egui::Window::new("Shaders")
             .resizable(true)
             .hscroll(false)
@@ -85,11 +85,6 @@ impl Window for ShadersWindow {
                                 ui.separator();
                                 ui.horizontal(|ui|{
                                     for s in rp.shaders() {
-                                        /*
-                                        if let Some ( r ) = state.project.resource_manager.get( s.resource_id() ) {
-
-                                        };
-                                        */
                                         //??? ui.visuals_mut().button_frame = false;
 
                                         let active = self.active_resource_id == *s.resource_id();
@@ -180,18 +175,14 @@ impl Window for ShadersWindow {
 
                                         ui.push_id("Compile Log", |ui| {
                                             egui::ScrollArea::vertical().show(ui, |ui| {
-                                                ui.label("Compile Log:");
-                                                let mg = self.mc_guffin.lock();
-                                                /*
-                                                let ss = mg
-                                                    .get_shader_source(&self.active_shader_type)
-                                                    .expect("Shader should exist");
-                                                let compile_log = ss.compile_log();
-                                                */
-                                                let compile_log = mg.get_resource_log( &self.active_resource_id );
+                                                if let Some( mgc ) = mgc {
+                                                    ui.label("Compile Log:");
+                                                    let mg = mgc.lock();
+                                                    let compile_log = mg.get_resource_log( &self.active_resource_id );
 
-                                                for e in compile_log.iter() {
-                                                    ui.label(e);
+                                                    for e in compile_log.iter() {
+                                                        ui.label(e);
+                                                    }
                                                 }
                                             });
                                         });
@@ -260,33 +251,15 @@ impl Window for ShadersWindow {
                             theme.clone().store_in_memory(ui.ctx());
                         });
                     });
-
-
-                    {
-                        let mut mg = self.mc_guffin.lock();
-                        if let Some(shader_source) =
-                            mg.get_mut_shader_source(&self.active_shader_type)
-                        {
-                            let save_file = if let Some(save_path) = shader_source.save_path() {
-                                save_path.to_string_lossy().to_string()
-                            } else {
-                                String::from("")
-                            };
-                            ui.label(save_file);
-                        }
-                    }
-
-
                 }
                 */
             });
     }
 }
 
-impl ShadersWindow {
-    pub fn new(mc_guffin: McGuffinContainer) -> Self {
+impl Default for ShadersWindow {
+    fn default() -> Self {
         Self {
-            mc_guffin,
             active_shader_type: String::from("fragment"),
 
             active_resource_id: Default::default(),

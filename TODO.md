@@ -3,7 +3,7 @@
 
 ## In Progress
 
-
+- [ ] Store window state
 
 ## ToDo
 
@@ -12,12 +12,15 @@
 - [ ] vec2 position property picker
 - [ ] Capture McGuffin errors and show them in the editor
 - [ ] Add builtin minimal shader examples
-- [ ] Store window state
 - [ ] Disable reload & save if no file name is set
 - [ ] Prefill filename in file picker dialog (save & load)
 - [ ] Add frame time display
 
 - [ ] Make resource path relative to project
+- [ ] Save (resources) on quit
+
+- [ ] Implement clone for McGuffinContainer
+- [ ] Add versioning to UniformManager
 
 ## Later
 - [ ] Rename shaders window

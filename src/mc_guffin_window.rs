@@ -1,14 +1,10 @@
-use crate::mc_guffin_container::McGuffinContainer;
 use crate::project::PropertyValue;
 use crate::state::State;
 use crate::window::Window;
 use color_eyre::Result;
 
 #[derive(Default)]
-pub struct McGuffinWindow {
-    //mc_guffin: Arc<Mutex<McGuffin>>,
-    mc_guffin: McGuffinContainer,
-}
+pub struct McGuffinWindow {}
 
 impl core::fmt::Debug for McGuffinWindow {
     fn fmt(&self, _: &mut core::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
@@ -37,17 +33,6 @@ impl Window for McGuffinWindow {
 }
 
 impl McGuffinWindow {
-    /*
-    pub fn setup( &mut self, mc_guffin: Arc<Mutex<McGuffin>> ) -> Result<()> {
-        self.mc_guffin = Some( mc_guffin );
-        Ok(())
-    }
-    */
-
-    //    pub fn new(mc_guffin: Arc<Mutex<McGuffin>>) -> Self {
-    pub fn new(mc_guffin: McGuffinContainer) -> Self {
-        Self { mc_guffin }
-    }
     fn mc_guffin_painting(&mut self, ui: &mut egui::Ui, state: &mut State) {
         let s = ui.available_size();
 
@@ -59,15 +44,17 @@ impl McGuffinWindow {
         wanted_size *= scale;
 
         let (rect, sense) = ui.allocate_at_least(wanted_size, egui::Sense::click_and_drag());
-        let mc_guffin = self.mc_guffin.clone();
-        let callback = egui::PaintCallback {
-            rect,
-            callback: std::sync::Arc::new(eframe::egui_glow::CallbackFn::new(
-                move |_info, painter| {
-                    mc_guffin.lock().paint(painter.gl());
-                },
-            )),
-        };
+        if let Some(mc_guffin) = state.mc_guffin_cloned() {
+            let callback = egui::PaintCallback {
+                rect,
+                callback: std::sync::Arc::new(eframe::egui_glow::CallbackFn::new(
+                    move |_info, painter| {
+                        mc_guffin.lock().paint(painter.gl());
+                    },
+                )),
+            };
+            ui.painter().add(callback);
+        }
         if let Some(click_pos) = sense.interact_pointer_pos() {
             let rs = rect.max - rect.min;
             let np = ((click_pos - rect.min) / rs) * egui::Vec2::new(2.0, -2.0)
@@ -98,20 +85,5 @@ impl McGuffinWindow {
                 }
             }
         }
-
-        {
-            /*
-            // :TODO:
-            let mut mg = mc_guffin.lock();
-
-            for (k, v) in self.property_manager.entries_mut().iter_mut() {
-                mg.set_property(k, *v);
-            }
-
-            let t = self.start_time.elapsed().as_secs_f32();
-            mg.set_property("fTime", t);
-            */
-        }
-        ui.painter().add(callback);
     }
 }

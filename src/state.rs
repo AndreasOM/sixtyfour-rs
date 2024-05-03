@@ -1,5 +1,6 @@
 use crate::project::Project;
 use crate::project::ResourceId;
+use crate::McGuffinContainer;
 use std::collections::VecDeque;
 use std::path::Path;
 
@@ -7,6 +8,9 @@ use std::path::PathBuf;
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct State {
+    #[serde(skip)]
+    mc_guffin: Option<McGuffinContainer>,
+
     pub project_path: Option<PathBuf>,
     #[serde(skip)]
     pub project: Project,
@@ -19,6 +23,17 @@ pub struct State {
 }
 
 impl State {
+    pub fn mc_guffin_cloned(&self) -> Option<McGuffinContainer> {
+        self.mc_guffin.as_ref().map(|mgc| mgc.clone())
+    }
+    pub fn mc_guffin(&self) -> Option<&McGuffinContainer> {
+        self.mc_guffin.as_ref()
+    }
+
+    pub fn set_mc_guffin(&mut self, mc_guffin: McGuffinContainer) {
+        self.mc_guffin = Some(mc_guffin);
+    }
+
     pub fn select_program_id(&mut self, id: ResourceId) {
         self.selected_program_id = Some(id);
     }
