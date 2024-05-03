@@ -2,15 +2,21 @@ use crate::state::State;
 use crate::window::Window;
 
 #[derive(Debug, Default)]
-pub struct ProjectWindow {}
+pub struct ProjectWindow {
+    is_open: bool,
+}
 
 impl Window for ProjectWindow {
     fn name(&self) -> &str {
         "Project"
     }
     fn is_open(&self) -> bool {
-        true
+        self.is_open
     }
+    fn toggle(&mut self) {
+        self.is_open = !self.is_open;
+    }
+
     fn update(&mut self, ctx: &egui::Context, state: &mut State) {
         egui::Window::new("Project")
             .resizable(true)

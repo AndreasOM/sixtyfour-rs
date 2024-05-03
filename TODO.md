@@ -4,6 +4,7 @@
 ## In Progress
 
 
+
 ## ToDo
 
 - [ ] Add line numbers to shader editor
@@ -34,6 +35,8 @@
 - [x] Disable McGuffin window dragging
 - [x] Connect property to hover position
 - [x] Store window state
+
+- [x] Add menu and allow window visibility management
 
 ### 2024-05-02
 - [x] Show filename as tooltip on reload button

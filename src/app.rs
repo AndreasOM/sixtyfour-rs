@@ -9,6 +9,7 @@ use crate::state::State;
 use crate::window::Window;
 use crate::Command;
 use crate::WindowManager;
+use crate::WindowsMenu;
 use color_eyre::Result;
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
@@ -24,6 +25,9 @@ pub struct TemplateApp {
 
     #[serde(skip)]
     start_time: std::time::Instant,
+
+    #[serde(default)]
+    windows_menu: Option<WindowsMenu>,
 }
 
 impl Default for TemplateApp {
@@ -33,6 +37,7 @@ impl Default for TemplateApp {
             window_manager: Default::default(),
             state: Default::default(),
             start_time: std::time::Instant::now(),
+            windows_menu: Default::default(),
         }
     }
 }
@@ -149,6 +154,25 @@ impl eframe::App for TemplateApp {
                 let t = self.start_time.elapsed().as_secs_f32();
                 mg.set_time(t);
             }
+        }
+        egui::TopBottomPanel::top("menu_panel")
+            //.resizable(true)
+            //.min_height(32.0)
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    if ui.button("Windows").clicked() {
+                        if let Some(_windows_menu) = self.windows_menu.take() {
+                        } else {
+                            let wm = WindowsMenu::default();
+
+                            self.windows_menu = Some(wm);
+                        }
+                    }
+                });
+            });
+
+        if let Some(windows_menu) = &mut self.windows_menu {
+            windows_menu.update(ctx, &mut self.state, &mut self.window_manager);
         }
 
         for w in self.window_manager.iter_mut() {

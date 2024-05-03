@@ -4,11 +4,27 @@ use crate::window::Window;
 use color_eyre::Result;
 
 #[derive(Default)]
-pub struct McGuffinWindow {}
+pub struct McGuffinWindow {
+    is_open: bool,
+}
 
 impl core::fmt::Debug for McGuffinWindow {
     fn fmt(&self, _: &mut core::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         Ok(())
+    }
+}
+
+#[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
+struct McGuffinWindowSave {
+    #[serde(default)]
+    is_open: bool,
+}
+
+impl From<&McGuffinWindow> for McGuffinWindowSave {
+    fn from(mw: &McGuffinWindow) -> Self {
+        Self {
+            is_open: mw.is_open,
+        }
     }
 }
 
@@ -17,8 +33,22 @@ impl Window for McGuffinWindow {
         "McGuffin"
     }
     fn is_open(&self) -> bool {
-        true
+        self.is_open
     }
+    fn toggle(&mut self) {
+        self.is_open = !self.is_open;
+    }
+    fn serialize(&self) -> String {
+        let save: McGuffinWindowSave = self.into();
+
+        ron::ser::to_string(&save).unwrap_or_default()
+    }
+    fn deserialize(&mut self, data: &str) {
+        let mut save: McGuffinWindowSave = ron::from_str(&data).unwrap_or_default();
+
+        self.is_open = save.is_open;
+    }
+
     fn update(&mut self, ctx: &egui::Context, state: &mut State) {
         egui::Window::new("McGuffin")
             .resizable(true)

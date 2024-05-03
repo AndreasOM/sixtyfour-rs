@@ -1,6 +1,7 @@
 use crate::project::Project;
 use crate::project::ResourceId;
 use crate::McGuffinContainer;
+use crate::WindowManager;
 use std::collections::VecDeque;
 use std::path::Path;
 
@@ -20,6 +21,9 @@ pub struct State {
 
     #[serde(default)]
     selected_program_id: Option<ResourceId>,
+
+    #[serde(skip)]
+    pub window_manager: WindowManager,
 }
 
 impl State {

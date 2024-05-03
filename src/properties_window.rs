@@ -5,6 +5,7 @@ use crate::window::Window;
 #[derive(Debug, Default)]
 pub struct PropertiesWindow {
     property_ui: PropertyUi,
+    is_open: bool,
 }
 
 impl Window for PropertiesWindow {
@@ -12,8 +13,12 @@ impl Window for PropertiesWindow {
         "Properties"
     }
     fn is_open(&self) -> bool {
-        true
+        self.is_open
     }
+    fn toggle(&mut self) {
+        self.is_open = !self.is_open;
+    }
+
     fn update(&mut self, ctx: &egui::Context, state: &mut State) {
         egui::Window::new("Properties")
             .resizable(true)

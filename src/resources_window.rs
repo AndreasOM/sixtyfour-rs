@@ -5,15 +5,21 @@ use crate::state::State;
 use crate::window::Window;
 
 #[derive(Debug, Default)]
-pub struct ResourcesWindow {}
+pub struct ResourcesWindow {
+    is_open: bool,
+}
 
 impl Window for ResourcesWindow {
     fn name(&self) -> &str {
         "Resources"
     }
     fn is_open(&self) -> bool {
-        true
+        self.is_open
     }
+    fn toggle(&mut self) {
+        self.is_open = !self.is_open;
+    }
+
     fn update(&mut self, ctx: &egui::Context, state: &mut State) {
         egui::Window::new("Resources")
             .resizable(true)

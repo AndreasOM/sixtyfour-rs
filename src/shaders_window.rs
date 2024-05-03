@@ -13,6 +13,7 @@ pub struct ShadersWindow {
     active_resource_id: ResourceId,
     new_shader_type: ShaderType,
     new_shader_resource_id: ResourceId,
+    is_open: bool,
 }
 
 impl core::fmt::Debug for ShadersWindow {
@@ -25,12 +26,15 @@ impl core::fmt::Debug for ShadersWindow {
 struct ShadersWindowSave {
     #[serde(default)]
     active_resource_id: Option<ResourceId>,
+    #[serde(default)]
+    is_open: bool,
 }
 
 impl From<&ShadersWindow> for ShadersWindowSave {
     fn from(sw: &ShadersWindow) -> Self {
         Self {
             active_resource_id: Some(sw.active_resource_id.clone()),
+            is_open: sw.is_open,
         }
     }
 }
@@ -39,8 +43,12 @@ impl Window for ShadersWindow {
         "Shaders"
     }
     fn is_open(&self) -> bool {
-        true
+        self.is_open
     }
+    fn toggle(&mut self) {
+        self.is_open = !self.is_open;
+    }
+
     fn serialize(&self) -> String {
         let save: ShadersWindowSave = self.into();
 
@@ -50,8 +58,9 @@ impl Window for ShadersWindow {
         let mut save: ShadersWindowSave = ron::from_str(&data).unwrap_or_default();
 
         if let Some(active_resource_id) = save.active_resource_id.take() {
-            self.active_resource_id = active_resource_id
+            self.active_resource_id = active_resource_id;
         }
+        self.is_open = save.is_open;
     }
 
     fn update(&mut self, ctx: &egui::Context, state: &mut State) {
@@ -291,6 +300,7 @@ impl Default for ShadersWindow {
             active_resource_id: Default::default(),
             new_shader_type: ShaderType::Fragment,
             new_shader_resource_id: Default::default(),
+            is_open: Default::default(),
         }
     }
 }
