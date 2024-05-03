@@ -8,7 +8,6 @@
 ## ToDo
 
 - [ ] Add line numbers to shader editor
-- [ ] Connect property to hover position
 
 - [ ] vec2 position property picker
 - [ ] Capture McGuffin errors and show them in the editor
@@ -18,12 +17,18 @@
 - [ ] Prefill filename in file picker dialog (save & load)
 - [ ] Add frame time display
 
+- [ ] Make resource path relative to project
+
 ## Later
 - [ ] Rename shaders window
 - [ ] Add code editor theme selection
 - [ ] Replace lazy_static with lazy_cell once stable (e.g. for CommandQueue)
 
 ## Done
+
+### 2024-05-03
+- [x] Disable McGuffin window dragging
+- [x] Connect property to hover position
 
 ### 2024-05-02
 - [x] Show filename as tooltip on reload button
