@@ -6,8 +6,6 @@
 
 ## ToDo
 
-- [ ] Disable reload & save if no file name is set
-- [ ] Prefill filename in file picker dialog (save & load)
 - [ ] Save (resources) on quit
 
 - [ ] Add line numbers to shader editor
@@ -26,6 +24,7 @@
 - [ ] Handle resoure loading and saving via command queue
 
 ## Later
+- [ ] Fix Quit in File dialog crash
 - [ ] Rename shaders window
 - [ ] Add code editor theme selection
 - [ ] Replace lazy_static with lazy_cell once stable (e.g. for CommandQueue)
@@ -34,6 +33,8 @@
 
 ### 2024-05-06
 - [x] Make resource/shader path relative to project
+- [+] Disable reload & save if no file name is set
+- [x] Prefill filename in file picker dialog (save as...)
 
 ### 2024-05-03
 - [x] Disable McGuffin window dragging

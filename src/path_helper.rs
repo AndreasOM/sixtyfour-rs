@@ -25,6 +25,11 @@ impl PathHelper {
             file.to_path_buf()
         }
     }
+
+    pub fn into_string(file: &Path) -> Option<String> {
+        let file_os = file.as_os_str();
+        file_os.to_str().map(std::string::ToString::to_string)
+    }
 }
 
 #[cfg(test)]

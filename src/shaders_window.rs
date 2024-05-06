@@ -6,6 +6,7 @@ use crate::project::ShaderType;
 use crate::state::State;
 use crate::window::Window;
 use color_eyre::Result;
+use std::path::Path;
 
 //#[derive(Clone)]
 pub struct ShadersWindow {
@@ -170,12 +171,13 @@ impl Window for ShadersWindow {
                                             .add_enabled(enabled, egui::Button::new("Save as..."))
                                             .clicked()
                                         {
-                                            //let filename = shader_source.default_file_name();
+                                            // let filename = PathHelper::into_string( rt.file().unwrap_or_else(|| Path::new("")) ).unwrap_or_default() ;
+                                            let filename = rt.file().map( PathHelper::into_string ).flatten().unwrap_or_default() ;
                                             if let Some(file) = rfd::FileDialog::new()
                                                 .set_directory(
                                                     parent
                                                 )
-                                                //.set_file_name(filename)
+                                                .set_file_name(filename)
                                                 .save_file()
                                                 {
                                                     if let Some( relative ) = PathHelper::strip_prefix( &file, parent ) {
