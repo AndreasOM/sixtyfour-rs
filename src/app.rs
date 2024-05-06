@@ -6,7 +6,6 @@ use crate::properties_window::PropertiesWindow;
 use crate::resources_window::ResourcesWindow;
 use crate::shaders_window::ShadersWindow;
 use crate::state::State;
-use crate::window::Window;
 use crate::Command;
 use crate::WindowManager;
 use crate::WindowsMenu;
@@ -125,6 +124,7 @@ impl eframe::App for TemplateApp {
     /// Called by the frame work to save state before shutdown.
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         self.state.save_project();
+        let _todo_handle = self.state.save_all_resources();
 
         eframe::set_value(storage, eframe::APP_KEY, self);
 

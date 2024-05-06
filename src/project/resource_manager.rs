@@ -1,5 +1,6 @@
 use crate::project::Resource;
 use crate::project::ResourceId;
+use color_eyre::Result;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -37,5 +38,21 @@ impl ResourceManager {
         }
 
         any_changes
+    }
+
+    pub fn save_all(&mut self, parent: Option<&Path>) -> Result<()> {
+        let mut any_error = false;
+        for (id, r) in self.resources.iter_mut() {
+            if let Err(e) = r.save(parent) {
+                eprintln!("Error saving {id} -> {e:?}");
+                any_error |= true;
+            }
+        }
+
+        if any_error {
+            eprintln!(":TODO: handle save errors");
+        }
+
+        Ok(())
     }
 }

@@ -2,9 +2,9 @@ use crate::project::Project;
 use crate::project::ResourceId;
 use crate::McGuffinContainer;
 use crate::WindowManager;
+use color_eyre::Result;
 use std::collections::VecDeque;
 use std::path::Path;
-
 use std::path::PathBuf;
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
@@ -70,6 +70,13 @@ impl State {
         &self.recent_project_paths
     }
 
+    pub fn save_all_resources(&mut self) -> Result<()> {
+        if let Some(pp) = &self.project_path {
+            self.project.save_all_resources(pp)
+        } else {
+            Ok(())
+        }
+    }
     pub fn save_project(&mut self) {
         // save the project
         if let Some(pp) = &self.project_path {

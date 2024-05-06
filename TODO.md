@@ -4,9 +4,12 @@
 ## In Progress
 
 
+
 ## ToDo
 
-- [ ] Save (resources) on quit
+- [ ] Improve projecty file management (load, save, ..., etc)
+
+- [ ] Highlight save button if resource is modified
 
 - [ ] Add line numbers to shader editor
 
@@ -35,6 +38,7 @@
 - [x] Make resource/shader path relative to project
 - [+] Disable reload & save if no file name is set
 - [x] Prefill filename in file picker dialog (save as...)
+- [x] Save (resources) on quit
 
 ### 2024-05-03
 - [x] Disable McGuffin window dragging

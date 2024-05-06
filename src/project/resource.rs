@@ -22,6 +22,12 @@ impl Resource {
             _ => false,
         }
     }
+    pub fn save(&mut self, parent: Option<&Path>) -> Result<()> {
+        match self {
+            Resource::Text(rt) => rt.save(parent),
+            _ => Ok(()),
+        }
+    }
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize, Clone)]

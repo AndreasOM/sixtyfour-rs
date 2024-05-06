@@ -35,6 +35,10 @@ impl Project {
         std::fs::write(filename, data)?;
         Ok(())
     }
+
+    pub fn save_all_resources(&mut self, project_folder: &Path) -> Result<()> {
+        self.resource_manager.save_all(Some(project_folder))
+    }
     pub fn name(&self) -> &str {
         &self.name
     }
