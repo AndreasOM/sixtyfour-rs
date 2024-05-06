@@ -138,8 +138,24 @@ impl eframe::App for TemplateApp {
         }
     }
 
+    /*
+    fn raw_input_hook(&mut self, _ctx: &egui::Context, raw_input: &mut egui::RawInput) {
+        eprintln!("{raw_input:?}")
+    }
+    */
+
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        /* :TODO: :( doesn't work
+        // quit handling
+        ctx.input(|i|{
+            if i.viewport().close_requested() {
+                eprintln!("Close requested!");
+                ctx.send_viewport_cmd( egui::viewport::ViewportCommand::CancelClose );
+            }
+        });
+        */
+
         // McGuffin
         {
             if let Some(mgc) = self.state.mc_guffin_cloned() {

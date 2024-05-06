@@ -158,8 +158,13 @@ impl Window for ShadersWindow {
 
 
                                         let enabled = rt.file().is_some();
+                                        let save_txt = if rt.dirty() {
+                                            String::from("* Save")
+                                        } else {
+                                            String::from("Save")
+                                        };
                                         if ui
-                                            .add_enabled(enabled, egui::Button::new("Save"))
+                                            .add_enabled(enabled, egui::Button::new(save_txt))
                                             .on_hover_text(&save_file)
                                             .clicked()
                                         {
@@ -272,6 +277,7 @@ impl Window for ShadersWindow {
                                             );
 
                                             if response.changed() {
+                                                rt.mark_dirty();
                                                 // let mut mg = self.mc_guffin.lock();
                                                 // mg.replace_shader_source(&self.active_shader_type, shader_source);
                                             }

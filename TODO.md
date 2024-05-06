@@ -4,12 +4,11 @@
 ## In Progress
 
 
-
 ## ToDo
+
 
 - [ ] Improve projecty file management (load, save, ..., etc)
 
-- [ ] Highlight save button if resource is modified
 
 - [ ] Add line numbers to shader editor
 
@@ -27,6 +26,7 @@
 - [ ] Handle resoure loading and saving via command queue
 
 ## Later
+- [ ] Block quit when dirty and auto save on quit is off
 - [ ] Fix Quit in File dialog crash
 - [ ] Rename shaders window
 - [ ] Add code editor theme selection
@@ -39,6 +39,7 @@
 - [+] Disable reload & save if no file name is set
 - [x] Prefill filename in file picker dialog (save as...)
 - [x] Save (resources) on quit
+- [x] Highlight save button if resource is modified
 
 ### 2024-05-03
 - [x] Disable McGuffin window dragging

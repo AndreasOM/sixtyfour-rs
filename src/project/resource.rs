@@ -28,6 +28,19 @@ impl Resource {
             _ => Ok(()),
         }
     }
+
+    pub fn dirty(&self) -> bool {
+        match self {
+            Resource::Text(rt) => rt.dirty(),
+            _ => false,
+        }
+    }
+    pub fn mark_dirty(&mut self) {
+        match self {
+            Resource::Text(rt) => rt.mark_dirty(),
+            _ => {}
+        }
+    }
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize, Clone)]
@@ -40,7 +53,7 @@ pub struct ResourceText {
     #[serde(skip)]
     text: String,
     #[serde(skip)]
-    unsaved: bool,
+    dirty: bool,
 }
 
 impl ResourceText {
@@ -70,6 +83,13 @@ impl ResourceText {
         &mut self.text
     }
 
+    pub fn dirty(&self) -> bool {
+        self.dirty
+    }
+    pub fn mark_dirty(&mut self) {
+        self.dirty = true;
+    }
+
     pub fn commit_text_change(&mut self) {
         self.version += 1;
     }
@@ -80,6 +100,7 @@ impl ResourceText {
             eprintln!("Loading from {path:?}");
             let text = std::fs::read_to_string(path)?;
             self.text = text;
+            self.dirty = false;
             Ok(())
         } else {
             Err(eyre!("No save path set").into())
@@ -91,6 +112,7 @@ impl ResourceText {
             eprintln!("Saving to {path:?}");
             let mut file = std::fs::File::create(path)?;
             file.write_all(self.text.as_bytes())?;
+            self.dirty = false;
             Ok(())
         } else {
             Err(eyre!("No save path set").into())
