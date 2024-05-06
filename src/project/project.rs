@@ -14,14 +14,14 @@ pub struct Project {
 }
 
 impl Project {
-    pub fn try_load(filename: &Path) -> Result<Self> {
-        let mut filename = filename.to_path_buf();
+    pub fn try_load(project_folder: &Path) -> Result<Self> {
+        let mut filename = project_folder.to_path_buf();
         filename.push("sfrs.ron");
 
         let data = std::fs::read_to_string(&filename)?;
 
         let mut project: Project = ron::from_str(&data)?;
-        let _ = project.resource_manager.reload_all();
+        let _ = project.resource_manager.reload_all(Some(project_folder));
         Ok(project)
     }
 

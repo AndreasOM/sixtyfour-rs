@@ -1,6 +1,7 @@
 use crate::project::Resource;
 use crate::project::ResourceId;
 use std::collections::HashMap;
+use std::path::Path;
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize, Clone)]
 pub struct ResourceManager {
@@ -29,10 +30,10 @@ impl ResourceManager {
         id
     }
 
-    pub fn reload_all(&mut self) -> bool {
+    pub fn reload_all(&mut self, parent: Option<&Path>) -> bool {
         let mut any_changes = false;
         for (_id, r) in self.resources.iter_mut() {
-            any_changes |= r.reload();
+            any_changes |= r.reload(parent);
         }
 
         any_changes

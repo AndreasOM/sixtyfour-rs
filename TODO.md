@@ -6,22 +6,24 @@
 
 ## ToDo
 
+- [ ] Disable reload & save if no file name is set
+- [ ] Prefill filename in file picker dialog (save & load)
+- [ ] Save (resources) on quit
+
 - [ ] Add line numbers to shader editor
 
 - [ ] vec2 position property picker
 - [ ] Capture McGuffin errors and show them in the editor
 - [ ] Add builtin minimal shader examples
-- [ ] Disable reload & save if no file name is set
-- [ ] Prefill filename in file picker dialog (save & load)
 - [ ] Add frame time display
 
-- [ ] Make resource path relative to project
-- [ ] Save (resources) on quit
 
 - [ ] Implement clone for McGuffinContainer
 - [ ] Add versioning to UniformManager
 
 - [ ] Fix McGuffin size after returning from fullscreen mode
+
+- [ ] Handle resoure loading and saving via command queue
 
 ## Later
 - [ ] Rename shaders window
@@ -29,6 +31,9 @@
 - [ ] Replace lazy_static with lazy_cell once stable (e.g. for CommandQueue)
 
 ## Done
+
+### 2024-05-06
+- [x] Make resource/shader path relative to project
 
 ### 2024-05-03
 - [x] Disable McGuffin window dragging

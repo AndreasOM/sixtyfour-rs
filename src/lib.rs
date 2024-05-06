@@ -35,3 +35,5 @@ mod property_ui_value_vec2_f32;
 mod property_ui_value_vec3_f32;
 
 mod project;
+
+mod path_helper;

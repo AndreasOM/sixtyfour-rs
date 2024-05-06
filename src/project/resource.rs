@@ -1,3 +1,4 @@
+use crate::path_helper::PathHelper;
 use color_eyre::eyre::eyre;
 use color_eyre::Result;
 use std::io::Write;
@@ -15,9 +16,9 @@ pub enum Resource {
 }
 
 impl Resource {
-    pub fn reload(&mut self) -> bool {
+    pub fn reload(&mut self, parent: Option<&Path>) -> bool {
         match self {
-            Resource::Text(rt) => rt.reload().is_ok(),
+            Resource::Text(rt) => rt.reload(parent).is_ok(),
             _ => false,
         }
     }
@@ -67,8 +68,10 @@ impl ResourceText {
         self.version += 1;
     }
 
-    pub fn reload(&mut self) -> Result<()> {
+    pub fn reload(&mut self, parent: Option<&Path>) -> Result<()> {
         if let Some(path) = &self.file {
+            let path = PathHelper::prefix_with(path, parent);
+            eprintln!("Loading from {path:?}");
             let text = std::fs::read_to_string(path)?;
             self.text = text;
             Ok(())
@@ -76,8 +79,9 @@ impl ResourceText {
             Err(eyre!("No save path set").into())
         }
     }
-    pub fn save(&mut self) -> Result<()> {
+    pub fn save(&mut self, parent: Option<&Path>) -> Result<()> {
         if let Some(path) = &self.file {
+            let path = PathHelper::prefix_with(path, parent);
             eprintln!("Saving to {path:?}");
             let mut file = std::fs::File::create(path)?;
             file.write_all(self.text.as_bytes())?;

@@ -104,7 +104,7 @@ impl Window for McGuffinWindow {
             self.mc_guffin_painting(ui, state);
         }) {
             if !state.mc_guffin_is_fullscreen {
-                eprintln!("! {:#?}", ir.response.rect);
+                // eprintln!("! {:#?}", ir.response.rect);
                 self.previous_rect = Some(ir.response.rect);
             }
         }

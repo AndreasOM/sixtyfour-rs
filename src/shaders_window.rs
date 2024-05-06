@@ -1,4 +1,5 @@
 use crate::mc_guffin_container::McGuffinContainer;
+use crate::path_helper::PathHelper;
 use crate::project::Resource;
 use crate::project::ResourceId;
 use crate::project::ShaderType;
@@ -152,6 +153,7 @@ impl Window for ShadersWindow {
                                             String::from("")
                                         };
                                         let current_dir = std::env::current_dir().unwrap_or_else(|_| "/".into());
+                                        let parent = state.project_path.as_ref().unwrap_or(&current_dir);
 
 
                                         let enabled = rt.file().is_some();
@@ -160,7 +162,7 @@ impl Window for ShadersWindow {
                                             .on_hover_text(&save_file)
                                             .clicked()
                                         {
-                                            let _ = rt.save();
+                                            let _ = rt.save( Some( parent ) );
                                         }
 
                                         let enabled = true;
@@ -171,13 +173,18 @@ impl Window for ShadersWindow {
                                             //let filename = shader_source.default_file_name();
                                             if let Some(file) = rfd::FileDialog::new()
                                                 .set_directory(
-                                                    state.project_path.as_ref().unwrap_or(&current_dir)
+                                                    parent
                                                 )
                                                 //.set_file_name(filename)
                                                 .save_file()
-                                            {
-                                                    rt.set_file( file );
-                                                    let _ = rt.save();
+                                                {
+                                                    if let Some( relative ) = PathHelper::strip_prefix( &file, parent ) {
+                                                        eprintln!("Info: {relative:?}");
+                                                        rt.set_file( relative.to_path_buf() );
+                                                        let _ = rt.save( Some( parent ) );
+                                                    } else {
+                                                        eprintln!("Warning: Can only save within project folder");
+                                                    }
                                             }
                                         }
 
@@ -187,7 +194,8 @@ impl Window for ShadersWindow {
                                                 .on_hover_text(save_file)
                                                 .clicked()
                                             {
-                                                let _ = rt.reload();
+                                                //let parent = None;
+                                                let _ = rt.reload( Some( parent ) );
                                             }
                                         let enabled = true;
                                             if ui
@@ -202,8 +210,13 @@ impl Window for ShadersWindow {
                                                     //.set_file_name(filename)
                                                     .pick_file()
                                                 {
-                                                    rt.set_file( file );
-                                                    let _ = rt.reload();
+                                                    if let Some( relative ) = PathHelper::strip_prefix( &file, parent ) {
+                                                        eprintln!("Info: {relative:?}");
+                                                        rt.set_file( relative.to_path_buf() );
+                                                        let _ = rt.reload( Some( parent ) );
+                                                    } else {
+                                                        eprintln!("Warning: Can only load from within project folder");
+                                                    }
                                                 }
                                             }
 
