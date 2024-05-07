@@ -63,7 +63,7 @@ impl Window for PropertiesWindow {
         ron::ser::to_string(&save).unwrap_or_default()
     }
     fn deserialize(&mut self, data: &str) {
-        let mut save: PropertiesWindowSave = ron::from_str(&data).unwrap_or_default();
+        let save: PropertiesWindowSave = ron::from_str(&data).unwrap_or_default();
 
         self.is_open = save.is_open;
     }

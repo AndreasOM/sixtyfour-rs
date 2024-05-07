@@ -9,6 +9,20 @@ pub struct ResourcesWindow {
     is_open: bool,
 }
 
+#[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
+struct ResourcesWindowSave {
+    #[serde(default)]
+    is_open: bool,
+}
+
+impl From<&ResourcesWindow> for ResourcesWindowSave {
+    fn from(rw: &ResourcesWindow) -> Self {
+        Self {
+            is_open: rw.is_open,
+        }
+    }
+}
+
 impl Window for ResourcesWindow {
     fn name(&self) -> &str {
         "Resources"
@@ -97,6 +111,16 @@ impl Window for ResourcesWindow {
                 }
             });
     }
+    fn serialize(&self) -> String {
+        let save: ResourcesWindowSave = self.into();
+
+        ron::ser::to_string(&save).unwrap_or_default()
+    }
+    fn deserialize(&mut self, data: &str) {
+        let save: ResourcesWindowSave = ron::from_str(&data).unwrap_or_default();
+
+        self.is_open = save.is_open;
+    }    
 }
 
 impl ResourcesWindow {}
