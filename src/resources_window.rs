@@ -40,7 +40,15 @@ impl Window for ResourcesWindow {
                                     .file()
                                     .map(|f| format!("{f:?}"))
                                     .unwrap_or_else(|| Default::default());
-                                ui.label(format!("  TXT {f}")).on_hover_text(id);
+                                {
+                                    let l = format!("  TXT {id} {f:20}"); // :TODO: truncate name?
+                                                                          //eprintln!("{l}");
+                                    let rt = egui::RichText::new(l).monospace();
+
+                                    ui.label(rt);
+                                }
+
+                                //                                ui.label(format!("  TXT {f}")).on_hover_text(id);
                                 let _response = ui.add(egui::TextEdit::singleline(rt.name_mut()));
                                 /*
                                 if response.changed() {
