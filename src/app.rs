@@ -243,6 +243,29 @@ impl eframe::App for TemplateApp {
                         eprintln!("{resource_id} not found!");
                     }
                 }
+                Command::ProgramRemoveShader {
+                    resource_id,
+                    shader_resource_id,
+                } => {
+                    if let Some(resource) =
+                        self.state.project.resource_manager.get_mut(&resource_id)
+                    {
+                        match resource {
+                            Resource::Program(rp) => {
+                                if rp.remove_shader(shader_resource_id) {
+                                    // removed
+                                } else {
+                                    // not removed
+                                }
+                            }
+                            _ => {
+                                eprintln!("{resource_id} is not a program!");
+                            }
+                        }
+                    } else {
+                        eprintln!("{resource_id} not found!");
+                    }
+                }
                 o => {
                     eprintln!("Unhandled command {o:?}");
                 }

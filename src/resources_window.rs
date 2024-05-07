@@ -120,7 +120,7 @@ impl Window for ResourcesWindow {
         let save: ResourcesWindowSave = ron::from_str(&data).unwrap_or_default();
 
         self.is_open = save.is_open;
-    }    
+    }
 }
 
 impl ResourcesWindow {}

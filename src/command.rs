@@ -12,6 +12,10 @@ pub enum Command {
         shader_type: ShaderType,
         shader_resource_id: ResourceId,
     },
+    ProgramRemoveShader {
+        resource_id: ResourceId,
+        shader_resource_id: ResourceId,
+    },
     #[default]
     Nop,
 }

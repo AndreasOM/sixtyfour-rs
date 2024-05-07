@@ -82,8 +82,15 @@ impl ShadersWindow {
                                 rt
                             };
 
-                            ui.label(rt);
-                            //ui.label(l);
+                            ui.horizontal(|ui| {
+                                if ui.button("[X]").clicked() {
+                                    let _ = COMMAND_QUEUE.send(Command::ProgramRemoveShader {
+                                        resource_id: selected_program_id.clone(),
+                                        shader_resource_id: rid.to_string(),
+                                    });
+                                };
+                                ui.label(rt);
+                            });
                         }
                         let mut new_shader = None;
                         ui.horizontal(|ui| {

@@ -142,6 +142,12 @@ impl ResourceProgram {
 
         self.shaders.push(s);
     }
+
+    pub fn remove_shader(&mut self, resource_id: ResourceId) -> bool {
+        let l = self.shaders.len();
+        self.shaders.retain(|s| *s.resource_id() != resource_id);
+        l != self.shaders.len()
+    }
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Debug, Default, Clone)]
