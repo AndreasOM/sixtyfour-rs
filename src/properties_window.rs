@@ -8,6 +8,20 @@ pub struct PropertiesWindow {
     is_open: bool,
 }
 
+#[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
+struct PropertiesWindowSave {
+    #[serde(default)]
+    is_open: bool,
+}
+
+impl From<&PropertiesWindow> for PropertiesWindowSave {
+    fn from(pw: &PropertiesWindow) -> Self {
+        Self {
+            is_open: pw.is_open,
+        }
+    }
+}
+
 impl Window for PropertiesWindow {
     fn name(&self) -> &str {
         "Properties"
@@ -42,6 +56,16 @@ impl Window for PropertiesWindow {
                 }
             });
         self.property_ui.update(ctx);
+    }
+    fn serialize(&self) -> String {
+        let save: PropertiesWindowSave = self.into();
+
+        ron::ser::to_string(&save).unwrap_or_default()
+    }
+    fn deserialize(&mut self, data: &str) {
+        let mut save: PropertiesWindowSave = ron::from_str(&data).unwrap_or_default();
+
+        self.is_open = save.is_open;
     }
 }
 

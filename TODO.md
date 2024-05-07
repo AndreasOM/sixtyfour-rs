@@ -3,6 +3,7 @@
 
 ## In Progress
 
+- [ ] Tweak properties window
 
 ## ToDo
 
@@ -12,7 +13,6 @@
 
 - [ ] Add line numbers to shader editor
 
-- [ ] vec2 position property picker
 - [ ] Capture McGuffin errors and show them in the editor
 - [ ] Add builtin minimal shader examples
 - [ ] Add frame time display
@@ -24,6 +24,8 @@
 - [ ] Fix McGuffin size after returning from fullscreen mode
 
 - [ ] Handle resoure loading and saving via command queue
+
+- [ ] vec2 position property picker
 
 ## Later
 - [ ] Block quit when dirty and auto save on quit is off
