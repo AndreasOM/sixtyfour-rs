@@ -40,6 +40,69 @@ impl From<&ShadersWindow> for ShadersWindowSave {
         }
     }
 }
+
+impl ShadersWindow {
+    fn update_shaders(&mut self, ui: &mut egui::Ui, state: &mut State) {
+        if let Some(selected_program_id) = state.selected_program_id().cloned() {
+            ui.label(format!("{selected_program_id}"));
+            let text_resources: Vec<ResourceId> = state
+                .project
+                .resource_manager
+                .resources()
+                .iter()
+                .filter(|(_k, r)| {
+                    if let Resource::Text(_) = *r {
+                        true
+                    } else {
+                        false
+                    }
+                })
+                .map(|(k, _r)| k.to_owned())
+                .collect();
+            if let Some(resource) = state.project.resource_manager.get_mut(&selected_program_id) {
+                match resource {
+                    Resource::Program(rp) => {
+                        for s in rp.shaders() {
+                            ui.label(format!("{:?} {}", s.shader_type(), s.resource_id()));
+                        }
+                        let mut new_shader = None;
+                        ui.horizontal(|ui| {
+                            if ui.button("Add Shader").clicked() {
+                                let shader_type = &self.new_shader_type;
+                                let resource_id = &self.new_shader_resource_id;
+                                new_shader = Some((*shader_type, resource_id.to_owned()));
+                            }
+                            let shader_type = &mut self.new_shader_type;
+                            egui::ComboBox::from_label("Shader Type")
+                                .selected_text(format!("{:?}", shader_type))
+                                .show_ui(ui, |ui| {
+                                    ui.selectable_value(
+                                        shader_type,
+                                        ShaderType::Fragment,
+                                        "Fragment",
+                                    );
+                                    ui.selectable_value(shader_type, ShaderType::Vertex, "Vertex");
+                                });
+                            let resource_id = &mut self.new_shader_resource_id;
+                            egui::ComboBox::from_label("Resource Id")
+                                .selected_text(format!("{:?}", resource_id))
+                                .show_ui(ui, |ui| {
+                                    for id in text_resources.iter() {
+                                        ui.selectable_value(resource_id, id.to_string(), id);
+                                    }
+                                });
+                        });
+
+                        if let Some((shader_type, resource_id)) = new_shader.take() {
+                            rp.add_shader(shader_type, resource_id);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+}
 impl Window for ShadersWindow {
     fn name(&self) -> &str {
         "Shaders"
@@ -67,60 +130,22 @@ impl Window for ShadersWindow {
 
     fn update(&mut self, ctx: &egui::Context, state: &mut State) {
         let mgc = state.mc_guffin().map(|mgc| mgc.clone());
+        let mut is_open = self.is_open;
         egui::Window::new("Shaders")
             .resizable(true)
             .hscroll(false)
             .vscroll(false)
             .collapsible(false)
             //.title_bar(false)
-            .open( &mut self.is_open )
+            .open( &mut is_open )
             .show(ctx, |ui| {
+                self.update_shaders( ui, state );
+                ui.separator(); // ---------------------------
                 if let Some( selected_program_id ) = state.selected_program_id().cloned() {
-                    ui.label( format!("{selected_program_id}"));
-                    let text_resources: Vec<ResourceId> = state.project.resource_manager.resources().iter().filter(|(_k,r)|{
-                        if let Resource::Text(_) = *r  {
-                            true
-                        } else {
-                            false
-                        }
-                    }).map(|(k,_r)| k.to_owned() ).collect();
                     if let Some( resource ) = state.project.resource_manager.get_mut( &selected_program_id ) {
 
                         match resource {
                             Resource::Program( rp ) => {
-                                for s in rp.shaders() {
-                                    ui.label(format!("{:?} {}", s.shader_type(), s.resource_id()));
-                                }
-                                let mut new_shader = None;
-                                ui.horizontal(|ui|{
-                                    if ui.button("Add Shader").clicked() {
-                                        let shader_type = &self.new_shader_type;
-                                        let resource_id = &self.new_shader_resource_id;
-                                        new_shader = Some( ( *shader_type, resource_id.to_owned() ) );
-                                    }
-                                    let shader_type = &mut self.new_shader_type;
-                                    egui::ComboBox::from_label("Shader Type")
-                                        .selected_text(format!("{:?}", shader_type))
-                                        .show_ui(ui, |ui| {
-                                            ui.selectable_value(shader_type, ShaderType::Fragment, "Fragment");
-                                            ui.selectable_value(shader_type, ShaderType::Vertex, "Vertex");
-                                        }
-                                    );
-                                    let resource_id = &mut self.new_shader_resource_id;
-                                    egui::ComboBox::from_label("Resource Id")
-                                        .selected_text(format!("{:?}", resource_id))
-                                        .show_ui(ui, |ui| {
-                                            for id in text_resources.iter() {
-                                                ui.selectable_value(resource_id, id.to_string(), id);
-                                            }
-                                        }
-                                    );
-                                });
-
-                                if let Some( ( shader_type, resource_id ) ) = new_shader.take() {
-                                    rp.add_shader( shader_type, resource_id );
-                                }
-                                ui.separator();
                                 ui.horizontal(|ui|{
                                     for s in rp.shaders() {
                                         //??? ui.visuals_mut().button_frame = false;
@@ -311,6 +336,7 @@ impl Window for ShadersWindow {
                 }
                 */
             });
+        self.is_open = is_open;
     }
 }
 

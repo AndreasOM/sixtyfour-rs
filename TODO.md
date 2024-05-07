@@ -3,6 +3,9 @@
 
 ## In Progress
 
+- [ ] Allow removing of resources
+	- [ ] Remove shader from program
+	- [ ] Remove resource from project
 - [ ] Tweak properties window
 
 ## ToDo
