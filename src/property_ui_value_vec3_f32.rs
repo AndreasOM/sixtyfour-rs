@@ -2,6 +2,9 @@ use crate::project::Property;
 use crate::project::PropertyConfig;
 use crate::project::PropertyValue;
 use crate::PropertyUiValue;
+use egui::Color32;
+use egui::RichText;
+use egui::WidgetText;
 
 #[derive(Debug, Default)]
 pub struct PropertyUiValueVec3F32 {}
@@ -9,6 +12,42 @@ pub struct PropertyUiValueVec3F32 {}
 impl PropertyUiValueVec3F32 {}
 
 impl PropertyUiValue for PropertyUiValueVec3F32 {
+    fn label(&self, name: &str, property: &mut Property) -> Option<WidgetText> {
+        match (&mut property.value, &mut property.config) {
+            (
+                PropertyValue::Vec3F32 { values },
+                PropertyConfig::F32 {
+                    min_value: _,
+                    max_value: _,
+                    step_size: _,
+                },
+            ) => Some(
+                format!(
+                    "{name} {:.3}, {:.3}, {:.3}",
+                    values[0], values[1], values[2]
+                )
+                .into(),
+            ),
+            (PropertyValue::Vec3F32 { values }, PropertyConfig::ColorRgb {}) => {
+                let c = Color32::from_rgb(
+                    (values[0] * 255.0).floor() as u8,
+                    (values[1] * 255.0).floor() as u8,
+                    (values[2] * 255.0).floor() as u8,
+                );
+                let h = c.to_hex();
+                Some(
+                    RichText::new(format!(
+                        "{name} {h} {:.3}, {:.3}, {:.3}",
+                        values[0], values[1], values[2]
+                    ))
+                    .color(c)
+                    // .monospace() // caller already ensures monospace
+                    .into(),
+                )
+            }
+            _ => None,
+        }
+    }
     fn update(&self, ui: &mut egui::Ui, name: &str, property: &mut Property) -> bool {
         match (&mut property.value, &mut property.config) {
             (

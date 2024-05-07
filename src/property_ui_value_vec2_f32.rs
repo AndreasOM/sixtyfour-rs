@@ -2,6 +2,7 @@ use crate::project::Property;
 use crate::project::PropertyConfig;
 use crate::project::PropertyValue;
 use crate::PropertyUiValue;
+use egui::WidgetText;
 
 #[derive(Debug, Default)]
 pub struct PropertyUiValueVec2F32 {}
@@ -9,6 +10,19 @@ pub struct PropertyUiValueVec2F32 {}
 impl PropertyUiValueVec2F32 {}
 
 impl PropertyUiValue for PropertyUiValueVec2F32 {
+    fn label(&self, name: &str, property: &mut Property) -> Option<WidgetText> {
+        match (&mut property.value, &mut property.config) {
+            (
+                PropertyValue::Vec2F32 { values },
+                PropertyConfig::F32 {
+                    min_value: _,
+                    max_value: _,
+                    step_size: _,
+                },
+            ) => Some(format!("{name} {:.3}, {:.3}", values[0], values[1]).into()),
+            _ => None,
+        }
+    }
     fn update(&self, ui: &mut egui::Ui, name: &str, property: &mut Property) -> bool {
         match (&mut property.value, &mut property.config) {
             (

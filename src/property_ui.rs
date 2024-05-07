@@ -4,6 +4,8 @@ use crate::project::PropertyConfig;
 use crate::property_ui_value_vec2_f32::PropertyUiValueVec2F32;
 use crate::property_ui_value_vec3_f32::PropertyUiValueVec3F32;
 use crate::Command;
+use egui::WidgetText;
+use std::collections::HashMap;
 
 use crate::property_ui_value_f32::PropertyUiValueF32;
 use crate::PropertyUiValue;
@@ -13,6 +15,7 @@ pub struct PropertyUi {
     configuring: Option<(String, PropertyConfig)>,
     applying: Option<(String, PropertyConfig)>,
     property_ui_values: Vec<Box<dyn PropertyUiValue>>,
+    fully_closed: HashMap<String, bool>,
 }
 
 impl Default for PropertyUi {
@@ -25,6 +28,7 @@ impl Default for PropertyUi {
         Self {
             configuring: Default::default(),
             applying: Default::default(),
+            fully_closed: Default::default(),
             property_ui_values,
         }
     }
@@ -120,26 +124,51 @@ impl PropertyUi {
             }
         }
 
-        ui.horizontal_wrapped(|ui| {
-            let mut handled = false;
-
+        let n = if true || *self.fully_closed.get(name).unwrap_or(&false) {
+            let mut n = WidgetText::default();
             for v in self.property_ui_values.iter() {
-                if v.update(ui, name, property) {
-                    handled = true;
+                if let Some(l) = v.label(name, property) {
+                    n = l;
                     break;
                 }
             }
+            //format!("{name} {n}")
+            n
+        } else {
+            format!("{name}").into()
+        };
 
-            if !handled {
-                let value = format!("Unhandled {:?}", property.value);
-                ui.label(value);
-            }
-            let enabled = self.configuring.is_none();
-            edit_clicked = ui
-                .add_enabled(enabled, egui::Button::new("⚙️ "))
-                .on_hover_text("Configure")
-                .clicked();
-        });
+        let n = n.monospace();
+
+        let r = egui::CollapsingHeader::new(n)
+            .id_source(name)
+            .show(ui, |ui| {
+                ui.horizontal_wrapped(|ui| {
+                    let mut handled = false;
+
+                    for v in self.property_ui_values.iter() {
+                        if v.update(ui, name, property) {
+                            handled = true;
+                            break;
+                        }
+                    }
+
+                    if !handled {
+                        let value = format!("Unhandled {:?}", property.value);
+                        ui.label(value);
+                    }
+                    let enabled = self.configuring.is_none();
+                    edit_clicked = ui
+                        .add_enabled(enabled, egui::Button::new("⚙️ "))
+                        .on_hover_text("Configure")
+                        .clicked();
+                });
+            });
+        if r.fully_closed() {
+            self.fully_closed.insert(name.to_string(), true);
+        } else {
+            self.fully_closed.insert(name.to_string(), false);
+        }
 
         if edit_clicked {
             self.configuring = Some((name.into(), property.config.clone()));

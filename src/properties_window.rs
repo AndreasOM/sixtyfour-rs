@@ -36,6 +36,7 @@ impl Window for PropertiesWindow {
     fn update(&mut self, ctx: &egui::Context, state: &mut State) {
         egui::Window::new("Properties")
             .resizable(true)
+            //.min_width( 1000.0 )
             .hscroll(false)
             .vscroll(true)
             .collapsible(false)
@@ -54,6 +55,7 @@ impl Window for PropertiesWindow {
                 for (k, p) in state.project.property_manager.entries_mut().iter_mut() {
                     self.property_ui.property(ctx, ui, k, p);
                 }
+                ui.allocate_space(egui::vec2(333.0, 0.0))
             });
         self.property_ui.update(ctx);
     }

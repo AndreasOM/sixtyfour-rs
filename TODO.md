@@ -3,7 +3,6 @@
 
 ## In Progress
 
-- [ ] Tweak properties window
 
 ## ToDo
 
@@ -42,6 +41,7 @@
 - [x] Allow removing of resources
 	- [x] Remove shader from program
 	- [x] Remove resource from project
+- [x] Improve properties window
 
 ### 2024-05-06
 - [x] Make resource/shader path relative to project
