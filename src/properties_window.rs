@@ -37,7 +37,7 @@ impl Window for PropertiesWindow {
         egui::Window::new("Properties")
             .resizable(true)
             .hscroll(false)
-            .vscroll(false)
+            .vscroll(true)
             .collapsible(false)
             //.title_bar(false)
             .open(&mut self.is_open)
