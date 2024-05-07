@@ -1,6 +1,7 @@
 use crate::command_queue::COMMAND_QUEUE;
 use crate::mc_guffin_container::McGuffinContainer;
 use crate::mc_guffin_window::McGuffinWindow;
+use crate::project::Resource;
 use crate::project_window::ProjectWindow;
 use crate::properties_window::PropertiesWindow;
 use crate::resources_window::ResourcesWindow;
@@ -221,6 +222,26 @@ impl eframe::App for TemplateApp {
                 Command::LeaveFullscreen => {
                     // :TODO: side effects
                     self.state.mc_guffin_is_fullscreen = false;
+                }
+                Command::ProgramAddShader {
+                    resource_id,
+                    shader_type,
+                    shader_resource_id,
+                } => {
+                    if let Some(resource) =
+                        self.state.project.resource_manager.get_mut(&resource_id)
+                    {
+                        match resource {
+                            Resource::Program(rp) => {
+                                rp.add_shader(shader_type, shader_resource_id);
+                            }
+                            _ => {
+                                eprintln!("{resource_id} is not a program!");
+                            }
+                        }
+                    } else {
+                        eprintln!("{resource_id} not found!");
+                    }
                 }
                 o => {
                     eprintln!("Unhandled command {o:?}");

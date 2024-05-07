@@ -1,12 +1,12 @@
-use crate::mc_guffin_container::McGuffinContainer;
+use crate::command_queue::COMMAND_QUEUE;
 use crate::path_helper::PathHelper;
 use crate::project::Resource;
 use crate::project::ResourceId;
 use crate::project::ShaderType;
 use crate::state::State;
 use crate::window::Window;
+use crate::Command;
 use color_eyre::Result;
-use std::path::Path;
 
 //#[derive(Clone)]
 pub struct ShadersWindow {
@@ -59,11 +59,31 @@ impl ShadersWindow {
                 })
                 .map(|(k, _r)| k.to_owned())
                 .collect();
-            if let Some(resource) = state.project.resource_manager.get_mut(&selected_program_id) {
+            if let Some(resource) = state.project.resource_manager.get(&selected_program_id) {
                 match resource {
                     Resource::Program(rp) => {
                         for s in rp.shaders() {
-                            ui.label(format!("{:?} {}", s.shader_type(), s.resource_id()));
+                            let name = if let Some(shader) =
+                                state.project.resource_manager.get(s.resource_id())
+                            {
+                                shader.name()
+                            } else {
+                                ""
+                            };
+                            let st: &str = (&s.shader_type()).into();
+                            let rid = s.resource_id();
+                            //let st = s.shader_type();
+                            let l = format!("{st:>9} {rid} {name}");
+                            //eprintln!("{l}");
+                            let rt = egui::RichText::new(l).monospace();
+                            let rt = if *s.resource_id() == self.active_resource_id {
+                                rt.strong()
+                            } else {
+                                rt
+                            };
+
+                            ui.label(rt);
+                            //ui.label(l);
                         }
                         let mut new_shader = None;
                         ui.horizontal(|ui| {
@@ -93,8 +113,13 @@ impl ShadersWindow {
                                 });
                         });
 
-                        if let Some((shader_type, resource_id)) = new_shader.take() {
-                            rp.add_shader(shader_type, resource_id);
+                        if let Some((shader_type, shader_resource_id)) = new_shader.take() {
+                            let _ = COMMAND_QUEUE.send(Command::ProgramAddShader {
+                                resource_id: selected_program_id.clone(),
+                                shader_type,
+                                shader_resource_id,
+                            });
+                            //rp.add_shader(shader_type, resource_id);
                         }
                     }
                     _ => {}

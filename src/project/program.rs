@@ -33,3 +33,12 @@ pub enum ShaderType {
     Fragment,
     Vertex,
 }
+
+impl core::fmt::Display for ShaderType {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+        match self {
+            Self::Fragment => write!(f, "Fragment"),
+            Self::Vertex => write!(f, "Vertex"),
+        }
+    }
+}

@@ -29,6 +29,13 @@ impl Resource {
         }
     }
 
+    pub fn name(&self) -> &str {
+        match self {
+            Resource::Text(rt) => rt.name(),
+            _ => "",
+        }
+    }
+
     pub fn dirty(&self) -> bool {
         match self {
             Resource::Text(rt) => rt.dirty(),
@@ -65,7 +72,7 @@ impl ResourceText {
         self.file = Some(filename);
     }
 
-    pub fn name(&mut self) -> &str {
+    pub fn name(&self) -> &str {
         &self.name
     }
     pub fn name_mut(&mut self) -> &mut String {
@@ -163,4 +170,22 @@ pub enum ShaderType {
     #[default]
     Fragment,
     Vertex,
+}
+
+impl core::fmt::Display for ShaderType {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+        match self {
+            Self::Fragment => write!(f, "Fragment"),
+            Self::Vertex => write!(f, "Vertex"),
+        }
+    }
+}
+
+impl From<&ShaderType> for &str {
+    fn from(st: &ShaderType) -> Self {
+        match st {
+            ShaderType::Fragment => "Fragment",
+            ShaderType::Vertex => "Vertex",
+        }
+    }
 }
