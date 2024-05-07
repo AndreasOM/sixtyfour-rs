@@ -266,6 +266,14 @@ impl eframe::App for TemplateApp {
                         eprintln!("{resource_id} not found!");
                     }
                 }
+                Command::RemoveResource { resource_id } => {
+                    if let Some(_removed) = self.state.project.resource_manager.remove(&resource_id)
+                    {
+                        // removed
+                    } else {
+                        // not removed
+                    }
+                }
                 o => {
                     eprintln!("Unhandled command {o:?}");
                 }

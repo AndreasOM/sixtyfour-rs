@@ -3,9 +3,6 @@
 
 ## In Progress
 
-- [ ] Allow removing of resources
-	- [ ] Remove shader from program
-	- [ ] Remove resource from project
 - [ ] Tweak properties window
 
 ## ToDo
@@ -38,6 +35,13 @@
 - [ ] Replace lazy_static with lazy_cell once stable (e.g. for CommandQueue)
 
 ## Done
+
+### 2024-05-07
+- [x] Improve shader list in program window
+- [x] Improve resource list in resource window
+- [x] Allow removing of resources
+	- [x] Remove shader from program
+	- [x] Remove resource from project
 
 ### 2024-05-06
 - [x] Make resource/shader path relative to project

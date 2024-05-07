@@ -1,8 +1,10 @@
+use crate::command_queue::COMMAND_QUEUE;
 use crate::project::Resource;
 use crate::project::ResourceProgram;
 use crate::project::ResourceText;
 use crate::state::State;
 use crate::window::Window;
+use crate::Command;
 
 #[derive(Debug, Default)]
 pub struct ResourcesWindow {
@@ -50,13 +52,19 @@ impl Window for ResourcesWindow {
                     match r {
                         Resource::Text(rt) => {
                             ui.horizontal(|ui| {
+                                if ui.button("[X]").clicked() {
+                                    let _ = COMMAND_QUEUE.send(Command::RemoveResource {
+                                        resource_id: id.clone(),
+                                    });
+                                };
+
                                 let f = rt
                                     .file()
                                     .map(|f| format!("{f:?}"))
                                     .unwrap_or_else(|| Default::default());
                                 {
-                                    let l = format!("  TXT {id} {f:20}"); // :TODO: truncate name?
-                                                                          //eprintln!("{l}");
+                                    let l = format!("    TXT {id} {f:20}"); // :TODO: truncate name?
+                                                                            //eprintln!("{l}");
                                     let rt = egui::RichText::new(l).monospace();
 
                                     ui.label(rt);
@@ -71,21 +79,29 @@ impl Window for ResourcesWindow {
                                 */
                             });
                         }
-                        Resource::Program(rp) => {
+                        Resource::Program(_rp) => {
                             ui.horizontal(|ui| {
-                                let s = if Some(id) == current_selected_program_id.as_ref() {
+                                let t = if Some(id) == current_selected_program_id.as_ref() {
                                     //state.selected_program_id() {
-                                    if ui.button("[D]").on_hover_text("Deselect").clicked() {
+                                    if ui
+                                        .button(egui::RichText::new("[D]").monospace())
+                                        .on_hover_text("Deselect")
+                                        .clicked()
+                                    {
                                         deselect_program_id = true;
                                     }
-                                    "!"
+                                    egui::RichText::new(format!("! PRG")).strong()
                                 } else {
-                                    if ui.button("[S]").on_hover_text("Select").clicked() {
+                                    if ui
+                                        .button(egui::RichText::new("[S]").monospace())
+                                        .on_hover_text("Select")
+                                        .clicked()
+                                    {
                                         selected_program_id = Some(id.clone());
                                     }
-                                    " "
+                                    egui::RichText::new(format!(" PRG"))
                                 };
-                                ui.label(format!("{s} PRG")).on_hover_text(id);
+                                ui.label(t).on_hover_text(id);
                             });
                         }
                         o => {

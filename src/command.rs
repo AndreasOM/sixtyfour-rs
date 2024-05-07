@@ -16,6 +16,9 @@ pub enum Command {
         resource_id: ResourceId,
         shader_resource_id: ResourceId,
     },
+    RemoveResource {
+        resource_id: ResourceId,
+    },
     #[default]
     Nop,
 }

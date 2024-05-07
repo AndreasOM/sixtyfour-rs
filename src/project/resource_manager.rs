@@ -31,6 +31,10 @@ impl ResourceManager {
         id
     }
 
+    pub fn remove(&mut self, resource_id: &ResourceId) -> Option<Resource> {
+        self.resources.remove(resource_id)
+    }
+
     pub fn reload_all(&mut self, parent: Option<&Path>) -> bool {
         let mut any_changes = false;
         for (_id, r) in self.resources.iter_mut() {
