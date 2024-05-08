@@ -25,6 +25,7 @@ pub struct McGuffin {
     properties_f32: HashMap<String, f32>,
     properties_vec2_f32: HashMap<String, [f32; 2]>,
     properties_vec3_f32: HashMap<String, [f32; 3]>,
+    properties_vec3_f32_size4: HashMap<String, [f32; 3 * 4]>,
     shader_sources: HashMap<String, ShaderSource>,
 
     project: Project,
@@ -315,6 +316,11 @@ impl McGuffin {
         for (k, v) in self.properties_vec3_f32.iter() {
             let _ = self.pipeline.set_property_vec3_f32(&mut self.gl, k, v);
         }
+        for (k, v) in self.properties_vec3_f32_size4.iter() {
+            let _ = self
+                .pipeline
+                .set_property_vec3_f32_size4(&mut self.gl, k, v);
+        }
         self.gl.check_gl_error(std::file!(), std::line!());
 
         self.gl.draw_arrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -338,6 +344,9 @@ impl McGuffin {
     fn set_property_vec3_f32(&mut self, name: &str, values: &[f32; 3]) {
         self.properties_vec3_f32.insert(name.into(), *values);
     }
+    fn set_property_vec3_f32_size4(&mut self, name: &str, values: &[f32; 3 * 4]) {
+        self.properties_vec3_f32_size4.insert(name.into(), *values);
+    }
 
     pub fn update_from_project(&mut self, project: &Project) {
         self.project = (*project).clone();
@@ -352,6 +361,9 @@ impl McGuffin {
                 PropertyValue::F32 { value, .. } => self.set_property_f32(k, *value),
                 PropertyValue::Vec2F32 { values } => self.set_property_vec2_f32(k, &values),
                 PropertyValue::Vec3F32 { values } => self.set_property_vec3_f32(k, &values),
+                PropertyValue::Vec3F32Size4 { values } => {
+                    self.set_property_vec3_f32_size4(k, &values)
+                }
                 v => {
                     eprintln!("Update for PropertyValue {v:?} not implemented");
                 }

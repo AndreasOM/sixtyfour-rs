@@ -34,7 +34,7 @@ impl PropertyUiValue for PropertyUiValueVec2F32 {
                 },
             ) => {
                 ui.vertical(|ui| {
-                    ui.label(name);
+                    //ui.label(name);
                     //egui::widgets::color_picker::color_edit_button_rgb( ui, &mut *values);
 
                     ui.add(
@@ -52,7 +52,7 @@ impl PropertyUiValue for PropertyUiValueVec2F32 {
             }
             (PropertyValue::Vec3F32 { values }, PropertyConfig::ColorRgb {}) => {
                 ui.vertical(|ui| {
-                    ui.label(name);
+                    //ui.label(name);
                     egui::widgets::color_picker::color_edit_button_rgb(ui, &mut *values);
                 });
                 true

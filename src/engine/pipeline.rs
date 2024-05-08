@@ -76,6 +76,24 @@ impl Pipeline {
 
         Ok(())
     }
+    pub fn set_property_vec3_f32_size4(
+        &mut self,
+        gl: &mut Gl,
+        name: &str,
+        values: &[f32; 3 * 4],
+    ) -> Result<()> {
+        if let Some(u) = self.uniform_manager.get_mut(name) {
+            match u.ttype() {
+                UniformType::Vec3Float => u.set_vec3_f32_size4(gl, self.program, values),
+                _ => {}
+            }
+        }
+        if gl.check_gl_error(std::file!(), std::line!()) {
+            eprintln!("Error after setting {name}");
+        }
+
+        Ok(())
+    }
     pub fn rebuild(
         &mut self,
         gl: &mut Gl,
@@ -222,7 +240,9 @@ impl Pipeline {
                     self.uniform_manager.add_entry(name.clone(), u);
                 }
                 GL_FLOAT_VEC3 => {
-                    let mut u = Uniform::new_vec3_float();
+                    // :TODO: check for struct if size is > 1
+                    assert!(size < 256);
+                    let mut u = Uniform::new_vec3_float(size as u8);
                     if l != -1 {
                         u.set_location(l);
                     }

@@ -3,6 +3,7 @@ use crate::project::Property;
 use crate::project::PropertyConfig;
 use crate::property_ui_value_vec2_f32::PropertyUiValueVec2F32;
 use crate::property_ui_value_vec3_f32::PropertyUiValueVec3F32;
+use crate::property_ui_value_vec3_f32_size4::PropertyUiValueVec3F32Size4;
 use crate::Command;
 use egui::WidgetText;
 use std::collections::HashMap;
@@ -24,6 +25,7 @@ impl Default for PropertyUi {
         property_ui_values.push(Box::new(PropertyUiValueF32::default()));
         property_ui_values.push(Box::new(PropertyUiValueVec2F32::default()));
         property_ui_values.push(Box::new(PropertyUiValueVec3F32::default()));
+        property_ui_values.push(Box::new(PropertyUiValueVec3F32Size4::default()));
 
         Self {
             configuring: Default::default(),

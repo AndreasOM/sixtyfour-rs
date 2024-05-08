@@ -40,6 +40,7 @@
 ### 2024-05-08
 - [x] Fix McGuffin size after returning from fullscreen mode
 - [x] Use ALT-Enter to toggle fullscreen
+- [x] Add support for vec3[4] uniforms/properties
 
 ### 2024-05-07
 - [x] Improve shader list in program window

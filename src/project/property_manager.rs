@@ -28,6 +28,12 @@ impl Property {
             config: PropertyConfig::default_f32(),
         }
     }
+    pub fn default_vec3_f32_size4(values: &[f32; 3 * 4]) -> Self {
+        Self {
+            value: PropertyValue::Vec3F32Size4 { values: *values },
+            config: PropertyConfig::default_f32(),
+        }
+    }
     pub fn value(&self) -> &PropertyValue {
         &self.value
     }
@@ -55,6 +61,10 @@ pub enum PropertyValue {
     },
     Vec3F32 {
         values: [f32; 3],
+    },
+    Vec3F32Size4 {
+        // :HACK:
+        values: [f32; 3 * 4],
     },
     Bool {
         value: bool,
@@ -169,13 +179,39 @@ impl PropertyManager {
             }
         }
     }
+    pub fn ensure_property_vec3_f32_size4(&mut self, name: &str, default_values: &[f32; 3 * 4]) {
+        if !self.entries.contains_key(name) {
+            self.entries.insert(
+                name.into(),
+                Property::default_vec3_f32_size4(default_values),
+            );
+        } else {
+            // :TODO: ensure type is correct
+        }
+        /*
+                if let Some(p) = self.entries.get_mut(name) {
+                    if name.ends_with("_rgb") {
+                        match p.config {
+                            PropertyConfig::ColorRgb {} => {}
+                            _ => {
+                                p.config = PropertyConfig::ColorRgb {};
+                            }
+                        }
+                    }
+                }
+        */
+    }
 
     pub fn ensure_all_properties_from_uniforms(&mut self, uniform_manager: &UniformManager) {
         for (k, v) in uniform_manager.entries().iter() {
             match v.ttype() {
                 UniformType::Float => self.ensure_property_f32(k, 1.0),
                 UniformType::Vec2Float => self.ensure_property_vec2_f32(k, &[1.0, 1.0]),
-                UniformType::Vec3Float => self.ensure_property_vec3_f32(k, &[1.0, 1.0, 1.0]),
+                UniformType::Vec3Float => match v.size() {
+                    1 => self.ensure_property_vec3_f32(k, &[1.0, 1.0, 1.0]),
+                    4 => self.ensure_property_vec3_f32_size4(k, &[1.0; 3 * 4]),
+                    o => eprintln!("Size {o} not supported for Vec3Float -> {k}"),
+                },
                 o => {
                     eprintln!("No matching property for {o:?}");
                 }
