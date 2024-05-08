@@ -6,6 +6,7 @@ pub enum Command {
     DeleteProperty {
         name: String,
     },
+    ToggleFullscreen,
     LeaveFullscreen,
     ProgramAddShader {
         resource_id: ResourceId,

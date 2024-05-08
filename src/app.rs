@@ -157,6 +157,14 @@ impl eframe::App for TemplateApp {
         });
         */
 
+        ctx.input_mut(|i| {
+            if i.consume_key(egui::Modifiers::ALT, egui::Key::Enter) {
+                //if i.consume_shortcut( &egui::KeyboardShortcut::new( egui::Modifiers::ALT, egui::Key::Enter ) ) {
+                eprintln!("ALT-Enter");
+                let _ = COMMAND_QUEUE.send(Command::ToggleFullscreen);
+            }
+        });
+
         // McGuffin
         {
             if let Some(mgc) = self.state.mc_guffin_cloned() {
@@ -222,6 +230,10 @@ impl eframe::App for TemplateApp {
                 Command::LeaveFullscreen => {
                     // :TODO: side effects
                     self.state.mc_guffin_is_fullscreen = false;
+                }
+                Command::ToggleFullscreen => {
+                    // :TODO: side effects
+                    self.state.mc_guffin_is_fullscreen = !self.state.mc_guffin_is_fullscreen;
                 }
                 Command::ProgramAddShader {
                     resource_id,
