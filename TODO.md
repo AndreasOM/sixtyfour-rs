@@ -20,13 +20,15 @@
 - [ ] Implement clone for McGuffinContainer
 - [ ] Add versioning to UniformManager
 
-- [ ] Fix McGuffin size after returning from fullscreen mode
 
 - [ ] Handle resoure loading and saving via command queue
 
 - [ ] vec2 position property picker
 
+- [ ] Display current project folder _somewhere_
+
 ## Later
+- [ ] Look into _off by one_ width for window size restore after fullscreen
 - [ ] Block quit when dirty and auto save on quit is off
 - [ ] Fix Quit in File dialog crash
 - [ ] Rename shaders window
@@ -34,6 +36,9 @@
 - [ ] Replace lazy_static with lazy_cell once stable (e.g. for CommandQueue)
 
 ## Done
+
+### 2024-05-08
+- [x] Fix McGuffin size after returning from fullscreen mode
 
 ### 2024-05-07
 - [x] Improve shader list in program window

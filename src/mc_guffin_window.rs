@@ -58,6 +58,7 @@ impl Window for McGuffinWindow {
 
     fn update(&mut self, ctx: &egui::Context, state: &mut State) {
         let mut is_open = self.is_open;
+        // target:  [[0.0 23.8] - [257.0 189.5]]
         let mut w = egui::Window::new("McGuffin")
             .frame(
                 egui::Frame::window( &egui::Style::default() )
@@ -77,21 +78,23 @@ impl Window for McGuffinWindow {
         if state.mc_guffin_is_fullscreen {
             if !self.was_fullscreen {
                 // just became fullscreen
+                eprintln!("! {:#?}", self.previous_rect);
+                self.was_fullscreen = true;
             }
             w = w.fixed_pos(egui::Pos2::ZERO);
             w = w.fixed_size(egui::Vec2::new(16000.0, 9000.0));
-            self.was_fullscreen = true;
         } else {
             if self.was_fullscreen {
                 // just ended fullscreen
                 if let Some(rect) = self.previous_rect {
                     // w = w.fixed_rect( rect );
                     w = w.current_pos(rect.min);
-                    //w = w.anchor( egui::Align2::LEFT_TOP, rect.min.to_vec2() );
-                    //w = w.resize(|w|);
+                    let mut s = rect.size().to_owned();
+                    s.x -= 1.0; // no idea?
+                    w = w.fixed_size(s);
                 }
+                self.was_fullscreen = false;
             }
-            self.was_fullscreen = false;
         }
 
         if let Some(ir) = w.show(ctx, |ui| {
@@ -104,8 +107,9 @@ impl Window for McGuffinWindow {
             self.mc_guffin_painting(ui, state);
         }) {
             if !state.mc_guffin_is_fullscreen {
-                // eprintln!("! {:#?}", ir.response.rect);
+                //eprintln!("! {:#?} == [[0.0 23.8] - [257.0 189.5]]", ir.response.rect);
                 self.previous_rect = Some(ir.response.rect);
+                //self.previous_rect = Some(ir.response.interact_rect);
             }
         }
         self.is_open = is_open;
