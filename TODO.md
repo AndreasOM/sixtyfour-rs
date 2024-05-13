@@ -3,7 +3,6 @@
 
 ## In Progress
 
-- [ ] Add specialised cosine palette property editor
 
 ## ToDo
 
@@ -38,6 +37,9 @@
 - [ ] Decide on good default window size
 - [ ] Decide on default on windows
 ## Done
+
+## 2024-05-13
+- [x] Add specialised cosine palette property editor
 
 ### 2024-05-08
 - [x] Fix McGuffin size after returning from fullscreen mode

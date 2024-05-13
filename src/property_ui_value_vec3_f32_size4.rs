@@ -32,13 +32,31 @@ impl Preview {
             color_image,
         }
     }
-    fn update(&mut self, values: &[f32; 3 * 4]) {
+    fn update(&mut self, values: &[f32; 3 * 4], active_index: usize) {
         let img = &mut self.color_image;
         let w = img.size[0];
         let h = img.size[1];
         let xs = 1.0 / (w as f32);
 
+        let mut off = [0.0; 13];
+        let active_index = 12.min(active_index);
+
+        //let mut off_a;//
+        let h_33 = (h as f32) * 0.33;
+        let h_66 = (h as f32) * 0.6;
         for y in 0..h {
+            if (y as f32) < h_33 {
+                let t = (h_33 - (y as f32)) * 3.0;
+                off[active_index] = t * 0.02;
+            } else if (y as f32) > h_66 {
+                let t = y as f32; // t -> 66-100
+                let t = t - h_66; // t -> 0..33
+                let t = t * 3.0; // t -> 0..100
+                off[active_index] = -t * 0.02;
+            } else {
+                off[active_index] = 0.0;
+            }
+
             for x in 0..w {
                 let ofs = y * w + x;
                 let pixel = &mut img.pixels[ofs];
@@ -48,7 +66,32 @@ impl Preview {
                 // rc gc bc
                 // rd gd bd
 
+                //                *pixel = Color32::GOLD;
+
                 let i = x as f32 * xs;
+                let mut col = [0.0f32; 3];
+
+                for c in 0..=2 {
+                    /*
+                    let o_a = if 0 * 3 + c == active_index {
+                        off[ active_index ]
+                    } else {
+                        0.0
+                    };
+                    */
+                    col[c] = (values[0 * 3 + c] + off[0 * 3 + c])
+                        + (values[1 * 3 + c] + off[1 * 3 + c])
+                            * (6.28318
+                                * ((values[2 * 3 + c] + off[2 * 3 + c]) * i
+                                    + (values[3 * 3 + c] + off[3 * 3 + c])))
+                                .cos();
+                }
+                *pixel = Color32::from_rgb(
+                    (255.0 * col[0]).floor() as u8,
+                    (255.0 * col[1]).floor() as u8,
+                    (255.0 * col[2]).floor() as u8,
+                );
+                /*
                 let r = values[0 * 3 + 0]
                     + values[1 * 3 + 0]
                         * (6.28318 * (values[2 * 3 + 0] * i + values[3 * 3 + 0])).cos();
@@ -59,12 +102,12 @@ impl Preview {
                     + values[1 * 3 + 2]
                         * (6.28318 * (values[2 * 3 + 2] * i + values[3 * 3 + 2])).cos();
 
-                //                *pixel = Color32::GOLD;
                 *pixel = Color32::from_rgb(
                     (255.0 * r).floor() as u8,
                     (255.0 * g).floor() as u8,
                     (255.0 * b).floor() as u8,
                 );
+                */
             }
         }
     }
@@ -74,6 +117,7 @@ pub struct PropertyUiValueVec3F32Size4 {
     previews: HashMap<String, Preview>,
     // texture_handle: Option<TextureHandle>,
     // image_data: Option<ColorImage>,
+    active_index: Option<usize>,
 }
 
 impl core::fmt::Debug for PropertyUiValueVec3F32Size4 {
@@ -136,7 +180,7 @@ impl PropertyUiValue for PropertyUiValueVec3F32Size4 {
             }
             (PropertyValue::Vec3F32Size4 { values }, PropertyConfig::ColorPal {}) => {
                 if let Some(preview) = self.previews.get_mut(name) {
-                    preview.update(values);
+                    preview.update(values, self.active_index.unwrap_or(999));
                     //Self::update_image( &mut preview.color_image, values);
                     let options = TextureOptions::default();
                     preview
@@ -155,11 +199,14 @@ impl PropertyUiValue for PropertyUiValueVec3F32Size4 {
                         ui.vertical(|ui| {
                             for i in 6..=8 {
                                 // c - rgb
-                                ui.add(
+                                let r = ui.add(
                                     egui::Slider::new(&mut (*values)[i], 0.0..=2.0)
                                         .step_by(0.1 as f64)
                                         .text(format!("{i}")),
                                 );
+                                if r.hovered() {
+                                    self.active_index = Some(i);
+                                }
                             }
                         });
                         ui.label("TR");
@@ -167,12 +214,16 @@ impl PropertyUiValue for PropertyUiValueVec3F32Size4 {
                         ui.horizontal(|ui| {
                             for i in 0..=2 {
                                 // c - rgb
-                                ui.add(
+                                let r = ui.add(
                                     egui::Slider::new(&mut (*values)[i], 0.0..=2.0)
                                         .vertical()
                                         .step_by(0.1 as f64)
                                         .text(format!("{i}")),
                                 );
+                                //if r.dragged() {
+                                if r.hovered() {
+                                    self.active_index = Some(i);
+                                }
                             }
                         });
                         //ui.label("MIDDLE");
@@ -193,12 +244,15 @@ impl PropertyUiValue for PropertyUiValueVec3F32Size4 {
                         ui.horizontal(|ui| {
                             for i in 3..=5 {
                                 // c - rgb
-                                ui.add(
+                                let r = ui.add(
                                     egui::Slider::new(&mut (*values)[i], 0.0..=2.0)
                                         .vertical()
                                         .step_by(0.1 as f64)
                                         .text(format!("{i}")),
                                 );
+                                if r.hovered() {
+                                    self.active_index = Some(i);
+                                }
                             }
                         });
                         ui.end_row();
@@ -210,11 +264,14 @@ impl PropertyUiValue for PropertyUiValueVec3F32Size4 {
                         ui.vertical(|ui| {
                             for i in 9..=11 {
                                 // c - rgb
-                                ui.add(
+                                let r = ui.add(
                                     egui::Slider::new(&mut (*values)[i], 0.0..=2.0)
                                         .step_by(0.1 as f64)
                                         .text(format!("{i}")),
                                 );
+                                if r.hovered() {
+                                    self.active_index = Some(i);
+                                }
                             }
                         });
                         ui.label("BR");
