@@ -9,20 +9,31 @@ use egui::RichText;
 use egui::TextureHandle;
 use egui::TextureOptions;
 use egui::WidgetText;
+use std::collections::HashMap;
 
-#[derive(Default)]
-pub struct PropertyUiValueVec3F32Size4 {
-    texture_handle: Option<TextureHandle>,
-    image_data: Option<ColorImage>,
+struct Preview {
+    texture_handle: TextureHandle,
+    color_image: ColorImage,
 }
-
-impl core::fmt::Debug for PropertyUiValueVec3F32Size4 {
+impl core::fmt::Debug for Preview {
     fn fmt(&self, _: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
         Ok(())
     }
 }
-impl PropertyUiValueVec3F32Size4 {
-    fn update_image(img: &mut ColorImage, values: &[f32; 3 * 4]) {
+
+impl Preview {
+    pub fn new(ctx: &egui::Context, width: usize, height: usize, name: &str) -> Self {
+        let color_image = ColorImage::new([width, height], Color32::PLACEHOLDER);
+        let options = TextureOptions::default();
+        let texture_handle = ctx.load_texture(name, color_image.clone(), options);
+
+        Self {
+            texture_handle,
+            color_image,
+        }
+    }
+    fn update(&mut self, values: &[f32; 3 * 4]) {
+        let img = &mut self.color_image;
         let w = img.size[0];
         let h = img.size[1];
         let xs = 1.0 / (w as f32);
@@ -58,6 +69,19 @@ impl PropertyUiValueVec3F32Size4 {
         }
     }
 }
+#[derive(Default)]
+pub struct PropertyUiValueVec3F32Size4 {
+    previews: HashMap<String, Preview>,
+    // texture_handle: Option<TextureHandle>,
+    // image_data: Option<ColorImage>,
+}
+
+impl core::fmt::Debug for PropertyUiValueVec3F32Size4 {
+    fn fmt(&self, _: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+        Ok(())
+    }
+}
+impl PropertyUiValueVec3F32Size4 {}
 
 impl PropertyUiValue for PropertyUiValueVec3F32Size4 {
     fn label(&self, name: &str, property: &mut Property) -> Option<WidgetText> {
@@ -111,31 +135,17 @@ impl PropertyUiValue for PropertyUiValueVec3F32Size4 {
                 true
             }
             (PropertyValue::Vec3F32Size4 { values }, PropertyConfig::ColorPal {}) => {
-                if let Some(img) = &mut self.image_data {
-                    Self::update_image(img, values);
+                if let Some(preview) = self.previews.get_mut(name) {
+                    preview.update(values);
+                    //Self::update_image( &mut preview.color_image, values);
+                    let options = TextureOptions::default();
+                    preview
+                        .texture_handle
+                        .set(preview.color_image.clone(), options);
                 } else {
-                    let mut img = ColorImage::new([64, 64], Color32::PLACEHOLDER);
-                    Self::update_image(&mut img, values);
-                    self.image_data = Some(img);
+                    let preview = Preview::new(ui.ctx(), 64, 64, name);
+                    self.previews.insert(name.to_owned(), preview);
                 }
-                let texture_id = if let Some(texture_handle) = &mut self.texture_handle {
-                    if let Some(img) = &self.image_data {
-                        let options = TextureOptions::default();
-                        texture_handle.set(img.clone(), options);
-                    }
-                    Some(texture_handle.id())
-                } else {
-                    if let Some(img) = &self.image_data {
-                        let ctx = ui.ctx();
-                        let options = TextureOptions::default();
-                        let handle = ctx.load_texture(name, (*img).clone(), options);
-                        self.texture_handle = Some(handle);
-                        Some(self.texture_handle.as_ref().unwrap().id())
-                    } else {
-                        None
-                    }
-                };
-
                 ui.vertical(|ui| {
                     //ui.label(name);
                     //egui::widgets::color_picker::color_edit_button_rgb( ui, &mut *values);
@@ -167,16 +177,18 @@ impl PropertyUiValue for PropertyUiValueVec3F32Size4 {
                         });
                         //ui.label("MIDDLE");
                         // -----
-                        if let Some(texture_id) = texture_id {
+                        if let Some(preview) = self.previews.get_mut(name) {
                             let sized_image = egui::load::SizedTexture::new(
-                                texture_id,
+                                preview.texture_handle.id(),
                                 egui::vec2(1.5 * 128.0, 128.0),
                             );
                             let image = egui::Image::from_texture(sized_image);
                             ui.add(image);
                         } else {
-                            unimplemented!();
+                            // unimplemented!();
+                            ui.label("unimplemented");
                         }
+
                         // -----
                         ui.horizontal(|ui| {
                             for i in 3..=5 {
