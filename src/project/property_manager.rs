@@ -81,6 +81,7 @@ pub enum PropertyConfig {
         step_size: f32,
     },
     ColorRgb {},
+    ColorPal {},
     Bool {},
     #[default]
     None,
@@ -188,18 +189,20 @@ impl PropertyManager {
         } else {
             // :TODO: ensure type is correct
         }
-        /*
-                if let Some(p) = self.entries.get_mut(name) {
-                    if name.ends_with("_rgb") {
-                        match p.config {
-                            PropertyConfig::ColorRgb {} => {}
-                            _ => {
-                                p.config = PropertyConfig::ColorRgb {};
-                            }
-                        }
+
+        if let Some(p) = self.entries.get_mut(name) {
+            let mut parts = name.split("[");
+            let n = parts.next().unwrap(); // safe since split always returns at least one element
+
+            if n.ends_with("_pal") {
+                match p.config {
+                    PropertyConfig::ColorPal {} => {}
+                    _ => {
+                        p.config = PropertyConfig::ColorPal {};
                     }
                 }
-        */
+            }
+        }
     }
 
     pub fn ensure_all_properties_from_uniforms(&mut self, uniform_manager: &UniformManager) {

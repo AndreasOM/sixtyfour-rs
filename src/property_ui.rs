@@ -145,7 +145,7 @@ impl PropertyUi {
         let r = egui::CollapsingHeader::new(n)
             .id_source(name)
             .show(ui, |ui| {
-                ui.horizontal_wrapped(|ui| {
+                ui.horizontal(|ui| {
                     let mut handled = false;
 
                     for v in self.property_ui_values.iter() {
@@ -161,7 +161,7 @@ impl PropertyUi {
                     }
                     let enabled = self.configuring.is_none();
                     edit_clicked = ui
-                        .add_enabled(enabled, egui::Button::new("⚙️ "))
+                        .add_enabled(enabled, egui::Button::new("⚙️"))
                         .on_hover_text("Configure")
                         .clicked();
                 });
