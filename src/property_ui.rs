@@ -148,7 +148,7 @@ impl PropertyUi {
                 ui.horizontal(|ui| {
                     let mut handled = false;
 
-                    for v in self.property_ui_values.iter() {
+                    for v in self.property_ui_values.iter_mut() {
                         if v.update(ui, name, property) {
                             handled = true;
                             break;

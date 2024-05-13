@@ -23,7 +23,7 @@ impl PropertyUiValue for PropertyUiValueF32 {
             _ => None,
         }
     }
-    fn update(&self, ui: &mut egui::Ui, name: &str, property: &mut Property) -> bool {
+    fn update(&mut self, ui: &mut egui::Ui, name: &str, property: &mut Property) -> bool {
         match (&mut property.value, &mut property.config) {
             (
                 PropertyValue::F32 { value },

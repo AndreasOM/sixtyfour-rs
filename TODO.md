@@ -3,6 +3,7 @@
 
 ## In Progress
 
+- [ ] Add specialised cosine palette property editor
 
 ## ToDo
 

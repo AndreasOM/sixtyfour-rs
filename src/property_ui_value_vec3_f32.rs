@@ -48,7 +48,7 @@ impl PropertyUiValue for PropertyUiValueVec3F32 {
             _ => None,
         }
     }
-    fn update(&self, ui: &mut egui::Ui, name: &str, property: &mut Property) -> bool {
+    fn update(&mut self, ui: &mut egui::Ui, _name: &str, property: &mut Property) -> bool {
         match (&mut property.value, &mut property.config) {
             (
                 PropertyValue::Vec3F32 { values },
