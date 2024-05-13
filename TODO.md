@@ -34,7 +34,8 @@
 - [ ] Rename shaders window
 - [ ] Add code editor theme selection
 - [ ] Replace lazy_static with lazy_cell once stable (e.g. for CommandQueue)
-
+- [ ] Decide on good default window size
+- [ ] Decide on default on windows
 ## Done
 
 ### 2024-05-08
