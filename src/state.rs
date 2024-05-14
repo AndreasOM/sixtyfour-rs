@@ -1,5 +1,6 @@
 use crate::project::Project;
 use crate::project::ResourceId;
+use crate::time_series::TimeSeries;
 use crate::McGuffinContainer;
 use crate::WindowManager;
 use color_eyre::Result;
@@ -27,9 +28,18 @@ pub struct State {
 
     #[serde(skip)]
     pub window_manager: WindowManager,
+
+    #[serde(skip)]
+    paint_time_series: TimeSeries,
 }
 
 impl State {
+    pub fn paint_time_series_mut(&mut self) -> &mut TimeSeries {
+        &mut self.paint_time_series
+    }
+    pub fn paint_time_series(&self) -> &TimeSeries {
+        &self.paint_time_series
+    }
     pub fn mc_guffin_cloned(&self) -> Option<McGuffinContainer> {
         self.mc_guffin.as_ref().map(|mgc| mgc.clone())
     }

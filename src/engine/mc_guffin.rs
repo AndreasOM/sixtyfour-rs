@@ -29,6 +29,8 @@ pub struct McGuffin {
     shader_sources: HashMap<String, ShaderSource>,
 
     project: Project,
+
+    last_paint_duration: std::time::Duration,
 }
 
 // :TODO: remove
@@ -37,8 +39,15 @@ unsafe impl Send for McGuffin {}
 //static glRects: extern "system" fn(i16, i16, i16, i16) -> c_void = GlFunctionPointer::null().into();
 
 //const EMPTY_VEC_STRING: &Vec<String> = &vec![];
+const MILLIS_PER_SEC: u64 = 1_000;
+const NANOS_PER_MILLI: u32 = 1_000_000;
 
 impl McGuffin {
+    pub fn last_paint_duration_in_ms(&self) -> f32 {
+        (self.last_paint_duration.as_secs() as f32) * (MILLIS_PER_SEC as f32)
+            + (self.last_paint_duration.as_nanos() as f32) / (NANOS_PER_MILLI as f32)
+        //self.last_paint_duration.as_millis_f32()
+    }
     pub fn uniform_manager(&self) -> &UniformManager {
         &self.pipeline.uniform_manager()
     }
@@ -332,7 +341,13 @@ impl McGuffin {
     }
 
     pub fn paint(&mut self, _gl: &eframe::glow::Context) {
+        let paint_start = std::time::Instant::now();
         let _ = self.update();
+        self.gl.glFinish();
+        let paint_end = std::time::Instant::now();
+        let paint_duration = paint_end - paint_start;
+        // eprintln!("{paint_duration:?}");
+        self.last_paint_duration = paint_duration;
     }
 
     fn set_property_f32(&mut self, name: &str, value: f32) {

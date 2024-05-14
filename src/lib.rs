@@ -17,6 +17,7 @@ use mc_guffin_container::McGuffinContainer;
 mod state;
 
 mod mc_guffin_window;
+mod performance_window;
 mod project_window;
 mod properties_window;
 mod resources_window;
@@ -38,3 +39,4 @@ mod property_ui_value_vec3_f32_size4;
 mod project;
 
 mod path_helper;
+mod time_series;

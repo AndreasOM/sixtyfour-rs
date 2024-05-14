@@ -8,7 +8,6 @@
 ## ToDo
 
 - [ ] Capture McGuffin errors and show them in the editor
-- [ ] Add frame time display
 
 - [ ] Improve projecty file management (load, save, ..., etc)
 
@@ -40,6 +39,7 @@
 ## 2024-05-14
 - [x] Implement clone for McGuffinContainer
 - [x] Display current project folder in top/menu bar
+- [x] Add frame time display
 
 ## 2024-05-13
 - [x] Add specialised cosine palette property editor

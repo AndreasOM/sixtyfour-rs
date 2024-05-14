@@ -1,12 +1,14 @@
 use crate::command_queue::COMMAND_QUEUE;
 use crate::mc_guffin_container::McGuffinContainer;
 use crate::mc_guffin_window::McGuffinWindow;
+use crate::performance_window::PerformanceWindow;
 use crate::project::Resource;
 use crate::project_window::ProjectWindow;
 use crate::properties_window::PropertiesWindow;
 use crate::resources_window::ResourcesWindow;
 use crate::shaders_window::ShadersWindow;
 use crate::state::State;
+use crate::time_series::TimeSeries;
 use crate::Command;
 use crate::WindowManager;
 use crate::WindowsMenu;
@@ -59,6 +61,7 @@ impl TemplateApp {
 
             s.window_manager.add(Box::new(McGuffinWindow::default()));
             s.window_manager.add(Box::new(ShadersWindow::default()));
+            s.window_manager.add(Box::new(PerformanceWindow::default()));
             s.window_manager.add(Box::new(PropertiesWindow::default()));
             s.window_manager.add(Box::new(ProjectWindow::default()));
             s.window_manager.add(Box::new(ResourcesWindow::default()));
@@ -227,6 +230,18 @@ impl eframe::App for TemplateApp {
                             } else {
                                 ui.label("[no project]");
                             }
+                            let d = if let Some(mgc) = self.state.mc_guffin() {
+                                let mg = mgc.lock();
+                                mg.last_paint_duration_in_ms()
+                            } else {
+                                0.0
+                            };
+
+                            self.state.paint_time_series_mut().push(d);
+                            let avg_d = self.state.paint_time_series().avg(20);
+                            let min_d = self.state.paint_time_series().min(20);
+                            let max_d = self.state.paint_time_series().max(20);
+                            ui.label(format!("{min_d} < {avg_d} < {max_d}"));
                         });
                     });
                 });

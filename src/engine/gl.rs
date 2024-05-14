@@ -117,6 +117,7 @@ struct Glfps {
     glProgramUniform3fv: GlFunctionPointer,
 
     glGetActiveUniform: GlFunctionPointer,
+    glFinish: GlFunctionPointer,
 }
 
 impl Gl {
@@ -222,6 +223,8 @@ impl Gl {
             .glGetActiveUniform
             .load(get_proc_address, c"glGetActiveUniform")?;
 
+        self.glfps.glFinish.load(get_proc_address, c"glFinish")?;
+
         Ok(())
     }
 
@@ -246,6 +249,7 @@ impl Gl {
     create_gl_wrapper!(void glProgramUniform2fv( GLuint program, GLint location, GLsizei count, const GLfloat *value));
     create_gl_wrapper!(void glProgramUniform3fv( GLuint program, GLint location, GLsizei count, const GLfloat *value));
     create_gl_wrapper!(void glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *ttype, GLchar *name));
+    create_gl_wrapper!(void glFinish( void ));
 
     pub fn rects(&self, x1: i16, y1: i16, x2: i16, y2: i16) {
         unsafe {
