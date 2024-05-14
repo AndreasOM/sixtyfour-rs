@@ -11,6 +11,8 @@ use crate::Command;
 use crate::WindowManager;
 use crate::WindowsMenu;
 use color_eyre::Result;
+use egui::Color32;
+use egui::RichText;
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -207,6 +209,25 @@ impl eframe::App for TemplateApp {
                             ui.label("(fullscreen)");
                         }
                         */
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            if let Some(pp) = self.state.project_path() {
+                                let dirty = self.state.project.dirty();
+                                let pp = pp.as_os_str().to_string_lossy();
+
+                                let c = if dirty {
+                                    Color32::from_rgb(222, 144, 144)
+                                } else {
+                                    Color32::from_rgb(222, 222, 222)
+                                };
+
+                                ui.label(
+                                    RichText::new(format!("{pp}",)).color(c), // .monospace()
+                                                                              //.into(),
+                                );
+                            } else {
+                                ui.label("[no project]");
+                            }
+                        });
                     });
                 });
 

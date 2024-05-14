@@ -14,6 +14,10 @@ pub struct Project {
 }
 
 impl Project {
+    pub fn dirty(&self) -> bool {
+        self.resource_manager.dirty()
+    }
+
     pub fn try_load(project_folder: &Path) -> Result<Self> {
         let mut filename = project_folder.to_path_buf();
         filename.push("sfrs.ron");

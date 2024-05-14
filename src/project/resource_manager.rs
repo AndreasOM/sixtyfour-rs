@@ -10,6 +10,10 @@ pub struct ResourceManager {
 }
 
 impl ResourceManager {
+    pub fn dirty(&self) -> bool {
+        self.resources.values().any(|r| r.dirty())
+    }
+
     pub fn resources(&self) -> &HashMap<ResourceId, Resource> {
         &self.resources
     }

@@ -3,11 +3,10 @@
 
 ## In Progress
 
-- [ ] Implement clone for McGuffinContainer
+
 
 ## ToDo
 
-- [ ] Display current project folder _somewhere_
 - [ ] Capture McGuffin errors and show them in the editor
 - [ ] Add frame time display
 
@@ -25,6 +24,8 @@
 
 - [ ] vec2 position property picker
 
+- [ ] Consider naming projects
+
 ## Later
 - [ ] Look into _off by one_ width for window size restore after fullscreen
 - [ ] Block quit when dirty and auto save on quit is off
@@ -35,6 +36,10 @@
 - [ ] Decide on good default window size
 - [ ] Decide on default on windows
 ## Done
+
+## 2024-05-14
+- [x] Implement clone for McGuffinContainer
+- [x] Display current project folder in top/menu bar
 
 ## 2024-05-13
 - [x] Add specialised cosine palette property editor
