@@ -3,29 +3,27 @@
 
 ## In Progress
 
+- [ ] Implement clone for McGuffinContainer
 
 ## ToDo
 
+- [ ] Display current project folder _somewhere_
+- [ ] Capture McGuffin errors and show them in the editor
+- [ ] Add frame time display
 
 - [ ] Improve projecty file management (load, save, ..., etc)
+
+- [ ] Add builtin minimal shader examples
+
+- [ ] Add versioning to UniformManager
+
+- [ ] Handle resoure loading and saving via command queue
+
 
 
 - [ ] Add line numbers to shader editor
 
-- [ ] Capture McGuffin errors and show them in the editor
-- [ ] Add builtin minimal shader examples
-- [ ] Add frame time display
-
-
-- [ ] Implement clone for McGuffinContainer
-- [ ] Add versioning to UniformManager
-
-
-- [ ] Handle resoure loading and saving via command queue
-
 - [ ] vec2 position property picker
-
-- [ ] Display current project folder _somewhere_
 
 ## Later
 - [ ] Look into _off by one_ width for window size restore after fullscreen

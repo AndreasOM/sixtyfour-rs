@@ -9,7 +9,10 @@ impl McGuffinContainer {
     pub fn lock(&self) -> MutexGuard<'_, McGuffin> {
         self.0.lock()
     }
-    pub fn clone(&self) -> Self {
+}
+
+impl Clone for McGuffinContainer {
+    fn clone(&self) -> Self {
         Self(Arc::clone(&self.0))
     }
 }
