@@ -108,7 +108,7 @@ impl McGuffin {
 
         self.gl.load_all(get_proc_address)?;
 
-        self.flow_vm.run_setup(&self.gl)?;
+        self.flow_vm.run_setup(&self.gl, &self.project)?;
 
         // create the program (vertex + fragment)
         self.pipeline.setup(&mut self.gl)?;
@@ -196,7 +196,7 @@ impl McGuffin {
         if program_changed {
             eprintln!("Program Changed: {program_changed:?}");
             self.pipeline
-                .rebuild(&mut self.gl, &mut self.shader_sources)
+                .rebuild(&self.gl, &mut self.shader_sources)
                 .map_err(|e| {
                     eprintln!("Pipeline rebuild failed: {e:?}");
                     e
@@ -260,7 +260,7 @@ impl McGuffin {
     pub fn update_from_project(&mut self, project: &Project) {
         self.project = (*project).clone();
         let _todo = self.flow_vm.load(&self.project.flow);
-        let _todo = self.flow_vm.run_setup(&self.gl);
+        let _todo = self.flow_vm.run_setup(&self.gl, project);
 
         match self.rebuild_program() {
             Ok(_) => {}

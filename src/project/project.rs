@@ -21,10 +21,9 @@ impl Project {
         let mut flow = Flow::default();
 
         let mut block = Block::new(String::from("start"));
-        let mut shaders = Vec::default();
-        shaders.push("ZceRIiX0USxGW--ZXAWac".into());
-        shaders.push("umeX0hZneUZlMWyEbu_GT".into());
-        block.add_step(Step::Program { shaders });
+        block.add_step(Step::Program {
+            resource_id: "Zm2nwFQDp3eQGuZldHMRA".into(),
+        });
         block.add_step(Step::FullscreenQuad);
 
         flow.add_block(block);

@@ -57,7 +57,7 @@ impl StepRunnerFullscreenQuad {
             unimplemented!();
         }
     }
-    pub fn run_teardown(&self, data: &mut Option<Box<dyn StepRunnerData>>) {}
+    pub fn run_teardown(&self, _data: &mut Option<Box<dyn StepRunnerData>>) {}
     pub fn run_render(&self, gl: &Gl, data: &Option<Box<dyn StepRunnerData>>) {
         if let Some(data) = data {
             match data.as_any().downcast_ref::<StepRunnerDataFullscreenQuad>() {

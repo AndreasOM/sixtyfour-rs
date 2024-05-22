@@ -4,7 +4,7 @@ use crate::project::ResourceId;
 pub enum Step {
     FullscreenQuad,
     Program {
-        shaders: Vec<ResourceId>,
+        resource_id: ResourceId,
     },
     #[default]
     Nop,

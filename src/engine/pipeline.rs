@@ -16,10 +16,10 @@ pub struct Pipeline {
 }
 
 impl Pipeline {
-    pub fn setup(&mut self, _gl: &mut Gl) -> Result<()> {
+    pub fn setup(&mut self, _gl: &Gl) -> Result<()> {
         Ok(())
     }
-    pub fn bind(&mut self, gl: &mut Gl) -> Result<()> {
+    pub fn bind(&self, gl: &Gl) -> Result<()> {
         gl.glUseProgram(self.program);
         Ok(())
     }
@@ -96,7 +96,7 @@ impl Pipeline {
     }
     pub fn rebuild(
         &mut self,
-        gl: &mut Gl,
+        gl: &Gl,
         shader_sources: &mut HashMap<String, ShaderSource>,
     ) -> Result<()> {
         let vertex_shader = {
@@ -119,7 +119,7 @@ impl Pipeline {
         eprintln!("pipeline.rebuild() -> success");
         Ok(())
     }
-    fn compile_shader(&mut self, gl: &mut Gl, shader_source: &mut ShaderSource) -> Result<GLuint> {
+    fn compile_shader(&mut self, gl: &Gl, shader_source: &mut ShaderSource) -> Result<GLuint> {
         // :TODO: verify shader type
         let source = CString::new(shader_source.source())?;
         let shader = gl.glCreateShader(shader_source.shader_type());
@@ -157,12 +157,7 @@ impl Pipeline {
         Ok(shader)
     }
 
-    fn link_program(
-        &mut self,
-        gl: &mut Gl,
-        vertex_shader: u32,
-        fragment_shader: u32,
-    ) -> Result<u32> {
+    fn link_program(&mut self, gl: &Gl, vertex_shader: u32, fragment_shader: u32) -> Result<u32> {
         let program = gl.glCreateProgram();
         gl.glAttachShader(program, vertex_shader);
         gl.glAttachShader(program, fragment_shader);
