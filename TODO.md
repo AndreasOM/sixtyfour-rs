@@ -3,13 +3,15 @@
 
 ## In Progress
 
-
+- [ ] Extract opengl setup into `Flow`
+	- [x] Implement FullscreenQuad Step
+	- [ ] Implement Program Step
 
 ## ToDo
 
 - [ ] Capture McGuffin errors and show them in the editor
 
-- [ ] Improve projecty file management (load, save, ..., etc)
+- [ ] Improve project file management (load, save, ..., etc)
 
 - [ ] Add builtin minimal shader examples
 
@@ -24,6 +26,8 @@
 - [ ] vec2 position property picker
 
 - [ ] Consider naming projects
+
+- [ ] Find better name for `Flow`
 
 ## Later
 - [ ] Look into _off by one_ width for window size restore after fullscreen

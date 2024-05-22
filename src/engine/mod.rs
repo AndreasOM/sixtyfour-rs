@@ -13,3 +13,12 @@ use uniform::Uniform;
 pub use uniform::UniformType;
 mod uniform_manager;
 pub use uniform_manager::UniformManager;
+
+mod flow_vm;
+pub use flow_vm::FlowVm;
+
+mod step_runner_data;
+pub use step_runner_data::StepRunnerData;
+
+mod step_runner_fullscreen_quad;
+pub use step_runner_fullscreen_quad::StepRunnerFullscreenQuad;

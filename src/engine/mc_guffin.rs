@@ -1,4 +1,5 @@
 use super::gl::*;
+use crate::engine::FlowVm;
 use crate::engine::Pipeline;
 use crate::engine::ShaderSource;
 use crate::engine::UniformManager;
@@ -31,6 +32,7 @@ pub struct McGuffin {
     project: Project,
 
     last_paint_duration: std::time::Duration,
+    flow_vm: FlowVm,
 }
 
 // :TODO: remove
@@ -105,35 +107,10 @@ impl McGuffin {
         // glRects
 
         self.gl.load_all(get_proc_address)?;
+
+        self.flow_vm.run_setup(&self.gl)?;
+
         // create the program (vertex + fragment)
-
-        // prepare the buffers
-        let mut vertex_array_id = 0;
-        self.gl.glGenVertexArrays(1, &mut vertex_array_id);
-        dbg!(&vertex_array_id);
-        self.gl.glBindVertexArray(vertex_array_id);
-
-        let mut vertex_buffer_id = 0;
-        self.gl.gen_buffers(1, &mut vertex_buffer_id);
-        self.gl.check_gl_error(std::file!(), std::line!());
-
-        dbg!(&vertex_buffer_id);
-        self.gl.bind_buffer(GL_ARRAY_BUFFER, vertex_buffer_id);
-        //self.call_gl_bind_buffer( GL_ARRAY_BUFFER, 0 );
-        self.gl.check_gl_error(std::file!(), std::line!());
-        /*
-                let data = [
-                    0.5f32, 1.0,
-                    -1.0, -1.0,
-                    1.0, -1.0,
-                    1.0, -1.0,
-                ];
-        */
-        self.do_data();
-
-        self.vertex_array_id = vertex_array_id;
-        self.vertex_buffer_id = vertex_buffer_id;
-
         self.pipeline.setup(&mut self.gl)?;
 
         Ok(())
@@ -231,90 +208,10 @@ impl McGuffin {
         Ok(())
     }
 
-    fn do_data(&self) {
-        let data: &mut [f32] = &mut [
-            1.0, -1.0, // top right -> bottom right?
-            1.0, 1.0, // top right -> top right?
-            -1.0, -1.0, // top left -> bottom left?
-            -1.0, 1.0, // top right -> top left?
-        ];
-        /*
-        let mut rng = rand::thread_rng();
-
-        for i in 0..=5 {
-            data[ i ] = rng.gen_range(-1.0..1.0);
-        }
-        */
-        /*
-        for f in &mut *data {
-            //let r = rng.next_u32() as f32;
-            let r: f32 = rng.gen_range(-1.0..1.0);
-
-            *f = r / f32::MAX;
-        }
-        */
-
-        //let data = [-1.0, -1.0, -1.0, 0.5, 0.5, -1.0, 0.5, 0.5];
-        //let size = core::mem::size_of_val(&data);
-        let size = 4 * data.len();
-        dbg!(&size);
-        //dbg!(data.as_ptr() as *const _);
-        self.gl.buffer_data(
-            GL_ARRAY_BUFFER,
-            size as isize,
-            data.as_ptr() as *const _,
-            GL_STATIC_DRAW,
-        );
-        self.gl.check_gl_error(std::file!(), std::line!());
-    }
-
     pub fn update(&mut self) -> Result<()> {
-        // bind the program
-
-        // pass in uniforms
-        // e.g. current time
-
-        // render something
-        // -> e.g. a fullscreen (or rather full viewport) rectangle
-
-        //glRects( -1, -1, 1, 1);
-        //self.call_gl_rects(-1, -1, 1, 1);
-
-        // gl::DrawArrays(gl::TRIANGLES, 0, 6i32);
-
         self.pipeline.bind(&mut self.gl)?;
-        //self.gl.glUseProgram(self.program);
         self.gl.check_gl_error(std::file!(), std::line!());
 
-        self.gl.glBindVertexArray(self.vertex_array_id);
-        //dbg!(self.vertex_array_id);
-        self.gl.bind_buffer(GL_ARRAY_BUFFER, self.vertex_buffer_id);
-        //dbg!(self.vertex_buffer_id);
-        /*
-                let data = [0.0;8];
-                let size = core::mem::size_of_val(&data);
-                dbg!(&size);
-                dbg!(data.as_ptr() as *const _);
-                self.call_gl_buffer_data(
-                    GL_ARRAY_BUFFER,
-                    size as isize,
-                    data.as_ptr() as *const _,
-                    GL_STATIC_DRAW,
-                );
-                self.check_gl_error(std::line!());
-        */
-        self.gl.enable_vertex_attrib_array(0); // 0 == pos
-
-        self.gl
-            .vertex_attrib_pointer(0, 2, GL_FLOAT, GL_FALSE as u8, 0, core::ptr::null());
-
-        //self.do_data();
-        //self.call_gl_disable( GL_CULL_FACE );
-        //unsafe{ self.gl.glDisable( GL_CULL_FACE ); }
-
-        // set uniforms
-        // glGetUniformLocation
-        // glProgramUniform1f
         self.gl.check_gl_error(std::file!(), std::line!());
         for (k, v) in self.properties_f32.iter() {
             let _ = self.pipeline.set_property(&mut self.gl, k, *v);
@@ -332,10 +229,7 @@ impl McGuffin {
         }
         self.gl.check_gl_error(std::file!(), std::line!());
 
-        self.gl.draw_arrays(GL_TRIANGLE_STRIP, 0, 4);
-        //self.call_gl_draw_arrays(GL_TRIANGLE_STRIP, 0, 10);
-
-        //self.call_gl_rects( -1, -1, 1, 1 );
+        self.flow_vm.run_update(&self.gl)?;
         self.gl.check_gl_error(std::file!(), std::line!());
         Ok(())
     }
@@ -365,6 +259,9 @@ impl McGuffin {
 
     pub fn update_from_project(&mut self, project: &Project) {
         self.project = (*project).clone();
+        let _todo = self.flow_vm.load(&self.project.flow);
+        let _todo = self.flow_vm.run_setup(&self.gl);
+
         match self.rebuild_program() {
             Ok(_) => {}
             Err(e) => {

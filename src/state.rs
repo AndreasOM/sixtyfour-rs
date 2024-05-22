@@ -103,7 +103,11 @@ impl State {
     pub fn reload_project(&mut self) {
         if let Some(pp) = self.project_path() {
             match Project::try_load(pp) {
-                Ok(project) => {
+                Ok(mut project) => {
+                    // :HACK:
+                    if project.flow.blocks().is_empty() {
+                        project.create_simple_flow();
+                    }
                     self.project = project;
                 }
                 Err(_) => {
