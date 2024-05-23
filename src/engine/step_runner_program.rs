@@ -84,8 +84,13 @@ impl StepRunnerProgram {
                                         }
                                     }
                                 }
-                                _ => return,
+                                o => {
+                                    eprintln!("Could not find program Resource {resource_id} is not a program resource {o:?}");
+                                    return;
+                                }
                             }
+                        } else {
+                            eprintln!("Could not find program resource {resource_id}");
                         }
 
                         // project.resource_manager.get(resource_id)

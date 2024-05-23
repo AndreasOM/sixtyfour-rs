@@ -176,14 +176,10 @@ impl eframe::App for TemplateApp {
                 let mut mg = mgc.lock();
                 mg.update_from_project(&self.state.project);
 
+                /*
                 self.state.project.with_property_manager_mut(|pm| {
                     pm.ensure_all_properties_from_uniforms(mg.uniform_manager());
                 });
-                /*
-                self.state
-                    .project
-                    .property_manager
-                    .ensure_all_properties_from_uniforms(mg.uniform_manager());
                 */
                 let t = self.start_time.elapsed().as_secs_f32();
                 mg.set_time(t);

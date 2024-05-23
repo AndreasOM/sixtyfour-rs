@@ -13,9 +13,6 @@ use std::collections::HashMap;
 pub struct FlowVm {
     flow: Flow,
     step_runner_data: HashMap<String, Vec<Option<Box<dyn StepRunnerData>>>>,
-    // :HACK: !!!!
-    has_run_setup_once: bool,
-    has_loaded: bool,
 }
 
 impl FlowVm {
@@ -23,12 +20,11 @@ impl FlowVm {
         //    	eprintln!("Load!!!!!!!!!!!!!!!!!");
         self.flow = flow.clone();
         self.step_runner_data = HashMap::default();
-        self.has_loaded = true;
         Ok(())
     }
 
     pub fn run_setup(&mut self, gl: &Gl, project: &Project) -> Result<()> {
-        // !!! only ever run once !!!
+        // !!! should only run once when project/flow is changed !!!
         if let Some(block) = self.flow.blocks().iter().find(|b| b.name() == "start") {
             let mut srd_block = Vec::with_capacity(block.steps().len());
             srd_block.resize_with(block.steps().len(), Default::default);
@@ -39,7 +35,7 @@ impl FlowVm {
                     Step::Program { .. } => {
                         let sr = StepRunnerProgram::default();
                         let mut srd = sr.create_data();
-                        // sr.run_setup(gl, project, step, &mut srd);
+                        sr.run_setup(gl, project, step, &mut srd);
                         srd_block[s_idx] = srd;
                     }
                     Step::FullscreenQuad => {
@@ -70,7 +66,7 @@ impl FlowVm {
                         let sr = StepRunnerProgram::default();
 
                         let srd = &srd_block[s_idx];
-                        // sr.run_render(gl, srd);
+                        sr.run_render(gl, srd);
                     }
                     Step::FullscreenQuad => {
                         let sr = StepRunnerFullscreenQuad::default();

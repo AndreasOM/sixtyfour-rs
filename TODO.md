@@ -3,11 +3,10 @@
 
 ## In Progress
 
-- [ ] Extract opengl setup into `Flow`
-	- [x] Implement FullscreenQuad Step
-	- [ ] Implement Program Step
+- [ ] Visualise Flow and Steps
 
 ## ToDo
+- [ ] Improve property handling in McGuffin
 
 - [ ] Capture McGuffin errors and show them in the editor
 
@@ -39,6 +38,13 @@
 - [ ] Decide on good default window size
 - [ ] Decide on default on windows
 ## Done
+
+
+## 2024-05-23
+- [x] Add versioning to project to avoid constant rebuilds
+- [x] Extract opengl setup into `Flow`
+	- [x] Implement FullscreenQuad Step
+	- [x] Implement Program Step
 
 ## 2024-05-14
 - [x] Implement clone for McGuffinContainer
