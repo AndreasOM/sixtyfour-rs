@@ -90,7 +90,9 @@ impl Window for ResourcesWindow {
                                     {
                                         deselect_program_id = true;
                                     }
-                                    egui::RichText::new(format!("! PRG")).strong()
+                                    let l = format!(" ! PRG {id}");
+                                    egui::RichText::new(l).monospace().strong()
+                                    //egui::RichText::new(format!("! PRG")).strong()
                                 } else {
                                     if ui
                                         .button(egui::RichText::new("[S]").monospace())
@@ -99,7 +101,9 @@ impl Window for ResourcesWindow {
                                     {
                                         selected_program_id = Some(id.clone());
                                     }
-                                    egui::RichText::new(format!(" PRG"))
+                                    let l = format!("   PRG {id}");
+                                    egui::RichText::new(l).monospace()
+                                    //egui::RichText::new(format!(" PRG"))
                                 };
                                 ui.label(t).on_hover_text(id);
                             });

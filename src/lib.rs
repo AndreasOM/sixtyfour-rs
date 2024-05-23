@@ -16,6 +16,7 @@ mod mc_guffin_container;
 use mc_guffin_container::McGuffinContainer;
 mod state;
 
+mod flow_window;
 mod mc_guffin_window;
 mod performance_window;
 mod project_window;

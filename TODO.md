@@ -4,6 +4,8 @@
 ## In Progress
 
 - [ ] Visualise Flow and Steps
+	- [x] Add versioning to blocks and steps
+	- [x] Hack in basic flow editor for Program Step
 
 ## ToDo
 - [ ] Improve property handling in McGuffin
@@ -45,6 +47,7 @@
 - [x] Extract opengl setup into `Flow`
 	- [x] Implement FullscreenQuad Step
 	- [x] Implement Program Step
+- [x] Add flow window
 
 ## 2024-05-14
 - [x] Implement clone for McGuffinContainer

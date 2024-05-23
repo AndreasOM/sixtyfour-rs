@@ -57,7 +57,7 @@ impl StepRunnerProgram {
         data: &mut Option<Box<dyn StepRunnerData>>,
     ) {
         eprintln!("Setting up program from step {step:?}");
-        if let Step::Program { resource_id } = step {
+        if let Step::Program { resource_id, .. } = step {
             if let Some(data) = data {
                 match data.as_any_mut().downcast_mut::<StepRunnerDataProgram>() {
                     Some(data) => {

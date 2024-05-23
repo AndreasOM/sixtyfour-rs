@@ -29,6 +29,7 @@ impl Project {
         let mut block = Block::new(String::from("start"));
         block.add_step(Step::Program {
             resource_id: "Zm2nwFQDp3eQGuZldHMRA".into(),
+            version: 1,
         });
         block.add_step(Step::FullscreenQuad);
 
@@ -71,6 +72,19 @@ impl Project {
         let new_rm_version = self.resource_manager.version();
 
         if new_rm_version != old_rm_version {
+            self.version += 1;
+            eprintln!("Project version: {}", self.version);
+        }
+    }
+    pub fn with_flow_mut<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&mut Flow) -> (),
+    {
+        let old_f_version = self.flow.version();
+        f(&mut self.flow);
+        let new_f_version = self.flow.version();
+
+        if new_f_version != old_f_version {
             self.version += 1;
             eprintln!("Project version: {}", self.version);
         }

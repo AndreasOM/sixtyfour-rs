@@ -1,8 +1,10 @@
 use crate::command_queue::COMMAND_QUEUE;
+use crate::flow_window::FlowWindow;
 use crate::mc_guffin_container::McGuffinContainer;
 use crate::mc_guffin_window::McGuffinWindow;
 use crate::performance_window::PerformanceWindow;
 use crate::project::Resource;
+use crate::project::Step;
 use crate::project_window::ProjectWindow;
 use crate::properties_window::PropertiesWindow;
 use crate::resources_window::ResourcesWindow;
@@ -59,6 +61,7 @@ impl TemplateApp {
         let mut s: Self = if let Some(storage) = cc.storage {
             let mut s: Self = eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
 
+            s.window_manager.add(Box::new(FlowWindow::default()));
             s.window_manager.add(Box::new(McGuffinWindow::default()));
             s.window_manager.add(Box::new(ShadersWindow::default()));
             s.window_manager.add(Box::new(PerformanceWindow::default()));
@@ -325,6 +328,28 @@ impl eframe::App for TemplateApp {
                         // not removed
                     }
                 }
+                Command::HackChangeFlowProgramResourceId {
+                    block_idx,
+                    step_idx,
+                    resource_id,
+                } => self.state.project.with_flow_mut(|f| {
+                    f.with_block_mut(block_idx, |block| {
+                        block.with_step_mut(step_idx, |step| {
+                            let new_resource_id = &resource_id;
+                            match step {
+                                Step::Program {
+                                    ref mut resource_id,
+                                    ref mut version,
+                                } => {
+                                    eprintln!("Changing program to {resource_id}");
+                                    *resource_id = new_resource_id.to_string();
+                                    *version += 1;
+                                }
+                                _ => {}
+                            }
+                        });
+                    });
+                }),
                 o => {
                     eprintln!("Unhandled command {o:?}");
                 }

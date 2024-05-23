@@ -20,6 +20,17 @@ pub enum Command {
     RemoveResource {
         resource_id: ResourceId,
     },
+    // :HACK:
+    HackChangeFlowProgramResourceId {
+        block_idx: usize,
+        step_idx: usize,
+        resource_id: ResourceId,
+    },
+    /*
+    ChangeFlow {
+        flow_command: FlowCommand,
+    }
+    */
     #[default]
     Nop,
 }
