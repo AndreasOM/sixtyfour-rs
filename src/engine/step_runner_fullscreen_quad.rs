@@ -46,6 +46,7 @@ impl StepRunnerFullscreenQuad {
                         GL_STATIC_DRAW,
                     );
 
+                    eprintln!("FullscreenQuad {vertex_array_id} {vertex_buffer_id}");
                     data.vertex_array_id = vertex_array_id;
                     data.vertex_buffer_id = vertex_buffer_id;
                 }

@@ -101,17 +101,25 @@ impl PropertyConfig {
 pub struct PropertyManager {
     //    entries: HashMap<String, Property>,
     entries: BTreeMap<String, Property>,
+
+    #[serde(skip)]
+    version: u32,
 }
 
 impl PropertyManager {
+    pub fn version(&self) -> u32 {
+        self.version
+    }
     pub fn add_entry<S>(&mut self, name: S, entry: Property) -> Option<Property>
     where
         S: Into<String>,
     {
+        self.version += 1;
         self.entries.insert(name.into(), entry)
     }
 
     pub fn delete_entry(&mut self, name: &str) -> Option<Property> {
+        self.version += 1;
         self.entries.remove(name)
     }
 
@@ -128,12 +136,16 @@ impl PropertyManager {
     }
 
     pub fn wipe_all(&mut self) {
+        self.version += 1;
         self.entries.clear();
     }
     pub fn ensure_property_f32(&mut self, name: &str, default_value: f32) {
         if !self.entries.contains_key(name) {
+            self.add_entry(name, Property::default_f32(default_value));
+            /*
             self.entries
                 .insert(name.into(), Property::default_f32(default_value));
+                */
         } else {
             // :TODO: ensure type is correct
         }
@@ -141,8 +153,11 @@ impl PropertyManager {
 
     pub fn ensure_property_vec2_f32(&mut self, name: &str, default_values: &[f32; 2]) {
         if !self.entries.contains_key(name) {
+            self.add_entry(name, Property::default_vec2_f32(default_values));
+            /*
             self.entries
                 .insert(name.into(), Property::default_vec2_f32(default_values));
+            */
         } else {
             // :TODO: ensure type is correct
         }
@@ -163,8 +178,11 @@ impl PropertyManager {
 
     pub fn ensure_property_vec3_f32(&mut self, name: &str, default_values: &[f32; 3]) {
         if !self.entries.contains_key(name) {
+            self.add_entry(name, Property::default_vec3_f32(default_values));
+            /*
             self.entries
                 .insert(name.into(), Property::default_vec3_f32(default_values));
+            */
         } else {
             // :TODO: ensure type is correct
         }
@@ -182,10 +200,13 @@ impl PropertyManager {
     }
     pub fn ensure_property_vec3_f32_size4(&mut self, name: &str, default_values: &[f32; 3 * 4]) {
         if !self.entries.contains_key(name) {
+            self.add_entry(name, Property::default_vec3_f32_size4(default_values));
+            /*
             self.entries.insert(
                 name.into(),
                 Property::default_vec3_f32_size4(default_values),
             );
+            */
         } else {
             // :TODO: ensure type is correct
         }

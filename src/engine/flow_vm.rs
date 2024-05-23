@@ -20,6 +20,7 @@ pub struct FlowVm {
 
 impl FlowVm {
     pub fn load(&mut self, flow: &Flow) -> Result<()> {
+        //    	eprintln!("Load!!!!!!!!!!!!!!!!!");
         self.flow = flow.clone();
         self.step_runner_data = HashMap::default();
         self.has_loaded = true;
@@ -27,22 +28,13 @@ impl FlowVm {
     }
 
     pub fn run_setup(&mut self, gl: &Gl, project: &Project) -> Result<()> {
-    	if !self.has_loaded {
-    		return Ok(());
-    	}
-    	if self.has_run_setup_once {
-    		return Ok(());
-    	} else {
-    		self.has_run_setup_once = true;
-    	}
-
         // !!! only ever run once !!!
         if let Some(block) = self.flow.blocks().iter().find(|b| b.name() == "start") {
             let mut srd_block = Vec::with_capacity(block.steps().len());
             srd_block.resize_with(block.steps().len(), Default::default);
 
             for (s_idx, step) in block.steps().iter().enumerate() {
-            	eprintln!("Setup {s_idx} {step:?}");
+                eprintln!("Setup {s_idx} {step:?}");
                 match step {
                     Step::Program { .. } => {
                         let sr = StepRunnerProgram::default();

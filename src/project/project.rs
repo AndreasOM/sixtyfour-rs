@@ -9,14 +9,20 @@ use std::path::Path;
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize, Clone)]
 pub struct Project {
     name: String,
-    pub property_manager: PropertyManager,
+    property_manager: PropertyManager,
     pub resource_manager: ResourceManager,
     //programs: HashMap<String, Program>,
     #[serde(default)]
     pub flow: Flow,
+
+    #[serde(skip)]
+    version: u32,
 }
 
 impl Project {
+    pub fn version(&self) -> u32 {
+        self.version
+    }
     pub fn create_simple_flow(&mut self) {
         let mut flow = Flow::default();
 
@@ -30,6 +36,45 @@ impl Project {
 
         self.flow = flow;
     }
+
+    pub fn with_property_manager<F>(&self, mut f: F)
+    where
+        F: FnMut(&PropertyManager) -> (),
+    {
+        f(&self.property_manager);
+    }
+    pub fn with_property_manager_mut<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&mut PropertyManager) -> (),
+    {
+        let old_pm_version = self.property_manager.version();
+        f(&mut self.property_manager);
+        let new_pm_version = self.property_manager.version();
+
+        if new_pm_version != old_pm_version {
+            self.version += 1;
+            eprintln!("Project version: {}", self.version);
+        }
+    }
+    pub fn with_resource_manager<F>(&self, mut f: F)
+    where
+        F: FnMut(&ResourceManager) -> (),
+    {
+        f(&self.resource_manager);
+    }
+    pub fn with_resource_manager_mut<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&mut ResourceManager) -> (),
+    {
+        let old_rm_version = self.resource_manager.version();
+        f(&mut self.resource_manager);
+        let new_rm_version = self.resource_manager.version();
+
+        if new_rm_version != old_rm_version {
+            self.version += 1;
+            eprintln!("Project version: {}", self.version);
+        }
+    }
     pub fn dirty(&self) -> bool {
         self.resource_manager.dirty()
     }
@@ -41,6 +86,7 @@ impl Project {
         let data = std::fs::read_to_string(&filename)?;
 
         let mut project: Project = ron::from_str(&data)?;
+        project.version = 1;
         let _ = project.resource_manager.reload_all(Some(project_folder));
         Ok(project)
     }

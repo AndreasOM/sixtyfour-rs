@@ -150,30 +150,34 @@ impl McGuffinWindow {
             let np = ((click_pos - rect.min) / rs) * egui::Vec2::new(2.0, -2.0)
                 + egui::Vec2::new(-1.0, 1.0);
 
-            if let Some(p) = state.project.property_manager.get_mut("fMouseClick") {
-                match p.value_mut() {
-                    PropertyValue::Vec2F32 { ref mut values } => {
-                        values[0] = np.x;
-                        values[1] = np.y;
+            state.project.with_property_manager_mut(|pm| {
+                if let Some(p) = pm.get_mut("fMouseClick") {
+                    match p.value_mut() {
+                        PropertyValue::Vec2F32 { ref mut values } => {
+                            values[0] = np.x;
+                            values[1] = np.y;
+                        }
+                        _ => {}
                     }
-                    _ => {}
                 }
-            }
+            });
         }
         if let Some(click_pos) = sense.hover_pos() {
             let rs = rect.max - rect.min;
             let np = ((click_pos - rect.min) / rs) * egui::Vec2::new(2.0, -2.0)
                 + egui::Vec2::new(-1.0, 1.0);
 
-            if let Some(p) = state.project.property_manager.get_mut("fMouseHover") {
-                match p.value_mut() {
-                    PropertyValue::Vec2F32 { ref mut values } => {
-                        values[0] = np.x;
-                        values[1] = np.y;
+            state.project.with_property_manager_mut(|pm| {
+                if let Some(p) = pm.get_mut("fMouseHover") {
+                    match p.value_mut() {
+                        PropertyValue::Vec2F32 { ref mut values } => {
+                            values[0] = np.x;
+                            values[1] = np.y;
+                        }
+                        _ => {}
                     }
-                    _ => {}
                 }
-            }
+            });
         }
     }
 }

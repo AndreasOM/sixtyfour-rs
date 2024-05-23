@@ -30,6 +30,7 @@ pub struct McGuffin {
     shader_sources: HashMap<String, ShaderSource>,
 
     project: Project,
+    project_version: u32,
 
     last_paint_duration: std::time::Duration,
     flow_vm: FlowVm,
@@ -108,7 +109,7 @@ impl McGuffin {
 
         self.gl.load_all(get_proc_address)?;
 
-        self.flow_vm.run_setup(&self.gl, &self.project)?;
+        // self.flow_vm.run_setup(&self.gl, &self.project)?;
 
         // create the program (vertex + fragment)
         self.pipeline.setup(&mut self.gl)?;
@@ -258,9 +259,13 @@ impl McGuffin {
     }
 
     pub fn update_from_project(&mut self, project: &Project) {
-        self.project = (*project).clone();
-        let _todo = self.flow_vm.load(&self.project.flow);
-        let _todo = self.flow_vm.run_setup(&self.gl, project);
+        if self.project_version != project.version() {
+            eprintln!("Project changed {}", project.version());
+            self.project = (*project).clone();
+            let _todo = self.flow_vm.load(&self.project.flow);
+            let _todo = self.flow_vm.run_setup(&self.gl, project);
+            self.project_version = project.version();
+        }
 
         match self.rebuild_program() {
             Ok(_) => {}
@@ -268,19 +273,21 @@ impl McGuffin {
                 eprintln!("Rebuild Program failed: {e:?}");
             }
         }
-        for (k, p) in project.property_manager.entries().iter() {
-            match p.value() {
-                PropertyValue::F32 { value, .. } => self.set_property_f32(k, *value),
-                PropertyValue::Vec2F32 { values } => self.set_property_vec2_f32(k, &values),
-                PropertyValue::Vec3F32 { values } => self.set_property_vec3_f32(k, &values),
-                PropertyValue::Vec3F32Size4 { values } => {
-                    self.set_property_vec3_f32_size4(k, &values)
-                }
-                v => {
-                    eprintln!("Update for PropertyValue {v:?} not implemented");
+        project.with_property_manager(|pm| {
+            for (k, p) in pm.entries().iter() {
+                match p.value() {
+                    PropertyValue::F32 { value, .. } => self.set_property_f32(k, *value),
+                    PropertyValue::Vec2F32 { values } => self.set_property_vec2_f32(k, &values),
+                    PropertyValue::Vec3F32 { values } => self.set_property_vec3_f32(k, &values),
+                    PropertyValue::Vec3F32Size4 { values } => {
+                        self.set_property_vec3_f32_size4(k, &values)
+                    }
+                    v => {
+                        eprintln!("Update for PropertyValue {v:?} not implemented");
+                    }
                 }
             }
-        }
+        });
     }
 
     pub fn set_time(&mut self, time: f32) {

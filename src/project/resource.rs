@@ -16,6 +16,12 @@ pub enum Resource {
 }
 
 impl Resource {
+    pub fn version(&mut self) -> u32 {
+        match self {
+            Resource::Text(rt) => rt.version(),
+            _ => 0,
+        }
+    }
     pub fn reload(&mut self, parent: Option<&Path>) -> bool {
         match self {
             Resource::Text(rt) => rt.reload(parent).is_ok(),
@@ -54,7 +60,7 @@ impl Resource {
 pub struct ResourceText {
     name: String,
     file: Option<PathBuf>,
-    #[serde(default)]
+    #[serde(skip)]
     version: u32,
 
     #[serde(skip)]

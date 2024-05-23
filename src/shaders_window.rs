@@ -161,7 +161,8 @@ impl Window for ShadersWindow {
     }
 
     fn update(&mut self, ctx: &egui::Context, state: &mut State) {
-        let mgc = state.mc_guffin().map(|mgc| mgc.clone());
+        // let mgc = state.mc_guffin().map(|mgc| mgc.clone());
+        let mgc = state.mc_guffin().cloned();
         let mut is_open = self.is_open;
         egui::Window::new("Shaders")
             .resizable(true)
@@ -194,7 +195,8 @@ impl Window for ShadersWindow {
                                 ui.separator();
 
                                 // editor
-                                if let Some( r ) = state.project.resource_manager.get_mut( &self.active_resource_id ) {
+                                state.project.with_resource_manager_mut(|rm|{
+                                    rm.with_resource_mut( &self.active_resource_id, |r|{
                                     if let Resource::Text( rt ) = r {
                                         ui.horizontal_wrapped(|ui| {
                                             let enabled = true;
@@ -288,7 +290,7 @@ impl Window for ShadersWindow {
 
                                         ui.push_id("Compile Log", |ui| {
                                             egui::ScrollArea::vertical().show(ui, |ui| {
-                                                if let Some( mgc ) = mgc {
+                                                if let Some( mgc ) = &mgc {
                                                     ui.label("Compile Log:");
                                                     let mg = mgc.lock();
                                                     let compile_log = mg.get_resource_log( &self.active_resource_id );
@@ -341,7 +343,9 @@ impl Window for ShadersWindow {
                                         });
 
                                     }
-                                }
+
+                                    });
+                                });
                             },
                             _ => {
                                 ui.label(format!("{selected_program_id} is not a program"));

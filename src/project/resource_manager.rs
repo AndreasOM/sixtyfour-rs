@@ -7,9 +7,15 @@ use std::path::Path;
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize, Clone)]
 pub struct ResourceManager {
     resources: HashMap<ResourceId, Resource>,
+
+    #[serde(skip)]
+    version: u32,
 }
 
 impl ResourceManager {
+    pub fn version(&self) -> u32 {
+        self.version
+    }
     pub fn dirty(&self) -> bool {
         self.resources.values().any(|r| r.dirty())
     }
@@ -19,6 +25,22 @@ impl ResourceManager {
     }
     pub fn resources_mut(&mut self) -> &mut HashMap<ResourceId, Resource> {
         &mut self.resources
+    }
+
+    pub fn with_resource_mut<F>(&mut self, resource_id: &ResourceId, mut f: F)
+    where
+        F: FnMut(&mut Resource) -> (),
+    {
+        if let Some(r) = self.resources.get_mut(resource_id) {
+            let old_r_version = r.version();
+            f(r);
+            let new_r_version = r.version();
+
+            if new_r_version != old_r_version {
+                self.version += 1;
+                eprintln!("ResourceManager version: {}", self.version);
+            }
+        }
     }
 
     pub fn get(&self, resource_id: &ResourceId) -> Option<&Resource> {

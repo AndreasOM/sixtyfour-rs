@@ -49,12 +49,15 @@ impl Window for PropertiesWindow {
                     .on_hover_text("Danger!!!")
                     .clicked()
                 {
-                    state.project.property_manager.wipe_all();
+                    state.project.with_property_manager_mut(|pm| pm.wipe_all());
+                    //state.project.property_manager.wipe_all();
                 }
 
-                for (k, p) in state.project.property_manager.entries_mut().iter_mut() {
-                    self.property_ui.property(ctx, ui, k, p);
-                }
+                state.project.with_property_manager_mut(|pm| {
+                    for (k, p) in pm.entries_mut().iter_mut() {
+                        self.property_ui.property(ctx, ui, k, p);
+                    }
+                });
                 ui.allocate_space(egui::vec2(333.0, 0.0))
             });
         self.property_ui.update(ctx);
