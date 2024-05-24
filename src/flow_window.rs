@@ -1,6 +1,7 @@
 use crate::command_queue::COMMAND_QUEUE;
 use crate::project::Step;
 use crate::state::State;
+use crate::step_editor_ui::StepEditorUi;
 use crate::window::Window;
 use crate::Command;
 
@@ -8,6 +9,9 @@ use crate::Command;
 pub struct FlowWindow {
     is_open: bool,
     selected_step: Option<(usize, usize)>,
+
+    //#[serde(skip)]
+    step_editor_ui: StepEditorUi,
 }
 
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
@@ -50,31 +54,17 @@ impl Window for FlowWindow {
                     .exact_height(128.0)
                     .show_inside(ui, |ui| {
                         if let Some(selected_step) = &self.selected_step {
-                            ui.label(format!("Selected {}-{}", selected_step.0, selected_step.1));
-                            state.project.with_flow_mut(|flow| {
+                            //ui.label(format!("Selected {}-{}", selected_step.0, selected_step.1));
+                            state.project.with_flow(|flow| {
                                 if let Some(b) = flow.blocks().get(selected_step.0) {
                                     if let Some(s) = b.steps().get(selected_step.1) {
-                                        match s {
-                                            Step::Program { resource_id, .. } => {
-                                                ui.label("PR");
-                                                ui.label("Resource Id");
-                                                let mut r_id = resource_id.clone();
-                                                let response =
-                                                    ui.add(egui::TextEdit::singleline(&mut r_id));
-                                                if response.changed() {
-                                                    let _ = COMMAND_QUEUE.send(
-                                                        Command::HackChangeFlowProgramResourceId {
-                                                            block_idx: selected_step.0,
-                                                            step_idx: selected_step.1,
-                                                            resource_id: r_id,
-                                                        },
-                                                    );
-                                                }
-                                            }
-                                            _ => {
-                                                ui.label(String::from(s));
-                                            }
-                                        }
+                                        self.step_editor_ui.update(
+                                            ui,
+                                            &state.project,
+                                            s,
+                                            selected_step.0,
+                                            selected_step.1,
+                                        );
                                     }
                                 }
                             });
@@ -82,18 +72,12 @@ impl Window for FlowWindow {
                     });
                 egui::TopBottomPanel::bottom("bottom_panel")
                     .resizable(false)
-                    .min_height(0.0)
-                    .show_inside(ui, |_ui| {
-                        /*
-                        ui.vertical_centered(|ui| {
-                            ui.heading("Bottom Panel");
-                        });
-                        */
-                        /*
-                        ui.vertical_centered(|ui| {
-                            ui.label("bottom");
-                        });
-                        */
+                    //.exact_height(16.0)
+                    .min_height(16.0)
+                    .show_inside(ui, |ui| {
+                        if let Some(selected_step) = &self.selected_step {
+                            ui.label(format!("Selected {}-{}", selected_step.0, selected_step.1));
+                        }
                     });
                 egui::CentralPanel::default().show_inside(ui, |ui| {
                     //egui::ScrollArea::both().show(ui, |ui| {

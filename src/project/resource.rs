@@ -38,6 +38,7 @@ impl Resource {
     pub fn name(&self) -> &str {
         match self {
             Resource::Text(rt) => rt.name(),
+            Resource::Program(rp) => rp.name(),
             _ => "",
         }
     }

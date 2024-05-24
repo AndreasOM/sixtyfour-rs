@@ -105,7 +105,7 @@ impl State {
             match Project::try_load(pp) {
                 Ok(mut project) => {
                     // :HACK:
-                    if project.flow.blocks().is_empty() {
+                    if project.flow().blocks().is_empty() {
                         project.create_simple_flow();
                     }
                     self.project = project;

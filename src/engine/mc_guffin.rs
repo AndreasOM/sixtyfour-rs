@@ -265,7 +265,7 @@ impl McGuffin {
         if self.project_version != project.version() {
             eprintln!("Project changed {}", project.version());
             self.project = (*project).clone();
-            let _todo = self.flow_vm.load(&self.project.flow);
+            let _todo = self.flow_vm.load(self.project.flow());
             let _todo = self.flow_vm.run_setup(&self.gl, project);
             self.project_version = project.version();
         }

@@ -41,3 +41,8 @@ mod project;
 
 mod path_helper;
 mod time_series;
+
+mod step_editor;
+mod step_editor_ui;
+use step_editor::StepEditor;
+mod step_editor_program;

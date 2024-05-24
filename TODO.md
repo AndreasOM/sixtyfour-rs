@@ -3,11 +3,6 @@
 
 ## In Progress
 
-- [ ] Visualise Flow and Steps
-	- [x] Add versioning to blocks and steps
-	- [x] Hack in basic flow editor for Program Step
-	- [x] Fix height of Flow window header
-	- [ ] Select Program Step resource via drop down
 
 ## ToDo
 
@@ -42,7 +37,11 @@
 - [x] Add names to Program Resources
 	- [x] Edit names in Resource Window
 	- [x] Show name in "Shader" Window
-
+- [x] Visualise Flow and Steps
+	- [x] Add versioning to blocks and steps
+	- [x] Hack in basic flow editor for Program Step
+	- [x] Fix height of Flow window header
+	- [x] Select Program Step resource via drop down
 
 ## 2024-05-23
 - [x] Add versioning to project to avoid constant rebuilds

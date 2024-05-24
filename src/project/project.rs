@@ -13,7 +13,7 @@ pub struct Project {
     pub resource_manager: ResourceManager,
     //programs: HashMap<String, Program>,
     #[serde(default)]
-    pub flow: Flow,
+    flow: Flow,
 
     #[serde(skip)]
     version: u32,
@@ -36,6 +36,7 @@ impl Project {
         flow.add_block(block);
 
         self.flow = flow;
+        self.version += 1;
     }
 
     pub fn with_property_manager<F>(&self, mut f: F)
@@ -76,6 +77,38 @@ impl Project {
             eprintln!("Project version: {}", self.version);
         }
     }
+    pub fn resource_manager(&self) -> &ResourceManager {
+        &self.resource_manager
+    }
+    pub fn with_mut<F, R>(&mut self, mut f: F) -> R
+    where
+        F: FnMut(&mut Project) -> R,
+    {
+        let old_pm_version = self.property_manager.version();
+        let old_rm_version = self.resource_manager.version();
+        let old_f_version = self.flow.version();
+
+        let result = f(self);
+
+        let new_pm_version = self.property_manager.version();
+        let new_rm_version = self.resource_manager.version();
+        let new_f_version = self.flow.version();
+
+        if new_f_version != old_f_version
+            || new_rm_version != old_rm_version
+            || new_pm_version != old_pm_version
+        {
+            self.version += 1;
+            eprintln!("Project version: {}", self.version);
+        }
+        result
+    }
+    pub fn with_flow<F, R>(&self, mut f: F) -> R
+    where
+        F: FnMut(&Flow) -> R,
+    {
+        f(&self.flow)
+    }
     pub fn with_flow_mut<F>(&mut self, mut f: F)
     where
         F: FnMut(&mut Flow) -> (),
@@ -88,6 +121,10 @@ impl Project {
             self.version += 1;
             eprintln!("Project version: {}", self.version);
         }
+    }
+
+    pub fn flow(&self) -> &Flow {
+        &self.flow
     }
     pub fn dirty(&self) -> bool {
         self.resource_manager.dirty()
