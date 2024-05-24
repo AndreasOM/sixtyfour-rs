@@ -27,6 +27,18 @@ impl ResourceManager {
         &mut self.resources
     }
 
+    pub fn with_resource<F, E, R>(&self, resource_id: &ResourceId, mut f: F, mut e: E) -> R
+    where
+        F: FnMut(&Resource) -> R,
+        E: FnMut() -> R,
+    {
+        if let Some(r) = self.resources.get(resource_id) {
+            f(r)
+        } else {
+            e()
+        }
+    }
+
     pub fn with_resource_mut<F>(&mut self, resource_id: &ResourceId, mut f: F)
     where
         F: FnMut(&mut Resource) -> (),

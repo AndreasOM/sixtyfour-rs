@@ -147,7 +147,7 @@ impl ResourceProgram {
     pub fn name_mut(&mut self) -> &mut String {
         &mut self.name
     }
-    
+
     pub fn shaders(&self) -> &Vec<Shader> {
         &self.shaders
     }

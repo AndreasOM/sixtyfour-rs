@@ -5,7 +5,7 @@
 
 - [ ] Add names to Program Resources
 	- [x] Edit names in Resource Window
-	- [ ] Show name in "Shader" Window
+	- [x] Show name in "Shader" Window
 	- [ ] Show name in Flow Window
 
 - [ ] Visualise Flow and Steps

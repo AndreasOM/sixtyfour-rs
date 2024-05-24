@@ -164,7 +164,27 @@ impl Window for ShadersWindow {
         // let mgc = state.mc_guffin().map(|mgc| mgc.clone());
         let mgc = state.mc_guffin().cloned();
         let mut is_open = self.is_open;
-        egui::Window::new("Shaders")
+        //let title = format!("Program");
+        let title = if let Some(selected_program_id) = state.selected_program_id().cloned() {
+            state.project.resource_manager.with_resource(
+                &selected_program_id,
+                |r| match r {
+                    Resource::Program(rp) => {
+                        let name = rp.name();
+                        format!("Program - {name}")
+                    }
+                    _ => {
+                        format!("Program - [{selected_program_id}] is not a Program")
+                    }
+                },
+                || format!("Program - Resource not found"),
+            )
+        } else {
+            format!("Program")
+        };
+
+        egui::Window::new(title)
+            .id("Shaders".into())
             .resizable(true)
             .hscroll(false)
             .vscroll(false)
