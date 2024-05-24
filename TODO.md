@@ -3,18 +3,17 @@
 
 ## In Progress
 
-- [ ] Add names to Program Resources
-	- [x] Edit names in Resource Window
-	- [x] Show name in "Shader" Window
-	- [ ] Show name in Flow Window
-
 - [ ] Visualise Flow and Steps
 	- [x] Add versioning to blocks and steps
 	- [x] Hack in basic flow editor for Program Step
+	- [x] Fix height of Flow window header
+	- [ ] Select Program Step resource via drop down
 
 ## ToDo
 
 - [ ] Add github action to run `cargo check` after push
+
+- [ ] Show Program name in Flow Window
 
 - [ ] Improve property handling in McGuffin
 - [ ] Capture McGuffin errors and show them in the editor
@@ -40,6 +39,10 @@
 
 ## 2024-05-24
 - [x] Use menu bar for menu bar
+- [x] Add names to Program Resources
+	- [x] Edit names in Resource Window
+	- [x] Show name in "Shader" Window
+
 
 ## 2024-05-23
 - [x] Add versioning to project to avoid constant rebuilds
