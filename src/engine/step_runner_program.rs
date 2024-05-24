@@ -27,25 +27,32 @@ impl StepRunnerProgram {
     ) -> Option<(String, ShaderSource)> {
         if let Some(r) = project.resource_manager.get(resource_id) {
             if let Resource::Text(rt) = r {
-                if !rt.text().is_empty() {
-                    //println!("{:?} {rt:?}", s.shader_type());
-                    match shader_type {
-                        ShaderType::Fragment => {
-                            let mut s =
-                                ShaderSource::new(GL_FRAGMENT_SHADER, rt.text().to_string());
-                            s.last_project_version = rt.version();
-                            s.set_resource_id(resource_id);
-                            return Some((String::from("fragment"), s));
-                        }
-                        ShaderType::Vertex => {
-                            let mut s = ShaderSource::new(GL_VERTEX_SHADER, rt.text().to_string());
-                            s.last_project_version = rt.version();
-                            s.set_resource_id(resource_id);
-                            return Some((String::from("vertex"), s));
-                        }
+                //if !rt.text().is_empty() {
+                //println!("{:?} {rt:?}", s.shader_type());
+                match shader_type {
+                    ShaderType::Fragment => {
+                        let mut s = ShaderSource::new(GL_FRAGMENT_SHADER, rt.text().to_string());
+                        s.last_project_version = rt.version();
+                        s.set_resource_id(resource_id);
+                        return Some((String::from("fragment"), s));
+                    }
+                    ShaderType::Vertex => {
+                        let mut s = ShaderSource::new(GL_VERTEX_SHADER, rt.text().to_string());
+                        s.last_project_version = rt.version();
+                        s.set_resource_id(resource_id);
+                        return Some((String::from("vertex"), s));
                     }
                 }
+                /*
+                } else {
+                    eprintln!("Text for Shader is empty {rt:?}");
+                }
+                */
+            } else {
+                eprintln!("Resource is not a Text {r:?}");
             }
+        } else {
+            eprintln!("Resource {resource_id} not found!");
         }
         None
     }
@@ -80,6 +87,9 @@ impl StepRunnerProgram {
                                         {
                                             shader_sources.insert(name, shader_source);
                                         } else {
+                                            eprintln!(
+                                                "Creating ShaderSource from Resource failed!"
+                                            );
                                             todo!();
                                         }
                                     }

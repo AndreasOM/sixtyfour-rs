@@ -44,8 +44,44 @@ impl From<&ShadersWindow> for ShadersWindowSave {
 impl ShadersWindow {
     fn update_shaders(&mut self, ui: &mut egui::Ui, state: &mut State) {
         if let Some(selected_program_id) = state.selected_program_id().cloned() {
-            ui.label(format!("{selected_program_id}"));
-            let text_resources: Vec<ResourceId> = state
+            egui::ComboBox::from_label("Resource Id")
+                .selected_text(
+                    egui::RichText::new(format!("{selected_program_id}"))
+                        .monospace()
+                        .strong(),
+                )
+                .width(192.0)
+                .show_ui(ui, |ui| {
+                    let program_resources = state
+                        .project
+                        .resource_manager()
+                        .resources()
+                        .iter()
+                        .filter(|(_k, r)| {
+                            if let Resource::Program(_) = *r {
+                                true
+                            } else {
+                                false
+                            }
+                        })
+                        .map(|(k, r)| (k, r.name()));
+                    let mut program_id = selected_program_id.clone();
+                    for (id, name) in program_resources {
+                        ui.selectable_value(
+                            &mut program_id,
+                            id.to_string(),
+                            egui::RichText::new(format!("{id} - {name}")).monospace(),
+                        );
+                    }
+                    if program_id != *selected_program_id {
+                        let _ = COMMAND_QUEUE.send(Command::SelectProgram {
+                            resource_id: program_id,
+                        });
+                    }
+                });
+
+            // ----
+            let text_resources: Vec<(ResourceId, &str)> = state
                 .project
                 .resource_manager
                 .resources()
@@ -57,7 +93,7 @@ impl ShadersWindow {
                         false
                     }
                 })
-                .map(|(k, _r)| k.to_owned())
+                .map(|(k, r)| (k.to_owned(), r.name()))
                 .collect();
             if let Some(resource) = state.project.resource_manager.get(&selected_program_id) {
                 match resource {
@@ -112,10 +148,23 @@ impl ShadersWindow {
                                 });
                             let resource_id = &mut self.new_shader_resource_id;
                             egui::ComboBox::from_label("Resource Id")
-                                .selected_text(format!("{:?}", resource_id))
+                                .selected_text(
+                                    egui::RichText::new(format!("{resource_id}"))
+                                        .monospace()
+                                        .strong(),
+                                )
+                                .width(192.0)
                                 .show_ui(ui, |ui| {
-                                    for id in text_resources.iter() {
-                                        ui.selectable_value(resource_id, id.to_string(), id);
+                                    for (id, name) in text_resources.iter() {
+                                        if rp.shaders().iter().any(|s| s.resource_id() == id) {
+                                            continue;
+                                        }
+                                        ui.selectable_value(
+                                            resource_id,
+                                            id.to_string(),
+                                            egui::RichText::new(format!("{id} - {name}"))
+                                                .monospace(),
+                                        );
                                     }
                                 });
                         });
@@ -161,10 +210,10 @@ impl Window for ShadersWindow {
     }
 
     fn update(&mut self, ctx: &egui::Context, state: &mut State) {
-        // let mgc = state.mc_guffin().map(|mgc| mgc.clone());
         let mgc = state.mc_guffin().cloned();
         let mut is_open = self.is_open;
-        //let title = format!("Program");
+
+        // window title
         let title = if let Some(selected_program_id) = state.selected_program_id().cloned() {
             state.project.resource_manager.with_resource(
                 &selected_program_id,
@@ -183,6 +232,7 @@ impl Window for ShadersWindow {
             format!("Program")
         };
 
+        // window
         egui::Window::new(title)
             .id("Shaders".into())
             .resizable(true)
@@ -192,8 +242,15 @@ impl Window for ShadersWindow {
             //.title_bar(false)
             .open( &mut is_open )
             .show(ctx, |ui| {
-                self.update_shaders( ui, state );
-                ui.separator(); // ---------------------------
+                egui::TopBottomPanel::top("shader_top_panel")
+                    //.resizable(true)
+                    //.min_height(32.0)
+                    .exact_height(128.0)
+                    .show_inside(ui, |ui| {
+
+                        self.update_shaders( ui, state );
+                    });
+
                 if let Some( selected_program_id ) = state.selected_program_id().cloned() {
                     if let Some( resource ) = state.project.resource_manager.get_mut( &selected_program_id ) {
 

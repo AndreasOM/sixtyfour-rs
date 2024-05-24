@@ -339,6 +339,9 @@ impl eframe::App for TemplateApp {
                         // not removed
                     }
                 }
+                Command::SelectProgram { resource_id } => {
+                    self.state.select_program_id(resource_id);
+                }
                 Command::HackChangeFlowProgramResourceId {
                     block_idx,
                     step_idx,

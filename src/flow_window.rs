@@ -1,9 +1,6 @@
-use crate::command_queue::COMMAND_QUEUE;
-use crate::project::Step;
 use crate::state::State;
 use crate::step_editor_ui::StepEditorUi;
 use crate::window::Window;
-use crate::Command;
 
 #[derive(Debug, Default)]
 pub struct FlowWindow {
