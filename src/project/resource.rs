@@ -135,10 +135,19 @@ impl ResourceText {
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize, Clone)]
 pub struct ResourceProgram {
+    #[serde(default)]
+    name: String,
     shaders: Vec<Shader>,
 }
 
 impl ResourceProgram {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+    pub fn name_mut(&mut self) -> &mut String {
+        &mut self.name
+    }
+    
     pub fn shaders(&self) -> &Vec<Shader> {
         &self.shaders
     }

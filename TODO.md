@@ -3,31 +3,28 @@
 
 ## In Progress
 
+- [ ] Add names to Program Resources
+	- [x] Edit names in Resource Window
+	- [ ] Show name in "Shader" Window
+	- [ ] Show name in Flow Window
+
 - [ ] Visualise Flow and Steps
 	- [x] Add versioning to blocks and steps
 	- [x] Hack in basic flow editor for Program Step
 
 ## ToDo
+
+- [ ] Add github action to run `cargo check` after push
+
 - [ ] Improve property handling in McGuffin
-
 - [ ] Capture McGuffin errors and show them in the editor
-
 - [ ] Improve project file management (load, save, ..., etc)
-
 - [ ] Add builtin minimal shader examples
-
 - [ ] Add versioning to UniformManager
-
 - [ ] Handle resoure loading and saving via command queue
-
-
-
 - [ ] Add line numbers to shader editor
-
 - [ ] vec2 position property picker
-
 - [ ] Consider naming projects
-
 - [ ] Find better name for `Flow`
 
 ## Later
@@ -41,6 +38,8 @@
 - [ ] Decide on default on windows
 ## Done
 
+## 2024-05-24
+- [x] Use menu bar for menu bar
 
 ## 2024-05-23
 - [x] Add versioning to project to avoid constant rebuilds

@@ -31,9 +31,8 @@ pub struct TemplateApp {
 
     #[serde(skip)]
     start_time: std::time::Instant,
-
-    #[serde(default)]
-    windows_menu: Option<WindowsMenu>,
+    //#[serde(skip)]
+    // windows_menu: Option<WindowsMenu>,
 }
 
 impl Default for TemplateApp {
@@ -43,7 +42,7 @@ impl Default for TemplateApp {
             window_manager: Default::default(),
             state: Default::default(),
             start_time: std::time::Instant::now(),
-            windows_menu: Default::default(),
+            // windows_menu: Default::default(),
         }
     }
 }
@@ -193,16 +192,27 @@ impl eframe::App for TemplateApp {
                 //.resizable(true)
                 //.min_height(32.0)
                 .show(ctx, |ui| {
-                    ui.horizontal(|ui| {
-                        if ui.button("Windows").clicked() {
-                            if let Some(_windows_menu) = self.windows_menu.take() {
-                            } else {
-                                let wm = WindowsMenu::default();
-
-                                self.windows_menu = Some(wm);
+                    egui::menu::bar(ui, |ui| {
+                        ui.menu_button("File", |ui| {
+                            if ui.button("Open").clicked() {
+                                // …
                             }
-                        }
+                        });
+                        ui.menu_button("Windows", |ui| {
+                            for w in self.window_manager.iter_mut() {
+                                let name = if w.is_open() {
+                                    let name = format!("*{}", w.name());
+                                    egui::RichText::new(name).monospace().strong()
+                                } else {
+                                    let name = format!(" {}", w.name());
+                                    egui::RichText::new(name).monospace()
+                                };
 
+                                if ui.button(name).clicked() {
+                                    w.toggle();
+                                }
+                            }
+                        });
                         if ui.button("Fullscreen").clicked() {
                             if self.state.mc_guffin_is_fullscreen {
                                 self.state.mc_guffin_is_fullscreen = false;
@@ -210,48 +220,49 @@ impl eframe::App for TemplateApp {
                                 self.state.mc_guffin_is_fullscreen = true;
                             }
                         }
-                        /*
-                        if self.state.mc_guffin_is_fullscreen {
-                            ui.label("(fullscreen)");
-                        }
-                        */
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            if let Some(pp) = self.state.project_path() {
-                                let dirty = self.state.project.dirty();
-                                let pp = pp.as_os_str().to_string_lossy();
+                        ui.horizontal(|ui| {
+                            ui.with_layout(
+                                egui::Layout::right_to_left(egui::Align::Center),
+                                |ui| {
+                                    if let Some(pp) = self.state.project_path() {
+                                        let dirty = self.state.project.dirty();
+                                        let pp = pp.as_os_str().to_string_lossy();
 
-                                let c = if dirty {
-                                    Color32::from_rgb(222, 144, 144)
-                                } else {
-                                    Color32::from_rgb(222, 222, 222)
-                                };
+                                        let c = if dirty {
+                                            Color32::from_rgb(222, 144, 144)
+                                        } else {
+                                            Color32::from_rgb(222, 222, 222)
+                                        };
 
-                                ui.label(
-                                    RichText::new(format!("{pp}",)).color(c), // .monospace()
-                                                                              //.into(),
-                                );
-                            } else {
-                                ui.label("[no project]");
-                            }
-                            let d = if let Some(mgc) = self.state.mc_guffin() {
-                                let mg = mgc.lock();
-                                mg.last_paint_duration_in_ms()
-                            } else {
-                                0.0
-                            };
+                                        ui.label(
+                                            RichText::new(format!("{pp}",)).color(c), // .monospace()
+                                                                                      //.into(),
+                                        );
+                                    } else {
+                                        ui.label("[no project]");
+                                    }
+                                    let d = if let Some(mgc) = self.state.mc_guffin() {
+                                        let mg = mgc.lock();
+                                        mg.last_paint_duration_in_ms()
+                                    } else {
+                                        0.0
+                                    };
 
-                            self.state.paint_time_series_mut().push(d);
-                            let avg_d = self.state.paint_time_series().avg(20);
-                            let min_d = self.state.paint_time_series().min(20);
-                            let max_d = self.state.paint_time_series().max(20);
-                            ui.label(format!("{min_d} < {avg_d} < {max_d}"));
+                                    self.state.paint_time_series_mut().push(d);
+                                    let avg_d = self.state.paint_time_series().avg(20);
+                                    let min_d = self.state.paint_time_series().min(20);
+                                    let max_d = self.state.paint_time_series().max(20);
+                                    ui.label(format!("{min_d} < {avg_d} < {max_d}"));
+                                },
+                            );
                         });
                     });
                 });
-
-            if let Some(windows_menu) = &mut self.windows_menu {
-                windows_menu.update(ctx, &mut self.state, &mut self.window_manager);
-            }
+            /*
+                        if let Some(windows_menu) = &mut self.windows_menu {
+                            windows_menu.update(ctx, &mut self.state, &mut self.window_manager);
+                        }
+            */
         }
 
         for w in self.window_manager.iter_mut() {

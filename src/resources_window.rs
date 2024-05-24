@@ -79,7 +79,7 @@ impl Window for ResourcesWindow {
                                 */
                             });
                         }
-                        Resource::Program(_rp) => {
+                        Resource::Program(rp) => {
                             ui.horizontal(|ui| {
                                 let t = if Some(id) == current_selected_program_id.as_ref() {
                                     //state.selected_program_id() {
@@ -90,7 +90,7 @@ impl Window for ResourcesWindow {
                                     {
                                         deselect_program_id = true;
                                     }
-                                    let l = format!(" ! PRG {id}");
+                                    let l = format!(" ! PRG {id}                     ");
                                     egui::RichText::new(l).monospace().strong()
                                     //egui::RichText::new(format!("! PRG")).strong()
                                 } else {
@@ -101,11 +101,12 @@ impl Window for ResourcesWindow {
                                     {
                                         selected_program_id = Some(id.clone());
                                     }
-                                    let l = format!("   PRG {id}");
+                                    let l = format!("   PRG {id}                     ");
                                     egui::RichText::new(l).monospace()
                                     //egui::RichText::new(format!(" PRG"))
                                 };
                                 ui.label(t).on_hover_text(id);
+                                let _response = ui.add(egui::TextEdit::singleline(rp.name_mut()));
                             });
                         }
                         o => {
