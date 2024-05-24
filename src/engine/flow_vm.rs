@@ -1,3 +1,4 @@
+use crate::engine::ResourceLogManager;
 use crate::engine::gl::Gl;
 use crate::engine::StepRunnerData;
 use crate::engine::StepRunnerFullscreenQuad;
@@ -23,7 +24,7 @@ impl FlowVm {
         Ok(())
     }
 
-    pub fn run_setup(&mut self, gl: &Gl, project: &Project) -> Result<()> {
+    pub fn run_setup(&mut self, gl: &Gl, project: &Project, resource_log_manager: &mut ResourceLogManager) -> Result<()> {
         // !!! should only run once when project/flow is changed !!!
         if let Some(block) = self.flow.blocks().iter().find(|b| b.name() == "start") {
             let mut srd_block = Vec::with_capacity(block.steps().len());
@@ -35,7 +36,7 @@ impl FlowVm {
                     Step::Program { .. } => {
                         let sr = StepRunnerProgram::default();
                         let mut srd = sr.create_data();
-                        sr.run_setup(gl, project, step, &mut srd);
+                        sr.run_setup(gl, project, resource_log_manager, step, &mut srd);
                         srd_block[s_idx] = srd;
                     }
                     Step::FullscreenQuad => {

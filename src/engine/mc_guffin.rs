@@ -1,39 +1,33 @@
+use crate::engine::ResourceLogManager;
 use super::gl::*;
 use crate::engine::FlowVm;
-use crate::engine::Pipeline;
-use crate::engine::ShaderSource;
-use crate::engine::UniformManager;
 use crate::project::Project;
 use crate::project::PropertyValue;
-use crate::project::Resource;
 use crate::project::ResourceId;
-use crate::project::ShaderType;
-use color_eyre::eyre::eyre;
 use color_eyre::Result;
 use core::ffi::c_void;
 use core::ffi::CStr;
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::ffi::CString;
 
 #[derive(Debug, Default)]
 pub struct McGuffin {
     gl: Gl,
 
-    vertex_array_id: u32,
-    vertex_buffer_id: u32,
     //pipeline: Pipeline,
     properties_f32: HashMap<String, f32>,
     properties_vec2_f32: HashMap<String, [f32; 2]>,
     properties_vec3_f32: HashMap<String, [f32; 3]>,
     properties_vec3_f32_size4: HashMap<String, [f32; 3 * 4]>,
-    shader_sources: HashMap<String, ShaderSource>,
+    // shader_sources: HashMap<String, ShaderSource>,
 
     project: Project,
     project_version: u32,
 
     last_paint_duration: std::time::Duration,
     flow_vm: FlowVm,
+
+    resource_log_manager: ResourceLogManager,
 }
 
 // :TODO: remove
@@ -57,54 +51,20 @@ impl McGuffin {
     }
     */
     pub fn get_resource_log(&self, resource_id: &ResourceId) -> Cow<'_, Vec<String>> {
+        /*
         for (_n, ss) in self.shader_sources.iter() {
             if Some(resource_id) == ss.resource_id() {
                 return Cow::Borrowed(ss.compile_log());
             }
         }
-        let not_found = vec![format!("Resource '{resource_id}' not found")];
+        */
+        if let Some( l ) = self.resource_log_manager.get( resource_id ) {
+            return Cow::Borrowed( l );
+        }
 
+        let not_found = vec![format!("Resource '{resource_id}' not found")];
         Cow::Owned(not_found)
     }
-    fn get_shader_source(&self, name: &str) -> Option<&ShaderSource> {
-        self.shader_sources.get(name)
-    }
-    fn get_mut_shader_source(&mut self, name: &str) -> Option<&mut ShaderSource> {
-        self.shader_sources.get_mut(name)
-    }
-    pub fn is_shader_source_dirty(&self, name: &str) -> bool {
-        if let Some(ss) = self.shader_sources.get(name) {
-            ss.dirty()
-        } else {
-            false
-        }
-    }
-    pub fn get_shader_source_source(&self, name: &str) -> &str {
-        if let Some(ss) = self.shader_sources.get(name) {
-            ss.source()
-        } else {
-            "shader does not exist"
-        }
-    }
-    pub fn replace_shader_source(&mut self, name: &str, source: String) {
-        if let Some(ss) = self.shader_sources.get_mut(name) {
-            ss.update_source(source);
-        } else {
-            eprintln!("ShaderSource {name} not found!");
-        }
-    }
-    pub fn mark_shader_source_clean(&mut self, name: &str) {
-        if let Some(ss) = self.shader_sources.get_mut(name) {
-            ss.mark_clean();
-        } else {
-            eprintln!("ShaderSource {name} not found!");
-        }
-    }
-    fn add_shader_source(&mut self, name: &str, shader_type: GLenum, source: &str) {
-        let ss = ShaderSource::new(shader_type, source.into());
-        self.shader_sources.insert(name.into(), ss);
-    }
-
     pub fn setup(&mut self, get_proc_address: &dyn Fn(&CStr) -> *const c_void) -> Result<()> {
         // load the gl functions we need
         // glRects
@@ -118,99 +78,6 @@ impl McGuffin {
 
         Ok(())
     }
-    /*
-        pub fn rebuild_program(&mut self) -> Result<()> {
-            // update shader sources from project
-            // and check for changes
-
-            let mut program_changed = false;
-            for (_id, r) in self.project.resource_manager.resources() {
-                match r {
-                    Resource::Program(rp) => {
-                        for s in rp.shaders() {
-                            let resource_id = s.resource_id();
-                            if let Some(r) = self.project.resource_manager.get(resource_id) {
-                                if let Resource::Text(rt) = r {
-                                    if !rt.text().is_empty() {
-                                        //println!("{:?} {rt:?}", s.shader_type());
-                                        match s.shader_type() {
-                                            ShaderType::Fragment => {
-                                                if let Some(fss) =
-                                                    self.shader_sources.get_mut("fragment")
-                                                {
-                                                    if rt.version() > fss.last_project_version {
-                                                        println!("Fragment shader changed");
-
-                                                        fss.last_project_version = rt.version();
-                                                        fss.update_source(rt.text().to_owned());
-                                                        fss.set_resource_id(resource_id);
-                                                        program_changed = true;
-                                                    }
-                                                } else {
-                                                    eprintln!("No fragment shader");
-                                                    let mut s = ShaderSource::new(
-                                                        GL_FRAGMENT_SHADER,
-                                                        rt.text().to_string(),
-                                                    );
-                                                    s.last_project_version = rt.version();
-                                                    s.set_resource_id(resource_id);
-                                                    self.shader_sources
-                                                        .insert(String::from("fragment"), s);
-                                                    program_changed = true;
-                                                }
-                                            }
-                                            ShaderType::Vertex => {
-                                                if let Some(fss) = self.shader_sources.get_mut("vertex")
-                                                {
-                                                    if rt.version() > fss.last_project_version {
-                                                        println!("Vertex shader changed");
-
-                                                        fss.last_project_version = rt.version();
-                                                        fss.update_source(rt.text().to_owned());
-                                                        fss.set_resource_id(resource_id);
-                                                        program_changed = true;
-                                                    }
-                                                } else {
-                                                    eprintln!("No vertex shader");
-                                                    let mut s = ShaderSource::new(
-                                                        GL_VERTEX_SHADER,
-                                                        rt.text().to_string(),
-                                                    );
-                                                    s.last_project_version = rt.version();
-                                                    s.set_resource_id(resource_id);
-                                                    self.shader_sources
-                                                        .insert(String::from("vertex"), s);
-                                                    program_changed = true;
-                                                }
-                                            }
-                                            _ => {}
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        //program_changed = true;
-                        break;
-                    }
-                    _ => {}
-                }
-            }
-
-            if program_changed {
-                eprintln!("Program Changed: {program_changed:?}");
-                self.pipeline
-                    .rebuild(&self.gl, &mut self.shader_sources)
-                    .map_err(|e| {
-                        eprintln!("Pipeline rebuild failed: {e:?}");
-                        e
-                    })?;
-                for ss in self.shader_sources.values_mut() {
-                    ss.mark_clean();
-                }
-            }
-            Ok(())
-        }
-    */
     pub fn update(&mut self) -> Result<()> {
         /*
         self.pipeline.bind(&mut self.gl)?;
@@ -266,7 +133,7 @@ impl McGuffin {
             eprintln!("Project changed {}", project.version());
             self.project = (*project).clone();
             let _todo = self.flow_vm.load(self.project.flow());
-            let _todo = self.flow_vm.run_setup(&self.gl, project);
+            let _todo = self.flow_vm.run_setup(&self.gl, project, &mut self.resource_log_manager);
             self.project_version = project.version();
         }
         /*

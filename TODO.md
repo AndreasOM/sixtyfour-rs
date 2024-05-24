@@ -3,16 +3,13 @@
 
 ## In Progress
 
-- [ ] Improve Shader Window _top_
-	- [x] Make top a panel
-	- [x] Show shader/text name
-	- [x] Add combo box to select current program
-	- [ ] Filter "add shader" list for already used shaders
 
 
 ## ToDo
 
 - [ ] Fix compile log in Shader Window
+
+- [ ] Make ShaderWindow autoselect a shader if needed/possible
 
 - [ ] Add github action to run `cargo check` after push
 
@@ -50,6 +47,11 @@
 	- [x] Fix height of Flow window header
 	- [x] Select Program Step resource via drop down
 - [x] Show Program name in Flow Window
+- [x] Improve Shader Window _top_
+	- [x] Make top a panel
+	- [x] Show shader/text name
+	- [x] Add combo box to select current program
+	- [x] Filter "add shader" list for already used shaders
 
 ## 2024-05-23
 - [x] Add versioning to project to avoid constant rebuilds

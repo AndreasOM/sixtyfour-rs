@@ -31,11 +31,21 @@ impl ShaderSource {
         &self.compile_log
     }
 
+    pub fn take_compile_log(&mut self ) -> Vec<String> {
+        //self.compile_log.split_off( 0 )
+        let v = core::mem::take(&mut self.compile_log);
+
+        v
+    }
+
     pub fn set_resource_id(&mut self, resource_id: &ResourceId) {
         self.resource_id = Some(resource_id.to_owned())
     }
     pub fn resource_id(&self) -> Option<&ResourceId> {
         self.resource_id.as_ref()
+    }
+    pub fn take_resource_id(&mut self) -> Option<ResourceId> {
+        self.resource_id.take()
     }
 
     pub fn shader_type(&self) -> GLenum {

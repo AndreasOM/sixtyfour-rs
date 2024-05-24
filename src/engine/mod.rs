@@ -24,3 +24,6 @@ mod step_runner_fullscreen_quad;
 pub use step_runner_fullscreen_quad::StepRunnerFullscreenQuad;
 mod step_runner_program;
 pub use step_runner_program::StepRunnerProgram;
+
+mod resource_log_manager;
+use resource_log_manager::ResourceLogManager;

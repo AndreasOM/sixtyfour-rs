@@ -1,3 +1,4 @@
+use crate::engine::ResourceLogManager;
 use crate::engine::gl::Gl;
 use crate::engine::gl::GL_FRAGMENT_SHADER;
 use crate::engine::gl::GL_VERTEX_SHADER;
@@ -60,6 +61,7 @@ impl StepRunnerProgram {
         &self,
         gl: &Gl,
         project: &Project,
+        resource_log_manager: &mut ResourceLogManager,
         step: &Step,
         data: &mut Option<Box<dyn StepRunnerData>>,
     ) {
@@ -112,6 +114,17 @@ impl StepRunnerProgram {
 
                         gl.check_gl_error(std::file!(), std::line!());
                         data.pipeline = pipeline;
+
+
+                        // retrieve and save the logs
+                        for (_n,ss) in shader_sources.iter_mut() {
+                            if let Some( resource_id ) = ss.take_resource_id() {
+                                let compile_log = ss.take_compile_log();
+                                //eprintln!("Compile Log for {resource_id}: \n{}", compile_log.join("\n"));
+                                resource_log_manager.add( resource_id, compile_log );
+                            }
+                        }
+                        // drop( shader_sources );
                     }
                     None => {
                         unimplemented!();
