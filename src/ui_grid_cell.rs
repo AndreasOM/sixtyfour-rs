@@ -5,13 +5,13 @@ use egui::Widget;
 
 #[derive(Debug)]
 pub struct UiGridCell {
-	content: String,
+    content: String,
 }
 
 impl Default for UiGridCell {
     fn default() -> Self {
-        Self { 
-        	content: Default::default(),
+        Self {
+            content: Default::default(),
         }
     }
 }
@@ -19,7 +19,7 @@ impl Default for UiGridCell {
 impl UiGridCell {
     pub fn new(content: String) -> Self {
         Self {
-        	content,
+            content,
             ..Default::default()
         }
     }
@@ -42,7 +42,7 @@ impl Widget for UiGridCell {
             rect.center(),
             egui::Align2::CENTER_CENTER, // :TODO: decide
             self.content,
-            egui::FontId::monospace( 12.0 ),
+            egui::FontId::monospace(12.0),
             egui::Color32::LIGHT_GRAY,
         );
 

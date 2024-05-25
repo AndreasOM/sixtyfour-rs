@@ -1,8 +1,9 @@
-use std::collections::HashMap;
 use crate::state::State;
 use crate::step_editor_ui::StepEditorUi;
 use crate::window::Window;
 use crate::UiGrid;
+use crate::UiGridCell;
+use std::collections::HashMap;
 
 #[derive(Debug, Default)]
 pub struct FlowWindow {
@@ -85,19 +86,20 @@ impl Window for FlowWindow {
                         let x = 0;
                         let mut y = 0;
                         // :CHEAT: ???
-                        let mut pos2step = HashMap::< ( u16, u16 ), ( usize, usize ) >::new(); // ( x, y ) -> ( b_idx, s_idx );
+                        let mut pos2step = HashMap::<(u16, u16), (usize, usize)>::new(); // ( x, y ) -> ( b_idx, s_idx );
                         for (b_idx, b) in state.project.flow().blocks().iter().enumerate() {
                             for (s_idx, s) in b.steps().iter().enumerate() {
-                                grid.add_cell(x, y, String::from(s));
-                                pos2step.insert( ( x, y ), (b_idx, s_idx));
+                                //grid.add_cell(x, y, String::from(s));
+                                grid.add_cell(x, y, UiGridCell::new(String::from(s)));
+                                pos2step.insert((x, y), (b_idx, s_idx));
                                 y += 1;
                             }
                         }
 
-                        let gr = grid.show( ui );
+                        let gr = grid.show(ui);
 
-                        if let Some( (sx, sy) ) = gr.selected() {
-                            if let Some( ( b_idx, s_idx ) ) = pos2step.get( &(sx, sy) ) {
+                        if let Some((sx, sy)) = gr.selected() {
+                            if let Some((b_idx, s_idx)) = pos2step.get(&(sx, sy)) {
                                 //eprintln!("Selected {b_idx}, {s_idx}");
                                 self.selected_step = Some((*b_idx, *s_idx))
                             }

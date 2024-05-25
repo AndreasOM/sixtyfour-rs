@@ -4,23 +4,24 @@ use egui::Ui;
 use egui::Widget;
 #[derive(Debug)]
 pub struct UiGridOutput {
-	selected: Option<(u16,u16)>,
-	response: Response,
+    selected: Option<(u16, u16)>,
+    response: Response,
 }
 
 impl UiGridOutput {
-	pub fn selected( &self ) -> Option< (u16, u16) > {
-		self.selected
-	}
+    pub fn selected(&self) -> Option<(u16, u16)> {
+        self.selected
+    }
 }
 
-#[derive(Debug)]
+//#[derive(Debug)]
 pub struct UiGrid {
     cell_width: f32,
     cell_height: f32,
     width: u16,
     height: u16,
-    cells: Vec<Option<String>>, // :HACK: this should be sparse
+    //cells: Vec<Option<String>>, // :HACK: this should be sparse
+    cells: Vec<Option<UiGridCell>>, // :HACK: this should be sparse
 }
 
 impl Default for UiGrid {
@@ -28,7 +29,7 @@ impl Default for UiGrid {
         let width = 32u16;
         let height = 32u16;
         let mut cells = Vec::with_capacity((width * height).into());
-        cells.resize((width * height).into(), None);
+        cells.resize_with((width * height).into(), Default::default);
 
         Self {
             cell_width: 128.0,
@@ -41,7 +42,7 @@ impl Default for UiGrid {
 }
 
 impl UiGrid {
-    pub fn add_cell(&mut self, x: u16, y: u16, content: String) {
+    pub fn add_cell(&mut self, x: u16, y: u16, content: UiGridCell) {
         let offset = (y * self.width + x) as usize;
         if offset > self.cells.capacity() {
             return;
@@ -58,7 +59,7 @@ impl UiGrid {
         let mut selected = None;
         if ui.is_rect_visible(rect) {
             let cell_size = egui::Vec2::new(self.cell_width, self.cell_height);
-            for (idx, content) in self.cells.iter().enumerate() {
+            for (idx, content) in self.cells.into_iter().enumerate() {
                 let y = idx / self.width as usize;
                 let x = idx % self.width as usize;
                 let cell_pos = egui::Pos2::new(
@@ -69,27 +70,26 @@ impl UiGrid {
                 let cell_rect = egui::Rect::from_center_size(cell_pos, cell_size);
 
                 if let Some(content) = content {
-                    let r = ui.put(cell_rect, UiGridCell::new(content.to_string()));
+                    //let r = ui.put(cell_rect, UiGridCell::new(content.to_string()));
+                    //let content = Box::new( egui::Label::new("fii") );
+                    let r = ui.put(cell_rect, content);
 
                     if r.clicked() {
-                    	// eprintln!("Clicked {x}, {y} {content}");
-                    	selected = Some( ( x as u16, y as u16 ) );
+                        // eprintln!("Clicked {x}, {y} {content}");
+                        selected = Some((x as u16, y as u16));
                     }
                 } else {
                 }
             }
         }
 
-        UiGridOutput {
-        	selected,
-        	response,
-        }
+        UiGridOutput { selected, response }
     }
 }
 
 impl Widget for UiGrid {
     fn ui(self, ui: &mut Ui) -> Response {
-    	// todo!();
-    	self.show(ui).response
+        // todo!();
+        self.show(ui).response
     }
 }
