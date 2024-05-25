@@ -1,5 +1,5 @@
-use crate::engine::ResourceLogManager;
 use crate::engine::gl::Gl;
+use crate::engine::ResourceLogManager;
 use crate::engine::StepRunnerData;
 use crate::engine::StepRunnerFullscreenQuad;
 use crate::engine::StepRunnerProgram;
@@ -24,7 +24,12 @@ impl FlowVm {
         Ok(())
     }
 
-    pub fn run_setup(&mut self, gl: &Gl, project: &Project, resource_log_manager: &mut ResourceLogManager) -> Result<()> {
+    pub fn run_setup(
+        &mut self,
+        gl: &Gl,
+        project: &Project,
+        resource_log_manager: &mut ResourceLogManager,
+    ) -> Result<()> {
         // !!! should only run once when project/flow is changed !!!
         if let Some(block) = self.flow.blocks().iter().find(|b| b.name() == "start") {
             let mut srd_block = Vec::with_capacity(block.steps().len());

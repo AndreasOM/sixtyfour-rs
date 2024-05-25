@@ -1,6 +1,8 @@
+use std::collections::HashMap;
 use crate::state::State;
 use crate::step_editor_ui::StepEditorUi;
 use crate::window::Window;
+use crate::UiGrid;
 
 #[derive(Debug, Default)]
 pub struct FlowWindow {
@@ -77,22 +79,30 @@ impl Window for FlowWindow {
                         }
                     });
                 egui::CentralPanel::default().show_inside(ui, |ui| {
-                    //egui::ScrollArea::both().show(ui, |ui| {
-                    egui::Grid::new("flow_grid").show(ui, |ui| {
-                        state.project.with_flow_mut(|flow| {
-                            for (b_idx, b) in flow.blocks().iter().enumerate() {
-                                ui.label(String::from(b.name()));
-                                ui.end_row();
-                                for (s_idx, s) in b.steps().iter().enumerate() {
-                                    if ui.label(String::from(s)).clicked() {
-                                        self.selected_step = Some((b_idx, s_idx))
-                                    };
-                                    ui.end_row();
-                                }
+                    egui::ScrollArea::both().show(ui, |ui| {
+                        let mut grid = UiGrid::default();
+
+                        let x = 0;
+                        let mut y = 0;
+                        // :CHEAT: ???
+                        let mut pos2step = HashMap::< ( u16, u16 ), ( usize, usize ) >::new(); // ( x, y ) -> ( b_idx, s_idx );
+                        for (b_idx, b) in state.project.flow().blocks().iter().enumerate() {
+                            for (s_idx, s) in b.steps().iter().enumerate() {
+                                grid.add_cell(x, y, String::from(s));
+                                pos2step.insert( ( x, y ), (b_idx, s_idx));
+                                y += 1;
                             }
-                        });
+                        }
+
+                        let gr = grid.show( ui );
+
+                        if let Some( (sx, sy) ) = gr.selected() {
+                            if let Some( ( b_idx, s_idx ) ) = pos2step.get( &(sx, sy) ) {
+                                //eprintln!("Selected {b_idx}, {s_idx}");
+                                self.selected_step = Some((*b_idx, *s_idx))
+                            }
+                        }
                     });
-                    //});
                 });
             });
     }

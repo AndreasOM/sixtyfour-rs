@@ -31,7 +31,7 @@ impl ShaderSource {
         &self.compile_log
     }
 
-    pub fn take_compile_log(&mut self ) -> Vec<String> {
+    pub fn take_compile_log(&mut self) -> Vec<String> {
         //self.compile_log.split_off( 0 )
         let v = core::mem::take(&mut self.compile_log);
 

@@ -1,6 +1,6 @@
-use crate::engine::ResourceLogManager;
 use super::gl::*;
 use crate::engine::FlowVm;
+use crate::engine::ResourceLogManager;
 use crate::project::Project;
 use crate::project::PropertyValue;
 use crate::project::ResourceId;
@@ -20,7 +20,6 @@ pub struct McGuffin {
     properties_vec3_f32: HashMap<String, [f32; 3]>,
     properties_vec3_f32_size4: HashMap<String, [f32; 3 * 4]>,
     // shader_sources: HashMap<String, ShaderSource>,
-
     project: Project,
     project_version: u32,
 
@@ -58,8 +57,8 @@ impl McGuffin {
             }
         }
         */
-        if let Some( l ) = self.resource_log_manager.get( resource_id ) {
-            return Cow::Borrowed( l );
+        if let Some(l) = self.resource_log_manager.get(resource_id) {
+            return Cow::Borrowed(l);
         }
 
         let not_found = vec![format!("Resource '{resource_id}' not found")];
@@ -133,7 +132,9 @@ impl McGuffin {
             eprintln!("Project changed {}", project.version());
             self.project = (*project).clone();
             let _todo = self.flow_vm.load(self.project.flow());
-            let _todo = self.flow_vm.run_setup(&self.gl, project, &mut self.resource_log_manager);
+            let _todo = self
+                .flow_vm
+                .run_setup(&self.gl, project, &mut self.resource_log_manager);
             self.project_version = project.version();
         }
         /*

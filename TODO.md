@@ -4,10 +4,8 @@
 ## In Progress
 
 
-
 ## ToDo
 
-- [ ] Fix compile log in Shader Window
 
 - [ ] Make ShaderWindow autoselect a shader if needed/possible
 
@@ -36,6 +34,11 @@
 - [ ] Decide on default on windows
 ## Done
 
+## 2024-05-25
+- [x] Add grid for flow
+	- [x] Add text to steps/cells
+	- [x] Allow selection of step
+
 ## 2024-05-24
 - [x] Use menu bar for menu bar
 - [x] Add names to Program Resources
@@ -52,6 +55,7 @@
 	- [x] Show shader/text name
 	- [x] Add combo box to select current program
 	- [x] Filter "add shader" list for already used shaders
+- [x] Fix compile log in Shader Window
 
 ## 2024-05-23
 - [x] Add versioning to project to avoid constant rebuilds
