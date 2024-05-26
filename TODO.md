@@ -3,6 +3,7 @@
 
 ## In Progress
 
+- [ ] Add highlight around selected step
 - [ ] Allow steps to be placed on grid
 	- [x] Store the grid position for step
 	- [x] Use grid position to edit steps
