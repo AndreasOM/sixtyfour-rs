@@ -1,3 +1,4 @@
+use crate::project::GridPos;
 use crate::UiGridCell;
 use egui::Response;
 use egui::Ui;
@@ -5,12 +6,16 @@ use egui::Widget;
 #[derive(Debug)]
 pub struct UiGridOutput {
     selected: Option<(u16, u16)>,
+    selected_grid_pos: Option<GridPos>,
     response: Response,
 }
 
 impl UiGridOutput {
     pub fn selected(&self) -> Option<(u16, u16)> {
         self.selected
+    }
+    pub fn selected_grid_pos(&self) -> Option<&GridPos> {
+        self.selected_grid_pos.as_ref()
     }
 }
 
@@ -57,44 +62,45 @@ impl UiGrid {
         );
         let (rect, response) = ui.allocate_exact_size(desired_size, egui::Sense::click());
         let mut selected = None;
+        let mut selected_grid_pos = None;
         if ui.is_rect_visible(rect) {
             let cell_size = egui::Vec2::new(self.cell_width, self.cell_height);
 
             // paint grid
-            let stroke = egui::Stroke::new( 0.25, egui::Color32::from_rgb( 50, 50, 50 ));
-	        // let visuals = ui.style().interact_selectable(&response, true);
+            let stroke = egui::Stroke::new(0.25, egui::Color32::from_rgb(50, 50, 50));
+            // let visuals = ui.style().interact_selectable(&response, true);
 
-            let vis_r = response.interact_rect;//.translate( ui.min_rect().min.to_vec2() );
-            let c = ( ( vis_r.width() / self.cell_width ).ceil() ) as usize;
+            let vis_r = response.interact_rect; //.translate( ui.min_rect().min.to_vec2() );
+            let c = ((vis_r.width() / self.cell_width).ceil()) as usize;
             let c = c + 1;
             let ul = ui.min_rect().min; // upper left of "window"
             let lr = ui.min_rect().max; // lower right of "window"
 
             let p = vis_r.min - ul;
-            let p = p / egui::Vec2::new( self.cell_width, self.cell_height );
+            let p = p / egui::Vec2::new(self.cell_width, self.cell_height);
             let p = p.floor();
-            let p = p * egui::Vec2::new( self.cell_width, self.cell_height );
+            let p = p * egui::Vec2::new(self.cell_width, self.cell_height);
             let mut p = ul + p;
 
             // vertical lines
             for _ in 0..c {
-				ui.painter().vline(
-					p.x,
-					egui::Rangef::new( ul.y, lr.y ),
-		            stroke, //visuals.bg_stroke,
-        		);
-        		p.x += self.cell_width;
+                ui.painter().vline(
+                    p.x,
+                    egui::Rangef::new(ul.y, lr.y),
+                    stroke, //visuals.bg_stroke,
+                );
+                p.x += self.cell_width;
             }
 
-            let c = ( ( vis_r.height() / self.cell_height ).ceil() ) as usize;
+            let c = ((vis_r.height() / self.cell_height).ceil()) as usize;
             let c = c + 1;
             for _ in 0..c {
-				ui.painter().hline(
-					egui::Rangef::new( ul.x, lr.x ),
-					p.y,
-		            stroke, //visuals.bg_stroke,
-        		);
-        		p.y += self.cell_height;
+                ui.painter().hline(
+                    egui::Rangef::new(ul.x, lr.x),
+                    p.y,
+                    stroke, //visuals.bg_stroke,
+                );
+                p.y += self.cell_height;
             }
 
             for (idx, content) in self.cells.into_iter().enumerate() {
@@ -115,13 +121,18 @@ impl UiGrid {
                     if r.clicked() {
                         // eprintln!("Clicked {x}, {y} {content}");
                         selected = Some((x as u16, y as u16));
+                        selected_grid_pos = Some(GridPos::new(x as u16, y as u16));
                     }
                 } else {
                 }
             }
         }
 
-        UiGridOutput { selected, response }
+        UiGridOutput {
+            selected,
+            selected_grid_pos,
+            response,
+        }
     }
 }
 

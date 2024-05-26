@@ -21,3 +21,5 @@ pub use resource::ResourceText;
 pub use resource::ShaderType;
 mod resource_manager;
 pub use resource_manager::ResourceManager;
+mod grid_pos;
+pub use grid_pos::GridPos;

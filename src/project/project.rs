@@ -1,5 +1,6 @@
 use crate::project::Block;
 use crate::project::Flow;
+use crate::project::GridPos;
 use crate::project::PropertyManager;
 use crate::project::ResourceManager;
 use crate::project::Step;
@@ -137,6 +138,7 @@ impl Project {
         let data = std::fs::read_to_string(&filename)?;
 
         let mut project: Project = ron::from_str(&data)?;
+        project.flow.fixup_blocks(GridPos::default());
         project.version = 1;
         let _ = project.resource_manager.reload_all(Some(project_folder));
         Ok(project)

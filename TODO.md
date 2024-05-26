@@ -3,6 +3,8 @@
 
 ## In Progress
 
+- [ ] Allow steps to be placed on grid
+	- [x] Store the grid position for step
 
 ## ToDo
 

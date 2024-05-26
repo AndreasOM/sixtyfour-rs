@@ -1,4 +1,5 @@
 use crate::project::Block;
+use crate::project::GridPos;
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize, Clone)]
 pub struct Flow {
@@ -9,6 +10,15 @@ pub struct Flow {
 }
 
 impl Flow {
+    pub fn fixup_blocks(&mut self, start: GridPos) -> GridPos {
+        let mut p = start;
+        for b in self.blocks.iter_mut() {
+            p = b.fixup_steps(p);
+        }
+        // no dirty check needed since we only do this on load anyway
+        p
+    }
+
     pub fn version(&self) -> u32 {
         self.version
     }

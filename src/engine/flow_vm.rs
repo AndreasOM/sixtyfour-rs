@@ -32,10 +32,10 @@ impl FlowVm {
     ) -> Result<()> {
         // !!! should only run once when project/flow is changed !!!
         if let Some(block) = self.flow.blocks().iter().find(|b| b.name() == "start") {
-            let mut srd_block = Vec::with_capacity(block.steps().len());
-            srd_block.resize_with(block.steps().len(), Default::default);
+            let mut srd_block = Vec::with_capacity(block.steps_in_grid().len());
+            srd_block.resize_with(block.steps_in_grid().len(), Default::default);
 
-            for (s_idx, step) in block.steps().iter().enumerate() {
+            for (s_idx, (step, _gp)) in block.steps_in_grid().iter().enumerate() {
                 eprintln!("Setup {s_idx} {step:?}");
                 match step {
                     Step::Program { .. } => {
@@ -66,7 +66,7 @@ impl FlowVm {
                 .step_runner_data
                 .get("start")
                 .ok_or(eyre!("Data for block `start` not found"))?;
-            for (s_idx, step) in block.steps().iter().enumerate() {
+            for (s_idx, (step, _gp)) in block.steps_in_grid().iter().enumerate() {
                 match step {
                     Step::Program { .. } => {
                         let sr = StepRunnerProgram::default();
