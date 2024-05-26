@@ -34,6 +34,9 @@
 - [ ] Decide on default on windows
 ## Done
 
+## 2024-05-26
+- [x] Add grid lines to grid view
+
 ## 2024-05-25
 - [x] Add grid for flow
 	- [x] Add text to steps/cells

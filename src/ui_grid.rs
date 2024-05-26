@@ -59,6 +59,44 @@ impl UiGrid {
         let mut selected = None;
         if ui.is_rect_visible(rect) {
             let cell_size = egui::Vec2::new(self.cell_width, self.cell_height);
+
+            // paint grid
+            let stroke = egui::Stroke::new( 0.25, egui::Color32::from_rgb( 50, 50, 50 ));
+	        // let visuals = ui.style().interact_selectable(&response, true);
+
+            let vis_r = response.interact_rect;//.translate( ui.min_rect().min.to_vec2() );
+            let c = ( ( vis_r.width() / self.cell_width ).ceil() ) as usize;
+            let c = c + 1;
+            let ul = ui.min_rect().min; // upper left of "window"
+            let lr = ui.min_rect().max; // lower right of "window"
+
+            let p = vis_r.min - ul;
+            let p = p / egui::Vec2::new( self.cell_width, self.cell_height );
+            let p = p.floor();
+            let p = p * egui::Vec2::new( self.cell_width, self.cell_height );
+            let mut p = ul + p;
+
+            // vertical lines
+            for _ in 0..c {
+				ui.painter().vline(
+					p.x,
+					egui::Rangef::new( ul.y, lr.y ),
+		            stroke, //visuals.bg_stroke,
+        		);
+        		p.x += self.cell_width;
+            }
+
+            let c = ( ( vis_r.height() / self.cell_height ).ceil() ) as usize;
+            let c = c + 1;
+            for _ in 0..c {
+				ui.painter().hline(
+					egui::Rangef::new( ul.x, lr.x ),
+					p.y,
+		            stroke, //visuals.bg_stroke,
+        		);
+        		p.y += self.cell_height;
+            }
+
             for (idx, content) in self.cells.into_iter().enumerate() {
                 let y = idx / self.width as usize;
                 let x = idx % self.width as usize;
