@@ -1,4 +1,5 @@
 use crate::command_queue::COMMAND_QUEUE;
+use crate::project::GridPos;
 use crate::project::Project;
 use crate::project::Resource;
 use crate::project::Step;
@@ -16,8 +17,7 @@ impl StepEditor for StepEditorProgram {
         ui: &mut egui::Ui,
         project: &Project,
         step: &Step,
-        block_idx: usize,
-        step_idx: usize,
+        grid_pos: &GridPos,
     ) -> bool {
         match step {
             Step::Program { resource_id, .. } => {
@@ -60,8 +60,7 @@ impl StepEditor for StepEditorProgram {
                         }
                         if selected_resource_id != *resource_id {
                             let _ = COMMAND_QUEUE.send(Command::HackChangeFlowProgramResourceId {
-                                block_idx,
-                                step_idx,
+                                grid_pos: grid_pos.clone(),
                                 resource_id: selected_resource_id,
                             });
                         }

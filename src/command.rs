@@ -1,3 +1,4 @@
+use crate::project::GridPos;
 use crate::project::ResourceId;
 use crate::project::ShaderType;
 
@@ -25,8 +26,7 @@ pub enum Command {
     },
     // :HACK:
     HackChangeFlowProgramResourceId {
-        block_idx: usize,
-        step_idx: usize,
+        grid_pos: GridPos,
         resource_id: ResourceId,
     },
     /*

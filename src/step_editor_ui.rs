@@ -1,3 +1,4 @@
+use crate::project::GridPos;
 use crate::project::Project;
 use crate::project::Step;
 use crate::step_editor_program::StepEditorProgram;
@@ -22,11 +23,10 @@ impl StepEditorUi {
         ui: &mut egui::Ui,
         project: &Project,
         step: &Step,
-        block_idx: usize,
-        step_idx: usize,
+        grid_pos: &GridPos,
     ) -> bool {
         for e in &self.step_editors {
-            if e.update(ui, project, step, block_idx, step_idx) {
+            if e.update(ui, project, step, grid_pos) {
                 return true;
             }
         }

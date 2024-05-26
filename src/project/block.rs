@@ -26,6 +26,16 @@ impl Block {
             start
         }
     }
+    pub fn get_step_at(&self, pos: &GridPos) -> Option<&Step> {
+        for (s, p) in self.steps_in_grid.iter() {
+            if *p == *pos {
+                return Some(s);
+            }
+        }
+
+        None
+    }
+
     pub fn version(&self) -> u32 {
         self.version
     }
@@ -67,6 +77,29 @@ impl Block {
                 self.version += 1;
                 eprintln!("Block version: {}", self.version);
             }
+        }
+    }
+    pub fn with_step_at_mut<F>(&mut self, grid_pos: &GridPos, mut f: F)
+    where
+        F: FnMut(&mut Step) -> (),
+    {
+        let mut any_changes = false;
+
+        for (s, p) in self.steps_in_grid.iter_mut() {
+            if *p == *grid_pos {
+                let old_version = s.version();
+                f(s);
+                let new_version = s.version();
+
+                if new_version != old_version {
+                    any_changes = true;
+                }
+            }
+        }
+
+        if any_changes {
+            self.version += 1;
+            eprintln!("Flow version: {}", self.version);
         }
     }
 }

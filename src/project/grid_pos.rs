@@ -1,4 +1,4 @@
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize, Clone)]
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize, Clone, PartialEq)]
 pub struct GridPos {
     x: u16,
     y: u16,

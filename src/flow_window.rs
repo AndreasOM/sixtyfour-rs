@@ -1,3 +1,4 @@
+use crate::project::GridPos;
 use crate::state::State;
 use crate::step_editor_ui::StepEditorUi;
 use crate::window::Window;
@@ -9,6 +10,7 @@ use std::collections::HashMap;
 pub struct FlowWindow {
     is_open: bool,
     selected_step: Option<(usize, usize)>,
+    selected_grid_pos: Option<GridPos>,
 
     //#[serde(skip)]
     step_editor_ui: StepEditorUi,
@@ -53,8 +55,17 @@ impl Window for FlowWindow {
                     //.min_height(32.0)
                     .exact_height(128.0)
                     .show_inside(ui, |ui| {
-                        if let Some(selected_step) = &self.selected_step {
+                        if let Some(selected_grid_pos) = &self.selected_grid_pos {
                             //ui.label(format!("Selected {}-{}", selected_step.0, selected_step.1));
+                            if let Some(s) = state.project.flow().get_step_at(selected_grid_pos) {
+                                self.step_editor_ui.update(
+                                    ui,
+                                    &state.project,
+                                    s,
+                                    selected_grid_pos,
+                                );
+                            }
+                            /*
                             state.project.with_flow(|flow| {
                                 if let Some(b) = flow.blocks().get(selected_step.0) {
                                     if let Some((s, _gp)) = b.steps_in_grid().get(selected_step.1) {
@@ -68,6 +79,7 @@ impl Window for FlowWindow {
                                     }
                                 }
                             });
+                            */
                         }
                     });
                 egui::TopBottomPanel::bottom("bottom_panel")
@@ -83,35 +95,16 @@ impl Window for FlowWindow {
                     egui::ScrollArea::both().show(ui, |ui| {
                         let mut grid = UiGrid::default();
 
-                        let x = 0;
-                        let mut y = 0;
-                        // :CHEAT: ???
-                        let mut pos2step = HashMap::<(u16, u16), (usize, usize)>::new(); // ( x, y ) -> ( b_idx, s_idx );
-                        for (b_idx, b) in state.project.flow().blocks().iter().enumerate() {
-                            for (s_idx, (s, gp)) in b.steps_in_grid().iter().enumerate() {
-                                //grid.add_cell(x, y, String::from(s));
+                        for (_b_idx, b) in state.project.flow().blocks().iter().enumerate() {
+                            for (_s_idx, (s, gp)) in b.steps_in_grid().iter().enumerate() {
                                 grid.add_cell(gp.x(), gp.y(), UiGridCell::new(String::from(s)));
-                                pos2step.insert((gp.x(), gp.y()), (b_idx, s_idx));
-                                y += 1;
                             }
                         }
 
                         let gr = grid.show(ui);
 
-                        /*
-                        if let Some((sx, sy)) = gr.selected() {
-                            if let Some((b_idx, s_idx)) = pos2step.get(&(sx, sy)) {
-                                //eprintln!("Selected {b_idx}, {s_idx}");
-                                self.selected_step = Some((*b_idx, *s_idx))
-                            }
-                        }
-                        */
                         if let Some(gp) = gr.selected_grid_pos() {
-                            let p = (gp.x(), gp.y());
-                            if let Some((b_idx, s_idx)) = pos2step.get(&p) {
-                                //eprintln!("Selected {b_idx}, {s_idx}");
-                                self.selected_step = Some((*b_idx, *s_idx))
-                            }
+                            self.selected_grid_pos = Some(gp.clone());
                         }
                     });
                 });

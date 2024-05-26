@@ -343,10 +343,24 @@ impl eframe::App for TemplateApp {
                     self.state.select_program_id(resource_id);
                 }
                 Command::HackChangeFlowProgramResourceId {
-                    block_idx,
-                    step_idx,
+                    grid_pos,
                     resource_id,
                 } => self.state.project.with_flow_mut(|f| {
+                    f.with_step_at_mut(&grid_pos, |step| {
+                        let new_resource_id = &resource_id;
+                        match step {
+                            Step::Program {
+                                ref mut resource_id,
+                                ref mut version,
+                            } => {
+                                eprintln!("Changing program to {resource_id}");
+                                *resource_id = new_resource_id.to_string();
+                                *version += 1;
+                            }
+                            _ => {}
+                        }
+                    });
+                    /*
                     f.with_block_mut(block_idx, |block| {
                         block.with_step_mut(step_idx, |step| {
                             let new_resource_id = &resource_id;
@@ -363,6 +377,7 @@ impl eframe::App for TemplateApp {
                             }
                         });
                     });
+                    */
                 }),
                 o => {
                     eprintln!("Unhandled command {o:?}");
