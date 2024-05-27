@@ -3,6 +3,7 @@ use crate::engine::ResourceLogManager;
 use crate::engine::StepRunnerData;
 use crate::engine::StepRunnerFullscreenQuad;
 use crate::engine::StepRunnerProgram;
+use crate::engine::StepRunnerSetUniformF32;
 use crate::project::Flow;
 use crate::project::Project;
 use crate::project::Step;
@@ -45,12 +46,10 @@ impl FlowVm {
                         srd_block[s_idx] = srd;
                     }
                     Step::SetUniformF32 { .. } => {
-                        /*
-                        let sr = StepRunnerProgram::default();
+                        let sr = StepRunnerSetUniformF32::default();
                         let mut srd = sr.create_data();
-                        sr.run_setup(gl, project, resource_log_manager, step, &mut srd);
+                        sr.run_setup(gl, step, &mut srd);
                         srd_block[s_idx] = srd;
-                        */
                     }
                     Step::FullscreenQuad => {
                         let sr = StepRunnerFullscreenQuad::default();
@@ -83,12 +82,10 @@ impl FlowVm {
                         sr.run_render(gl, srd);
                     }
                     Step::SetUniformF32 { .. } => {
-                        /*
-                        let sr = StepRunnerProgram::default();
+                        let sr = StepRunnerSetUniformF32::default();
 
                         let srd = &srd_block[s_idx];
-                        sr.run_render(gl, srd);
-                        */
+                        sr.run_render(gl, step, srd);
                     }
                     Step::FullscreenQuad => {
                         let sr = StepRunnerFullscreenQuad::default();

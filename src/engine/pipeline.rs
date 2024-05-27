@@ -116,7 +116,7 @@ impl Pipeline {
             fragment_shader
         };
         self.program = self.link_program(gl, vertex_shader, fragment_shader)?;
-        eprintln!("pipeline.rebuild() -> success");
+        eprintln!("pipeline.rebuild() -> success {}", self.program);
         Ok(())
     }
     fn compile_shader(&mut self, gl: &Gl, shader_source: &mut ShaderSource) -> Result<GLuint> {

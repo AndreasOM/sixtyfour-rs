@@ -24,6 +24,8 @@ mod step_runner_fullscreen_quad;
 pub use step_runner_fullscreen_quad::StepRunnerFullscreenQuad;
 mod step_runner_program;
 pub use step_runner_program::StepRunnerProgram;
+mod step_runner_set_uniform_f32;
+pub use step_runner_set_uniform_f32::StepRunnerSetUniformF32;
 
 mod resource_log_manager;
 use resource_log_manager::ResourceLogManager;
