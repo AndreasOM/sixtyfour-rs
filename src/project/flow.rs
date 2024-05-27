@@ -37,6 +37,23 @@ impl Flow {
         self.version += 1;
         self.blocks.push(block);
     }
+    pub fn add_step(&mut self, pos: &GridPos, step: Step) {
+        // cheat, just use the first block :sigh:
+        if let Some(b) = self.blocks.get_mut(0) {
+            b.add_step_in_grid(pos, step);
+        }
+        self.version += 1;
+    }
+    pub fn remove_step(&mut self, pos: &GridPos) -> Option<Step> {
+        // cheat, just use the first block :sigh:
+        if let Some(b) = self.blocks.get_mut(0) {
+            self.version += 1;
+            b.remove_step_in_grid(pos)
+        } else {
+            None
+        }
+    }
+
     pub fn blocks(&self) -> &Vec<Block> {
         &self.blocks
     }

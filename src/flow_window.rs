@@ -1,7 +1,10 @@
+use crate::command_queue::COMMAND_QUEUE;
 use crate::project::GridPos;
+use crate::project::Step;
 use crate::state::State;
 use crate::step_editor_ui::StepEditorUi;
 use crate::window::Window;
+use crate::Command;
 use crate::UiGrid;
 use crate::UiGridCell;
 use std::collections::HashMap;
@@ -11,6 +14,8 @@ pub struct FlowWindow {
     is_open: bool,
     selected_step: Option<(usize, usize)>,
     selected_grid_pos: Option<GridPos>,
+    target_grid_pos: GridPos,
+    target_step_type: String,
 
     //#[serde(skip)]
     step_editor_ui: StepEditorUi,
@@ -65,22 +70,8 @@ impl Window for FlowWindow {
                                     selected_grid_pos,
                                 );
                             }
-                            /*
-                            state.project.with_flow(|flow| {
-                                if let Some(b) = flow.blocks().get(selected_step.0) {
-                                    if let Some((s, _gp)) = b.steps_in_grid().get(selected_step.1) {
-                                        self.step_editor_ui.update(
-                                            ui,
-                                            &state.project,
-                                            s,
-                                            selected_step.0,
-                                            selected_step.1,
-                                        );
-                                    }
-                                }
-                            });
-                            */
                         }
+                        ui.separator();
                     });
                 egui::TopBottomPanel::bottom("bottom_panel")
                     .resizable(false)
@@ -89,6 +80,51 @@ impl Window for FlowWindow {
                     .show_inside(ui, |ui| {
                         if let Some(selected_step) = &self.selected_step {
                             ui.label(format!("Selected {}-{}", selected_step.0, selected_step.1));
+                        }
+                    });
+                egui::SidePanel::left("left_panel")
+                    .resizable(false)
+                    //.exact_height(16.0)
+                    .min_width(128.0)
+                    .show_inside(ui, |ui| {
+                        ui.label("Grid Stuff");
+                        ui.add(
+                            egui::DragValue::new(self.target_grid_pos.x_mut())
+                                .speed(0.2)
+                                .clamp_range(0..=31),
+                        );
+                        ui.add(
+                            egui::DragValue::new(self.target_grid_pos.y_mut())
+                                .speed(0.2)
+                                .clamp_range(0..=31),
+                        );
+
+                        egui::ComboBox::from_label("Step Type")
+                            .selected_text(
+                                egui::RichText::new(format!("{}", self.target_step_type))
+                                    .monospace()
+                                    .strong(),
+                            )
+                            .width(128.0)
+                            .show_ui(ui, |ui| {
+                                for t in Step::types() {
+                                    ui.selectable_value(
+                                        &mut self.target_step_type,
+                                        String::from(*t),
+                                        *t,
+                                    );
+                                }
+                            });
+                        if ui.button("Add Step").clicked() {
+                            let _ = COMMAND_QUEUE.send(Command::HackAddStepToFlow {
+                                grid_pos: self.target_grid_pos.clone(),
+                                step_type: self.target_step_type.clone(),
+                            });
+                        }
+                        if ui.button("Remove Step").clicked() {
+                            let _ = COMMAND_QUEUE.send(Command::HackRemoveStepFromFlow {
+                                grid_pos: self.target_grid_pos.clone(),
+                            });
                         }
                     });
                 egui::CentralPanel::default().show_inside(ui, |ui| {
@@ -102,6 +138,7 @@ impl Window for FlowWindow {
                         }
 
                         grid.select_cell(self.selected_grid_pos.as_ref());
+                        grid.highlight_cell(&self.target_grid_pos);
 
                         let gr = grid.show(ui);
 

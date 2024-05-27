@@ -29,6 +29,13 @@ pub enum Command {
         grid_pos: GridPos,
         resource_id: ResourceId,
     },
+    HackAddStepToFlow {
+        grid_pos: GridPos,
+        step_type: String,
+    },
+    HackRemoveStepFromFlow {
+        grid_pos: GridPos,
+    },
     /*
     ChangeFlow {
         flow_command: FlowCommand,

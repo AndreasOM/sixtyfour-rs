@@ -30,6 +30,7 @@ pub struct UiGrid {
     //cells: Vec<Option<String>>, // :HACK: this should be sparse
     cells: Vec<Option<UiGridCell>>, // :HACK: this should be sparse
     selected_cell: Option<GridPos>,
+    highlighted_cells: Vec<GridPos>,
 }
 
 impl Default for UiGrid {
@@ -47,6 +48,7 @@ impl Default for UiGrid {
             height,
             cells,
             selected_cell: None,
+            highlighted_cells: Vec::default(),
         }
     }
 }
@@ -64,6 +66,17 @@ impl UiGrid {
         self.selected_cell = pos.cloned();
     }
 
+    pub fn highlight_cell(&mut self, pos: &GridPos) {
+        self.highlighted_cells.push(pos.to_owned());
+    }
+
+    fn paint_highlight_cell(&self, ui: &mut Ui, stroke: &egui::Stroke, pos: &GridPos) {
+        let pos = ui.min_rect().min
+            + self.cell_size * egui::Vec2::new(pos.x() as f32 + 0.5, pos.y() as f32 + 0.5);
+        let rect = Rect::from_center_size(pos, self.cell_size);
+        ui.painter()
+            .rect_stroke(rect, 0.125 * rect.height(), *stroke);
+    }
     pub fn show(self, ui: &mut Ui) -> UiGridOutput {
         let desired_size = egui::vec2(
             self.cell_width * self.width as f32,
@@ -113,22 +126,22 @@ impl UiGrid {
             }
 
             // paint highlights
-            /*
-            pub fn rect_stroke(
-                &self,
-                rect: Rect,
-                rounding: impl Into<Rounding>,
-                stroke: impl Into<Stroke>
-            ) -> ShapeIdx
-            */
-            if let Some(pos) = self.selected_cell {
+
+            if let Some(pos) = &self.selected_cell {
                 let stroke = egui::Stroke::new(5.25, egui::Color32::from_rgb(75, 50, 50));
+                self.paint_highlight_cell(ui, &stroke, pos);
+                /*
                 let pos = ui.min_rect().min
                     + self.cell_size * egui::Vec2::new(pos.x() as f32 + 0.5, pos.y() as f32 + 0.5);
                 let rect = Rect::from_center_size(pos, self.cell_size);
                 ui.painter()
                     .rect_stroke(rect, 0.125 * rect.height(), stroke);
                 eprintln!("Highlight Rect: {rect:?}");
+                */
+            }
+            let stroke = egui::Stroke::new(2.0, egui::Color32::from_rgb(75, 100, 50));
+            for hp in self.highlighted_cells.iter() {
+                self.paint_highlight_cell(ui, &stroke, hp);
             }
             for (idx, content) in self.cells.into_iter().enumerate() {
                 let y = idx / self.width as usize;

@@ -51,6 +51,25 @@ impl Block {
     pub fn add_step(&mut self, step: Step) {
         self.steps.push(step);
     }
+    pub fn add_step_in_grid(&mut self, pos: &GridPos, step: Step) {
+        // :TODO: position might already be in use
+        if self.steps_in_grid.iter().any(|(_s, p)| *p == *pos) {
+            // position already in used
+            eprintln!("Position {pos:?} already in use");
+            return;
+        }
+        self.version += 1;
+        self.steps_in_grid.push((step, pos.clone()));
+    }
+    pub fn remove_step_in_grid(&mut self, pos: &GridPos) -> Option<Step> {
+        // :TODO: position might already be in use
+        if let Some(idx) = self.steps_in_grid.iter().position(|(_s, p)| *p == *pos) {
+            self.version += 1;
+            Some(self.steps_in_grid.remove(idx).0)
+        } else {
+            None
+        }
+    }
     /*
     pub fn steps(&self) -> &Vec<Step> {
         &self.steps

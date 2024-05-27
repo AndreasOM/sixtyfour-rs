@@ -14,6 +14,12 @@ impl GridPos {
     pub fn y(&self) -> u16 {
         self.y
     }
+    pub fn x_mut(&mut self) -> &mut u16 {
+        &mut self.x
+    }
+    pub fn y_mut(&mut self) -> &mut u16 {
+        &mut self.y
+    }
     pub fn inc_y(&mut self) {
         self.y += 1;
     }

@@ -3,12 +3,13 @@
 
 ## In Progress
 
-- [ ] Add highlight around selected step
+- [ ] Set uniform from flow
+
+## ToDo
+
 - [ ] Allow steps to be placed on grid
 	- [x] Store the grid position for step
 	- [x] Use grid position to edit steps
-
-## ToDo
 
 
 - [ ] Make ShaderWindow autoselect a shader if needed/possible
@@ -38,8 +39,12 @@
 - [ ] Decide on default on windows
 ## Done
 
+## 2024-05-27
+- [x] Add and remove steps from flow via editor 
+
 ## 2024-05-26
 - [x] Add grid lines to grid view
+- [x] Add highlight around selected step
 
 ## 2024-05-25
 - [x] Add grid for flow
