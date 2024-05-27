@@ -101,7 +101,7 @@ impl Window for FlowWindow {
                             }
                         }
 
-                        grid.select_cell( self.selected_grid_pos.as_ref() );
+                        grid.select_cell(self.selected_grid_pos.as_ref());
 
                         let gr = grid.show(ui);
 

@@ -1,6 +1,6 @@
-use egui::Rect;
 use crate::project::GridPos;
 use crate::UiGridCell;
+use egui::Rect;
 use egui::Response;
 use egui::Ui;
 use egui::Widget;
@@ -29,7 +29,7 @@ pub struct UiGrid {
     height: u16,
     //cells: Vec<Option<String>>, // :HACK: this should be sparse
     cells: Vec<Option<UiGridCell>>, // :HACK: this should be sparse
-    selected_cell: Option< GridPos >,
+    selected_cell: Option<GridPos>,
 }
 
 impl Default for UiGrid {
@@ -42,7 +42,7 @@ impl Default for UiGrid {
         Self {
             cell_width: 128.0,
             cell_height: 32.0,
-            cell_size: egui::Vec2::new( 128.0, 32.0 ),
+            cell_size: egui::Vec2::new(128.0, 32.0),
             width,
             height,
             cells,
@@ -60,9 +60,8 @@ impl UiGrid {
         self.cells[offset] = Some(content);
     }
 
-    pub fn select_cell( &mut self, pos: Option< &GridPos > ) {
+    pub fn select_cell(&mut self, pos: Option<&GridPos>) {
         self.selected_cell = pos.cloned();
-
     }
 
     pub fn show(self, ui: &mut Ui) -> UiGridOutput {
@@ -114,23 +113,21 @@ impl UiGrid {
             }
 
             // paint highlights
-/*
-pub fn rect_stroke(
-    &self,
-    rect: Rect,
-    rounding: impl Into<Rounding>,
-    stroke: impl Into<Stroke>
-) -> ShapeIdx
-*/
-            if let Some( pos ) = self.selected_cell {
+            /*
+            pub fn rect_stroke(
+                &self,
+                rect: Rect,
+                rounding: impl Into<Rounding>,
+                stroke: impl Into<Stroke>
+            ) -> ShapeIdx
+            */
+            if let Some(pos) = self.selected_cell {
                 let stroke = egui::Stroke::new(5.25, egui::Color32::from_rgb(75, 50, 50));
-                let pos = ui.min_rect().min + self.cell_size * egui::Vec2::new( pos.x() as f32 + 0.5, pos.y() as f32 + 0.5 );
-                let rect = Rect::from_center_size( pos, self.cell_size );
-                ui.painter().rect_stroke(
-                    rect,
-                    0.125 * rect.height(),
-                    stroke,                    
-                );
+                let pos = ui.min_rect().min
+                    + self.cell_size * egui::Vec2::new(pos.x() as f32 + 0.5, pos.y() as f32 + 0.5);
+                let rect = Rect::from_center_size(pos, self.cell_size);
+                ui.painter()
+                    .rect_stroke(rect, 0.125 * rect.height(), stroke);
                 eprintln!("Highlight Rect: {rect:?}");
             }
             for (idx, content) in self.cells.into_iter().enumerate() {
@@ -142,7 +139,7 @@ pub fn rect_stroke(
                 );
                 let cell_pos = ui.min_rect().min + cell_pos.to_vec2();
                 let cell_rect = egui::Rect::from_center_size(cell_pos, cell_size);
-                let cell_rect = cell_rect.shrink( 1.0 );
+                let cell_rect = cell_rect.shrink(1.0);
 
                 if let Some(content) = content {
                     //let r = ui.put(cell_rect, UiGridCell::new(content.to_string()));
