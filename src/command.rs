@@ -36,6 +36,11 @@ pub enum Command {
     HackRemoveStepFromFlow {
         grid_pos: GridPos,
     },
+    HackStepSetUniformF32SetNameAndValue {
+        grid_pos: GridPos,
+        name: String,
+        value: String,
+    },
     /*
     ChangeFlow {
         flow_command: FlowCommand,

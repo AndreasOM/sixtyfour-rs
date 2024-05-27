@@ -46,6 +46,9 @@ mod step_editor;
 mod step_editor_ui;
 use step_editor::StepEditor;
 mod step_editor_program;
+mod step_editor_scratch;
+mod step_editor_set_uniform_f32;
+use step_editor_scratch::StepEditorScratch;
 
 mod ui_grid;
 use ui_grid::UiGrid;

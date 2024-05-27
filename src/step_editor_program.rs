@@ -5,6 +5,7 @@ use crate::project::Resource;
 use crate::project::Step;
 use crate::Command;
 use crate::StepEditor;
+use crate::StepEditorScratch;
 
 #[derive(Debug, Default)]
 pub struct StepEditorProgram {}
@@ -16,6 +17,7 @@ impl StepEditor for StepEditorProgram {
         &self,
         ui: &mut egui::Ui,
         project: &Project,
+        _step_editor_scratch: &mut StepEditorScratch,
         step: &Step,
         grid_pos: &GridPos,
     ) -> bool {

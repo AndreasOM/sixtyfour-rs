@@ -44,6 +44,14 @@ impl FlowVm {
                         sr.run_setup(gl, project, resource_log_manager, step, &mut srd);
                         srd_block[s_idx] = srd;
                     }
+                    Step::SetUniformF32 { .. } => {
+                        /*
+                        let sr = StepRunnerProgram::default();
+                        let mut srd = sr.create_data();
+                        sr.run_setup(gl, project, resource_log_manager, step, &mut srd);
+                        srd_block[s_idx] = srd;
+                        */
+                    }
                     Step::FullscreenQuad => {
                         let sr = StepRunnerFullscreenQuad::default();
                         let mut srd = sr.create_data();
@@ -73,6 +81,14 @@ impl FlowVm {
 
                         let srd = &srd_block[s_idx];
                         sr.run_render(gl, srd);
+                    }
+                    Step::SetUniformF32 { .. } => {
+                        /*
+                        let sr = StepRunnerProgram::default();
+
+                        let srd = &srd_block[s_idx];
+                        sr.run_render(gl, srd);
+                        */
                     }
                     Step::FullscreenQuad => {
                         let sr = StepRunnerFullscreenQuad::default();

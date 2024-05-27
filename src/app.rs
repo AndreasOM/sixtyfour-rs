@@ -10,7 +10,6 @@ use crate::properties_window::PropertiesWindow;
 use crate::resources_window::ResourcesWindow;
 use crate::shaders_window::ShadersWindow;
 use crate::state::State;
-use crate::time_series::TimeSeries;
 use crate::Command;
 use crate::WindowManager;
 use crate::WindowsMenu;
@@ -378,6 +377,25 @@ impl eframe::App for TemplateApp {
                     //
                     self.state.project.with_flow_mut(|f| {
                         f.remove_step(&grid_pos);
+                    });
+                }
+                Command::HackStepSetUniformF32SetNameAndValue {
+                    grid_pos,
+                    name,
+                    value,
+                } => {
+                    self.state.project.with_flow_mut(|f| {
+                        f.with_step_at_mut(&grid_pos, |s| {
+                            let new_name = &name;
+                            let new_value = &value;
+                            match s {
+                                Step::SetUniformF32 { name, value, .. } => {
+                                    *name = new_name.to_string();
+                                    *value = new_value.to_string();
+                                }
+                                _ => {}
+                            }
+                        })
                     });
                 }
                 o => {

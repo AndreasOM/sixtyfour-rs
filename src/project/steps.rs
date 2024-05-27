@@ -8,6 +8,11 @@ pub enum Step {
         #[serde(skip)]
         version: u32,
     },
+    SetUniformF32 {
+        name: String,
+        value: String,
+        version: u32,
+    },
     #[default]
     Nop,
 }
@@ -17,11 +22,12 @@ impl Step {
         match self {
             Self::FullscreenQuad => 0,
             Self::Program { version, .. } => *version,
+            Self::SetUniformF32 { version, .. } => *version,
             Self::Nop => 0,
         }
     }
     pub fn types() -> &'static [&'static str] {
-        &["FullscreenQuad", "Program", "Nop"]
+        &["FullscreenQuad", "Program", "SetUniformF32", "Nop"]
     }
 }
 impl From<&Step> for String {
@@ -29,6 +35,7 @@ impl From<&Step> for String {
         match s {
             Step::FullscreenQuad => format!("FullscreenQuad"),
             Step::Program { .. } => format!("Program"),
+            Step::SetUniformF32 { .. } => format!("SetUniformF32"),
             //Step::Program{ resource_id } => format!("Program {resource_id}"),
             Step::Nop => format!("Nop"),
         }
@@ -41,6 +48,11 @@ impl From<&str> for Step {
             "FullscreenQuad" => Step::FullscreenQuad,
             "Program" => Step::Program {
                 resource_id: Default::default(),
+                version: 1,
+            },
+            "SetUniformF32" => Step::SetUniformF32 {
+                name: Default::default(),
+                value: Default::default(),
                 version: 1,
             },
             "Nop" => Step::Nop,

@@ -37,10 +37,12 @@
 - [ ] Replace lazy_static with lazy_cell once stable (e.g. for CommandQueue)
 - [ ] Decide on good default window size
 - [ ] Decide on default on windows
+
 ## Done
 
 ## 2024-05-27
 - [x] Add and remove steps from flow via editor 
+- [x] Edit uniform step in flow editor
 
 ## 2024-05-26
 - [x] Add grid lines to grid view

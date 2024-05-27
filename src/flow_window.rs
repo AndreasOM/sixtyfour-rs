@@ -62,10 +62,16 @@ impl Window for FlowWindow {
                     .show_inside(ui, |ui| {
                         if let Some(selected_grid_pos) = &self.selected_grid_pos {
                             //ui.label(format!("Selected {}-{}", selected_step.0, selected_step.1));
-                            if let Some(s) = state.project.flow().get_step_at(selected_grid_pos) {
+                            let project = &mut state.project;
+                            // let step_editor_scratch = &mut state.step_editor_scratch_mut();
+                            let step_editor_scratch = &mut state.step_editor_scratch;
+                            let (project, step_editor_scratch) =
+                                state.project_and_step_editor_scratch_mut();
+                            if let Some(s) = project.flow().get_step_at(selected_grid_pos) {
                                 self.step_editor_ui.update(
                                     ui,
-                                    &state.project,
+                                    project,
+                                    step_editor_scratch,
                                     s,
                                     selected_grid_pos,
                                 );
@@ -143,7 +149,12 @@ impl Window for FlowWindow {
                         let gr = grid.show(ui);
 
                         if let Some(gp) = gr.selected_grid_pos() {
+                            // :TODO: only clear on change
+                            //if self.selected_grid_pos != Some( *gp ) {
+                            state.step_editor_scratch_mut().clear();
                             self.selected_grid_pos = Some(gp.clone());
+
+                            //}
                         }
                     });
                 });

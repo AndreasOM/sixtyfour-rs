@@ -2,6 +2,7 @@ use crate::project::Project;
 use crate::project::ResourceId;
 use crate::time_series::TimeSeries;
 use crate::McGuffinContainer;
+use crate::StepEditorScratch;
 use crate::WindowManager;
 use color_eyre::Result;
 use std::collections::VecDeque;
@@ -31,9 +32,18 @@ pub struct State {
 
     #[serde(skip)]
     paint_time_series: TimeSeries,
+
+    #[serde(skip)]
+    pub step_editor_scratch: StepEditorScratch,
 }
 
 impl State {
+    pub fn project_and_step_editor_scratch_mut(&mut self) -> (&Project, &mut StepEditorScratch) {
+        (&self.project, &mut self.step_editor_scratch)
+    }
+    pub fn step_editor_scratch_mut(&mut self) -> &mut StepEditorScratch {
+        &mut self.step_editor_scratch
+    }
     pub fn paint_time_series_mut(&mut self) -> &mut TimeSeries {
         &mut self.paint_time_series
     }
