@@ -12,6 +12,7 @@ pub type GLsizei = core::ffi::c_int;
 pub type GLchar = core::ffi::c_char;
 pub type GLfloat = core::ffi::c_float;
 
+pub const GL_CURRENT_PROGRAM: GLenum = 0x8B8D;
 pub const GL_ARRAY_BUFFER: GLenum = 0x8892;
 pub const GL_STATIC_DRAW: GLenum = 0x88E4;
 pub const GL_DYNAMIC_DRAW: GLenum = 0x88E8;
@@ -118,6 +119,7 @@ struct Glfps {
 
     glGetActiveUniform: GlFunctionPointer,
     glFinish: GlFunctionPointer,
+    glGetIntegerv: GlFunctionPointer,
 }
 
 impl Gl {
@@ -224,6 +226,9 @@ impl Gl {
             .load(get_proc_address, c"glGetActiveUniform")?;
 
         self.glfps.glFinish.load(get_proc_address, c"glFinish")?;
+        self.glfps
+            .glGetIntegerv
+            .load(get_proc_address, c"glGetIntegerv")?;
 
         Ok(())
     }
@@ -250,6 +255,7 @@ impl Gl {
     create_gl_wrapper!(void glProgramUniform3fv( GLuint program, GLint location, GLsizei count, const GLfloat *value));
     create_gl_wrapper!(void glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *ttype, GLchar *name));
     create_gl_wrapper!(void glFinish( void ));
+    create_gl_wrapper!(void glGetIntegerv( GLenum pname, GLint * data ));
 
     pub fn rects(&self, x1: i16, y1: i16, x2: i16, y2: i16) {
         unsafe {

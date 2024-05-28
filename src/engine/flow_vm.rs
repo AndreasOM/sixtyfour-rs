@@ -11,13 +11,29 @@ use color_eyre::eyre::eyre;
 use color_eyre::Result;
 use std::collections::HashMap;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct FlowVm {
     flow: Flow,
     step_runner_data: HashMap<String, Vec<Option<Box<dyn StepRunnerData>>>>,
+    start_time: std::time::Instant,
+    time: f32,
+}
+
+impl Default for FlowVm {
+    fn default() -> Self {
+        Self {
+            flow: Flow::default(),
+            step_runner_data: HashMap::default(),
+            start_time: std::time::Instant::now(),
+            time: f32::default(),
+        }
+    }
 }
 
 impl FlowVm {
+    pub fn time(&self) -> f32 {
+        self.time
+    }
     pub fn load(&mut self, flow: &Flow) -> Result<()> {
         //    	eprintln!("Load!!!!!!!!!!!!!!!!!");
         self.flow = flow.clone();
@@ -68,6 +84,11 @@ impl FlowVm {
         Ok(())
     }
     pub fn run_update(&mut self, gl: &Gl) -> Result<()> {
+        // update time
+        let now = std::time::Instant::now();
+        let t = now - self.start_time;
+        self.time = t.as_secs_f32();
+        
         if let Some(block) = self.flow.blocks().iter().find(|b| b.name() == "start") {
             let srd_block = self
                 .step_runner_data
@@ -85,7 +106,7 @@ impl FlowVm {
                         let sr = StepRunnerSetUniformF32::default();
 
                         let srd = &srd_block[s_idx];
-                        sr.run_render(gl, step, srd);
+                        sr.run_render(gl, &self, step, srd);
                     }
                     Step::FullscreenQuad => {
                         let sr = StepRunnerFullscreenQuad::default();

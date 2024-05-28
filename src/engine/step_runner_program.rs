@@ -113,6 +113,7 @@ impl StepRunnerProgram {
                         });
 
                         gl.check_gl_error(std::file!(), std::line!());
+                        pipeline.bind(gl);
                         data.pipeline = pipeline;
 
                         // retrieve and save the logs

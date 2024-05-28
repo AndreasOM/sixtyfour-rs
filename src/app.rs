@@ -389,9 +389,14 @@ impl eframe::App for TemplateApp {
                             let new_name = &name;
                             let new_value = &value;
                             match s {
-                                Step::SetUniformF32 { name, value, .. } => {
+                                Step::SetUniformF32 {
+                                    name,
+                                    value,
+                                    version,
+                                } => {
                                     *name = new_name.to_string();
                                     *value = new_value.to_string();
+                                    *version += 1;
                                 }
                                 _ => {}
                             }

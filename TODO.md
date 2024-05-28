@@ -3,7 +3,6 @@
 
 ## In Progress
 
-- [ ] Set uniform from flow
 
 ## ToDo
 
@@ -39,6 +38,10 @@
 - [ ] Decide on default on windows
 
 ## Done
+
+## 2024-05-28
+- [x] Set uniform from flow
+- [x] Allow "expressions" in uniform values (`${TIME}`)
 
 ## 2024-05-27
 - [x] Add and remove steps from flow via editor 

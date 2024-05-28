@@ -1,5 +1,7 @@
+use crate::engine::FlowVm;
 use crate::engine::gl::GLint;
 use crate::engine::gl::Gl;
+use crate::engine::gl::GL_CURRENT_PROGRAM;
 use crate::engine::StepRunnerData;
 use crate::project::Step;
 use core::any::Any;
@@ -23,9 +25,10 @@ impl StepRunnerSetUniformF32 {
                     if let Step::SetUniformF32 { name, .. } = step {
                         let n =
                             CString::new(String::from(name)).expect("can convert name to CString"); // what the elf?
-                        let program = 4; // :HACK:
-                        let l = gl.glGetUniformLocation(program, n.as_ptr());
-                        eprintln!("Location for {name} -> {l}");
+                        let mut program: GLint = 0;
+                        gl.glGetIntegerv(GL_CURRENT_PROGRAM, &mut program);
+                        let l = gl.glGetUniformLocation(program as u32, n.as_ptr());
+                        eprintln!("Location for {name} -> {l} in {program}");
                         data.location = l;
                     }
                 }
@@ -38,15 +41,29 @@ impl StepRunnerSetUniformF32 {
         }
     }
     pub fn run_teardown(&self, _data: &mut Option<Box<dyn StepRunnerData>>) {}
-    pub fn run_render(&self, gl: &Gl, step: &Step, data: &Option<Box<dyn StepRunnerData>>) {
+    pub fn run_render(&self, gl: &Gl, flow_vm: &FlowVm, step: &Step, data: &Option<Box<dyn StepRunnerData>>) {
         if let Some(data) = data {
-            match data.as_any().downcast_ref::<StepRunnerDataSetUniformF32>() {
+            match data
+                .as_any()
+                .downcast_ref::<StepRunnerDataSetUniformF32>()
+            {
                 Some(data) => {
-                    if let Step::SetUniformF32 { value, .. } = step {
+                    if let Step::SetUniformF32 { value, name, .. } = step {
                         if data.location >= 0 {
-                            let program = 4; // :HACK:
-                            let value = value.parse::<f32>().unwrap_or_default();
-                            gl.glProgramUniform1f(program, data.location, value);
+                            let mut program: GLint = 0;
+                            gl.glGetIntegerv(GL_CURRENT_PROGRAM, &mut program);
+                            let value = value.parse::<f32>().unwrap_or_else(|_|{
+                                match value.as_ref() {
+                                    "${TIME}" => flow_vm.time(),
+                                    _ => 0.0,
+                                }
+                            }
+                            );
+                            //if value != data.value {
+                                //eprintln!("Value changed to {value} for {name}");
+                                //data.value = value;
+                                gl.glProgramUniform1f(program as u32, data.location, value);
+                            //}
                         }
                     }
                 }
@@ -63,6 +80,7 @@ impl StepRunnerSetUniformF32 {
 #[derive(Debug, Default)]
 struct StepRunnerDataSetUniformF32 {
     location: GLint,
+    value: f32,
 }
 
 impl StepRunnerData for StepRunnerDataSetUniformF32 {
