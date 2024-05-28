@@ -48,11 +48,21 @@ impl FlowVm {
         resource_log_manager: &mut ResourceLogManager,
     ) -> Result<()> {
         // !!! should only run once when project/flow is changed !!!
-        if let Some(block) = self.flow.blocks().iter().find(|b| b.name() == "start") {
-            let mut srd_block = Vec::with_capacity(block.steps_in_grid().len());
-            srd_block.resize_with(block.steps_in_grid().len(), Default::default);
+        if let Some(start_step) = self.flow.steps().iter().find(|(s, _gp)| {
+            if let Step::Label { name, .. } = s {
+                name == "start"
+            } else {
+                false
+            }
+        }) {
+            let (_s, pos) = start_step;
+            eprintln!("Starting at {pos:?}");
+            let mut pos = pos.clone();
+            let mut s_idx = 0;
+            let mut srd_block = Vec::with_capacity(self.flow.steps().len());
+            srd_block.resize_with(self.flow.steps().len(), Default::default);
 
-            for (s_idx, (step, _gp)) in block.steps_in_grid().iter().enumerate() {
+            while let Some(step) = self.flow.get_step_at(&pos) {
                 eprintln!("Setup {s_idx} {step:?}");
                 match step {
                     Step::Program { .. } => {
@@ -73,13 +83,14 @@ impl FlowVm {
                         sr.run_setup(gl, &mut srd);
                         srd_block[s_idx] = srd;
                     }
+                    Step::Label { .. } => {}
                     Step::Nop => {}
                 }
+                pos.inc_y();
+                s_idx += 1;
             }
             self.step_runner_data
-                .insert(String::from("start"), srd_block);
-        } else {
-            eprintln!("No `start` block in flow!");
+                .insert(String::from("start"), srd_block); // :TODO: "start" is not the right name
         }
         Ok(())
     }
@@ -89,12 +100,24 @@ impl FlowVm {
         let t = now - self.start_time;
         self.time = t.as_secs_f32();
 
-        if let Some(block) = self.flow.blocks().iter().find(|b| b.name() == "start") {
+        if let Some(start_step) = self.flow.steps().iter().find(|(s, _gp)| {
+            if let Step::Label { name, .. } = s {
+                name == "start"
+            } else {
+                false
+            }
+        }) {
+            let (_s, pos) = start_step;
+            eprintln!("Starting at {pos:?}");
+            let mut pos = pos.clone();
+            let mut s_idx = 0;
             let srd_block = self
                 .step_runner_data
                 .get("start")
                 .ok_or(eyre!("Data for block `start` not found"))?;
-            for (s_idx, (step, _gp)) in block.steps_in_grid().iter().enumerate() {
+
+            while let Some(step) = self.flow.get_step_at(&pos) {
+                eprintln!("Setup {s_idx} {step:?}");
                 match step {
                     Step::Program { .. } => {
                         let sr = StepRunnerProgram::default();
@@ -114,11 +137,12 @@ impl FlowVm {
                         let srd = &srd_block[s_idx];
                         sr.run_render(gl, srd);
                     }
+                    Step::Label { .. } => {}
                     Step::Nop => {}
                 }
+                pos.inc_y();
+                s_idx += 1;
             }
-        } else {
-            eprintln!("No `start` block in flow!");
         }
         Ok(())
     }

@@ -93,7 +93,6 @@ impl UiGrid {
         let p = p / self.cell_size;
         let p = p.floor();
 
-        eprintln!("{p:?}");
         GridPos::new(p.x as u16, p.y as u16)
     }
     pub fn show(mut self, ui: &mut Ui) -> UiGridOutput {

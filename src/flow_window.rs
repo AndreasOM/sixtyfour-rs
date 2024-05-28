@@ -155,10 +155,8 @@ impl Window for FlowWindow {
                         let mut grid = UiGrid::default();
                         grid.set_target_grid_pos(self.target_grid_pos.as_ref());
 
-                        for (_b_idx, b) in state.project.flow().blocks().iter().enumerate() {
-                            for (_s_idx, (s, gp)) in b.steps_in_grid().iter().enumerate() {
-                                grid.add_cell(gp.x(), gp.y(), UiGridCell::new(String::from(s)));
-                            }
+                        for (s, gp) in state.project.flow().steps().iter() {
+                            grid.add_cell(gp.x(), gp.y(), UiGridCell::new(String::from(s)));
                         }
 
                         grid.select_cell(self.selected_grid_pos.as_ref());

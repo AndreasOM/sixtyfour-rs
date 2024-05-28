@@ -45,6 +45,7 @@ mod time_series;
 mod step_editor;
 mod step_editor_ui;
 use step_editor::StepEditor;
+mod step_editor_label;
 mod step_editor_program;
 mod step_editor_scratch;
 mod step_editor_set_uniform_f32;

@@ -24,6 +24,7 @@ impl Project {
     pub fn version(&self) -> u32 {
         self.version
     }
+    /*
     pub fn create_simple_flow(&mut self) {
         let mut flow = Flow::default();
 
@@ -39,6 +40,7 @@ impl Project {
         self.flow = flow;
         self.version += 1;
     }
+    */
 
     pub fn with_property_manager<F>(&self, mut f: F)
     where

@@ -414,6 +414,20 @@ impl eframe::App for TemplateApp {
                         })
                     });
                 }
+                Command::HackStepLabelSetName { grid_pos, name } => {
+                    self.state.project.with_flow_mut(|f| {
+                        f.with_step_at_mut(&grid_pos, |s| {
+                            let new_name = &name;
+                            match s {
+                                Step::Label { name, version } => {
+                                    *name = new_name.to_string();
+                                    *version += 1;
+                                }
+                                _ => {}
+                            }
+                        })
+                    });
+                }
                 o => {
                     eprintln!("Unhandled command {o:?}");
                 }

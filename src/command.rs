@@ -45,6 +45,10 @@ pub enum Command {
         source_grid_pos: GridPos,
         target_grid_pos: GridPos,
     },
+    HackStepLabelSetName {
+        grid_pos: GridPos,
+        name: String,
+    },
     /*
     ChangeFlow {
         flow_command: FlowCommand,
