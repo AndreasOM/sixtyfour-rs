@@ -1,7 +1,7 @@
-use crate::engine::FlowVm;
 use crate::engine::gl::GLint;
 use crate::engine::gl::Gl;
 use crate::engine::gl::GL_CURRENT_PROGRAM;
+use crate::engine::FlowVm;
 use crate::engine::StepRunnerData;
 use crate::project::Step;
 use core::any::Any;
@@ -41,28 +41,31 @@ impl StepRunnerSetUniformF32 {
         }
     }
     pub fn run_teardown(&self, _data: &mut Option<Box<dyn StepRunnerData>>) {}
-    pub fn run_render(&self, gl: &Gl, flow_vm: &FlowVm, step: &Step, data: &Option<Box<dyn StepRunnerData>>) {
+    pub fn run_render(
+        &self,
+        gl: &Gl,
+        flow_vm: &FlowVm,
+        step: &Step,
+        data: &Option<Box<dyn StepRunnerData>>,
+    ) {
         if let Some(data) = data {
-            match data
-                .as_any()
-                .downcast_ref::<StepRunnerDataSetUniformF32>()
-            {
+            match data.as_any().downcast_ref::<StepRunnerDataSetUniformF32>() {
                 Some(data) => {
                     if let Step::SetUniformF32 { value, name, .. } = step {
                         if data.location >= 0 {
                             let mut program: GLint = 0;
                             gl.glGetIntegerv(GL_CURRENT_PROGRAM, &mut program);
-                            let value = value.parse::<f32>().unwrap_or_else(|_|{
-                                match value.as_ref() {
-                                    "${TIME}" => flow_vm.time(),
-                                    _ => 0.0,
-                                }
-                            }
-                            );
+                            let value =
+                                value
+                                    .parse::<f32>()
+                                    .unwrap_or_else(|_| match value.as_ref() {
+                                        "${TIME}" => flow_vm.time(),
+                                        _ => 0.0,
+                                    });
                             //if value != data.value {
-                                //eprintln!("Value changed to {value} for {name}");
-                                //data.value = value;
-                                gl.glProgramUniform1f(program as u32, data.location, value);
+                            //eprintln!("Value changed to {value} for {name}");
+                            //data.value = value;
+                            gl.glProgramUniform1f(program as u32, data.location, value);
                             //}
                         }
                     }

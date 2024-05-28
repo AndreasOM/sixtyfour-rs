@@ -12,9 +12,8 @@ use std::collections::HashMap;
 #[derive(Debug, Default)]
 pub struct FlowWindow {
     is_open: bool,
-    selected_step: Option<(usize, usize)>,
     selected_grid_pos: Option<GridPos>,
-    target_grid_pos: GridPos,
+    target_grid_pos: Option<GridPos>,
     target_step_type: String,
 
     //#[serde(skip)]
@@ -84,9 +83,11 @@ impl Window for FlowWindow {
                     //.exact_height(16.0)
                     .min_height(16.0)
                     .show_inside(ui, |ui| {
+                        /*
                         if let Some(selected_step) = &self.selected_step {
                             ui.label(format!("Selected {}-{}", selected_step.0, selected_step.1));
                         }
+                        */
                     });
                 egui::SidePanel::left("left_panel")
                     .resizable(false)
@@ -94,6 +95,7 @@ impl Window for FlowWindow {
                     .min_width(128.0)
                     .show_inside(ui, |ui| {
                         ui.label("Grid Stuff");
+                        /*
                         ui.add(
                             egui::DragValue::new(self.target_grid_pos.x_mut())
                                 .speed(0.2)
@@ -104,6 +106,7 @@ impl Window for FlowWindow {
                                 .speed(0.2)
                                 .clamp_range(0..=31),
                         );
+                        */
 
                         egui::ComboBox::from_label("Step Type")
                             .selected_text(
@@ -122,20 +125,35 @@ impl Window for FlowWindow {
                                 }
                             });
                         if ui.button("Add Step").clicked() {
-                            let _ = COMMAND_QUEUE.send(Command::HackAddStepToFlow {
-                                grid_pos: self.target_grid_pos.clone(),
-                                step_type: self.target_step_type.clone(),
-                            });
+                            if let Some(target_grid_pos) = &self.target_grid_pos {
+                                let _ = COMMAND_QUEUE.send(Command::HackAddStepToFlow {
+                                    grid_pos: target_grid_pos.clone(),
+                                    step_type: self.target_step_type.clone(),
+                                });
+                            }
                         }
                         if ui.button("Remove Step").clicked() {
-                            let _ = COMMAND_QUEUE.send(Command::HackRemoveStepFromFlow {
-                                grid_pos: self.target_grid_pos.clone(),
-                            });
+                            if let Some(target_grid_pos) = &self.target_grid_pos {
+                                let _ = COMMAND_QUEUE.send(Command::HackRemoveStepFromFlow {
+                                    grid_pos: target_grid_pos.clone(),
+                                });
+                            }
+                        }
+                        if ui.button("Move Step").clicked() {
+                            if let (Some(target_grid_pos), Some(selected_grid_pos)) =
+                                (&self.target_grid_pos, &self.selected_grid_pos)
+                            {
+                                let _ = COMMAND_QUEUE.send(Command::HackMoveStepInFlow {
+                                    source_grid_pos: selected_grid_pos.clone(),
+                                    target_grid_pos: target_grid_pos.clone(),
+                                });
+                            }
                         }
                     });
                 egui::CentralPanel::default().show_inside(ui, |ui| {
                     egui::ScrollArea::both().show(ui, |ui| {
                         let mut grid = UiGrid::default();
+                        grid.set_target_grid_pos(self.target_grid_pos.as_ref());
 
                         for (_b_idx, b) in state.project.flow().blocks().iter().enumerate() {
                             for (_s_idx, (s, gp)) in b.steps_in_grid().iter().enumerate() {
@@ -144,7 +162,9 @@ impl Window for FlowWindow {
                         }
 
                         grid.select_cell(self.selected_grid_pos.as_ref());
-                        grid.highlight_cell(&self.target_grid_pos);
+                        if let Some(target_grid_pos) = &self.target_grid_pos {
+                            grid.highlight_cell(&target_grid_pos);
+                        }
 
                         let gr = grid.show(ui);
 
@@ -156,6 +176,8 @@ impl Window for FlowWindow {
 
                             //}
                         }
+
+                        self.target_grid_pos = gr.target_grid_pos().cloned();
                     });
                 });
             });

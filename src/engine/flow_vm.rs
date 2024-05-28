@@ -88,7 +88,7 @@ impl FlowVm {
         let now = std::time::Instant::now();
         let t = now - self.start_time;
         self.time = t.as_secs_f32();
-        
+
         if let Some(block) = self.flow.blocks().iter().find(|b| b.name() == "start") {
             let srd_block = self
                 .step_runner_data

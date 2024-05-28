@@ -6,17 +6,17 @@ use egui::Ui;
 use egui::Widget;
 #[derive(Debug)]
 pub struct UiGridOutput {
-    selected: Option<(u16, u16)>,
     selected_grid_pos: Option<GridPos>,
+    target_grid_pos: Option<GridPos>,
     response: Response,
 }
 
 impl UiGridOutput {
-    pub fn selected(&self) -> Option<(u16, u16)> {
-        self.selected
-    }
     pub fn selected_grid_pos(&self) -> Option<&GridPos> {
         self.selected_grid_pos.as_ref()
+    }
+    pub fn target_grid_pos(&self) -> Option<&GridPos> {
+        self.target_grid_pos.as_ref()
     }
 }
 
@@ -31,6 +31,7 @@ pub struct UiGrid {
     cells: Vec<Option<UiGridCell>>, // :HACK: this should be sparse
     selected_cell: Option<GridPos>,
     highlighted_cells: Vec<GridPos>,
+    target_grid_pos: Option<GridPos>,
 }
 
 impl Default for UiGrid {
@@ -49,11 +50,20 @@ impl Default for UiGrid {
             cells,
             selected_cell: None,
             highlighted_cells: Vec::default(),
+            target_grid_pos: None,
         }
     }
 }
 
 impl UiGrid {
+    /*
+    pub fn target_grid_pos(&self) -> Option<&GridPos> {
+        self.target_grid_pos.as_ref()
+    }
+    */
+    pub fn set_target_grid_pos(&mut self, target_grid_pos: Option<&GridPos>) {
+        self.target_grid_pos = target_grid_pos.cloned();
+    }
     pub fn add_cell(&mut self, x: u16, y: u16, content: UiGridCell) {
         let offset = (y * self.width + x) as usize;
         if offset > self.cells.capacity() {
@@ -77,13 +87,22 @@ impl UiGrid {
         ui.painter()
             .rect_stroke(rect, 0.125 * rect.height(), *stroke);
     }
-    pub fn show(self, ui: &mut Ui) -> UiGridOutput {
+
+    fn screen_pos_to_grid_pos(&self, ul: &egui::Pos2, screen_pos: &egui::Pos2) -> GridPos {
+        let p = *screen_pos - *ul;
+        let p = p / self.cell_size;
+        let p = p.floor();
+
+        eprintln!("{p:?}");
+        GridPos::new(p.x as u16, p.y as u16)
+    }
+    pub fn show(mut self, ui: &mut Ui) -> UiGridOutput {
         let desired_size = egui::vec2(
             self.cell_width * self.width as f32,
             self.cell_height * self.height as f32,
         );
         let (rect, response) = ui.allocate_exact_size(desired_size, egui::Sense::click());
-        let mut selected = None;
+        //let (rect, response) = ui.allocate_exact_size(desired_size, egui::Sense::click_and_drag());
         let mut selected_grid_pos = None;
         if ui.is_rect_visible(rect) {
             let cell_size = egui::Vec2::new(self.cell_width, self.cell_height);
@@ -143,7 +162,9 @@ impl UiGrid {
             for hp in self.highlighted_cells.iter() {
                 self.paint_highlight_cell(ui, &stroke, hp);
             }
-            for (idx, content) in self.cells.into_iter().enumerate() {
+            let cells = core::mem::take(&mut self.cells);
+
+            for (idx, content) in cells.into_iter().enumerate() {
                 let y = idx / self.width as usize;
                 let x = idx % self.width as usize;
                 let cell_pos = egui::Pos2::new(
@@ -160,19 +181,41 @@ impl UiGrid {
                     let r = ui.put(cell_rect, content);
 
                     if r.clicked() {
-                        // eprintln!("Clicked {x}, {y} {content}");
-                        selected = Some((x as u16, y as u16));
                         selected_grid_pos = Some(GridPos::new(x as u16, y as u16));
+                    }
+                    if r.secondary_clicked() {
+                        if let Some(cp) = r.interact_pointer_pos() {
+                            let ghp = self.screen_pos_to_grid_pos(&ui.min_rect().min, &cp);
+                            let stroke =
+                                egui::Stroke::new(2.25, egui::Color32::from_rgb(250, 150, 100));
+                            self.paint_highlight_cell(ui, &stroke, &ghp);
+                            self.target_grid_pos = Some(ghp);
+                        }
                     }
                 } else {
                 }
             }
         }
 
+        if let Some(hp) = response.hover_pos() {
+            let ghp = self.screen_pos_to_grid_pos(&ui.min_rect().min, &hp);
+            let stroke = egui::Stroke::new(2.25, egui::Color32::from_rgb(50, 150, 200));
+            self.paint_highlight_cell(ui, &stroke, &ghp);
+        }
+
+        if response.secondary_clicked() {
+            if let Some(cp) = response.interact_pointer_pos() {
+                let ghp = self.screen_pos_to_grid_pos(&ui.min_rect().min, &cp);
+                let stroke = egui::Stroke::new(2.25, egui::Color32::from_rgb(250, 150, 100));
+                self.paint_highlight_cell(ui, &stroke, &ghp);
+                self.target_grid_pos = Some(ghp);
+            }
+        }
+
         UiGridOutput {
-            selected,
             selected_grid_pos,
             response,
+            target_grid_pos: self.target_grid_pos,
         }
     }
 }

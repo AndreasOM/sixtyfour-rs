@@ -379,6 +379,17 @@ impl eframe::App for TemplateApp {
                         f.remove_step(&grid_pos);
                     });
                 }
+                Command::HackMoveStepInFlow {
+                    source_grid_pos,
+                    target_grid_pos,
+                } => {
+                    //
+                    self.state.project.with_flow_mut(|f| {
+                        if let Some(step) = f.remove_step(&source_grid_pos) {
+                            f.add_step(&target_grid_pos, step);
+                        }
+                    });
+                }
                 Command::HackStepSetUniformF32SetNameAndValue {
                     grid_pos,
                     name,

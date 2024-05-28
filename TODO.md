@@ -4,11 +4,9 @@
 ## In Progress
 
 
+
 ## ToDo
 
-- [ ] Allow steps to be placed on grid
-	- [x] Store the grid position for step
-	- [x] Use grid position to edit steps
 
 
 - [ ] Make ShaderWindow autoselect a shader if needed/possible
@@ -42,6 +40,11 @@
 ## 2024-05-28
 - [x] Set uniform from flow
 - [x] Allow "expressions" in uniform values (`${TIME}`)
+- [x] Allow steps to be placed on grid
+	- [x] Store the grid position for step
+	- [x] Use grid position to edit steps
+	- [x] Allow cell selection via mouse
+	- [x] Move steps in grid/flow
 
 ## 2024-05-27
 - [x] Add and remove steps from flow via editor 

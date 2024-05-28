@@ -41,6 +41,10 @@ pub enum Command {
         name: String,
         value: String,
     },
+    HackMoveStepInFlow {
+        source_grid_pos: GridPos,
+        target_grid_pos: GridPos,
+    },
     /*
     ChangeFlow {
         flow_command: FlowCommand,
