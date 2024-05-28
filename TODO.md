@@ -46,6 +46,7 @@
 	- [x] Allow cell selection via mouse
 	- [x] Move steps in grid/flow
 - [x] Remove blocks from flow/project
+- [x] Add duplicate step in flow
 
 ## 2024-05-27
 - [x] Add and remove steps from flow via editor 

@@ -45,6 +45,11 @@ pub enum Command {
         source_grid_pos: GridPos,
         target_grid_pos: GridPos,
     },
+    HackCloneStepInFlow {
+        source_grid_pos: GridPos,
+        target_grid_pos: GridPos,
+        overwrite: bool,
+    },
     HackStepLabelSetName {
         grid_pos: GridPos,
         name: String,

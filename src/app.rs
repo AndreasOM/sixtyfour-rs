@@ -390,6 +390,22 @@ impl eframe::App for TemplateApp {
                         }
                     });
                 }
+                Command::HackCloneStepInFlow {
+                    source_grid_pos,
+                    target_grid_pos,
+                    overwrite,
+                } => {
+                    //
+                    self.state.project.with_flow_mut(|f| {
+                        if let Some(step) = f.get_step_at(&source_grid_pos) {
+                            if !overwrite & f.get_step_at(&target_grid_pos).is_some() {
+                                eprintln!("Copy target already in use");
+                            } else {
+                                f.add_step(&target_grid_pos, step.clone());
+                            }
+                        }
+                    });
+                }
                 Command::HackStepSetUniformF32SetNameAndValue {
                     grid_pos,
                     name,

@@ -95,19 +95,6 @@ impl Window for FlowWindow {
                     .min_width(128.0)
                     .show_inside(ui, |ui| {
                         ui.label("Grid Stuff");
-                        /*
-                        ui.add(
-                            egui::DragValue::new(self.target_grid_pos.x_mut())
-                                .speed(0.2)
-                                .clamp_range(0..=31),
-                        );
-                        ui.add(
-                            egui::DragValue::new(self.target_grid_pos.y_mut())
-                                .speed(0.2)
-                                .clamp_range(0..=31),
-                        );
-                        */
-
                         egui::ComboBox::from_label("Step Type")
                             .selected_text(
                                 egui::RichText::new(format!("{}", self.target_step_type))
@@ -124,12 +111,16 @@ impl Window for FlowWindow {
                                     );
                                 }
                             });
+
+                        let mut new_target_grid_pos = self.target_grid_pos.clone();
+                        let mut new_selected_grid_pos = self.selected_grid_pos.clone();
                         if ui.button("Add Step").clicked() {
                             if let Some(target_grid_pos) = &self.target_grid_pos {
                                 let _ = COMMAND_QUEUE.send(Command::HackAddStepToFlow {
                                     grid_pos: target_grid_pos.clone(),
                                     step_type: self.target_step_type.clone(),
                                 });
+                                new_target_grid_pos.as_mut().unwrap().inc_y();
                             }
                         }
                         if ui.button("Remove Step").clicked() {
@@ -137,6 +128,7 @@ impl Window for FlowWindow {
                                 let _ = COMMAND_QUEUE.send(Command::HackRemoveStepFromFlow {
                                     grid_pos: target_grid_pos.clone(),
                                 });
+                                new_target_grid_pos.as_mut().unwrap().inc_y();
                             }
                         }
                         if ui.button("Move Step").clicked() {
@@ -147,8 +139,26 @@ impl Window for FlowWindow {
                                     source_grid_pos: selected_grid_pos.clone(),
                                     target_grid_pos: target_grid_pos.clone(),
                                 });
+                                new_target_grid_pos.as_mut().unwrap().inc_y();
+                                new_selected_grid_pos.as_mut().unwrap().inc_y();
                             }
                         }
+                        if ui.button("Clone Step").clicked() {
+                            if let (Some(target_grid_pos), Some(selected_grid_pos)) =
+                                (&self.target_grid_pos, &self.selected_grid_pos)
+                            {
+                                let _ = COMMAND_QUEUE.send(Command::HackCloneStepInFlow {
+                                    source_grid_pos: selected_grid_pos.clone(),
+                                    target_grid_pos: target_grid_pos.clone(),
+                                    overwrite: false,
+                                });
+                                new_target_grid_pos.as_mut().unwrap().inc_y();
+                                new_selected_grid_pos.as_mut().unwrap().inc_y();
+                            }
+                        }
+
+                        self.target_grid_pos = new_target_grid_pos;
+                        self.selected_grid_pos = new_selected_grid_pos;
                     });
                 egui::CentralPanel::default().show_inside(ui, |ui| {
                     egui::ScrollArea::both().show(ui, |ui| {
