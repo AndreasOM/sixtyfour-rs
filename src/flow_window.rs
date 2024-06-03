@@ -1,6 +1,6 @@
-use crate::project::GridRect;
 use crate::command_queue::COMMAND_QUEUE;
 use crate::project::GridPos;
+use crate::project::GridRect;
 use crate::project::Step;
 use crate::state::State;
 use crate::step_editor_ui::StepEditorUi;
@@ -67,7 +67,9 @@ impl Window for FlowWindow {
                             let step_editor_scratch = &mut state.step_editor_scratch;
                             let (project, step_editor_scratch) =
                                 state.project_and_step_editor_scratch_mut();
-                            if let Some(s) = project.flow().get_step_at(selected_grid_rect.top_left()) {
+                            if let Some(s) =
+                                project.flow().get_step_at(selected_grid_rect.top_left())
+                            {
                                 self.step_editor_ui.update(
                                     ui,
                                     project,
@@ -141,7 +143,11 @@ impl Window for FlowWindow {
                                     target_grid_pos: target_grid_pos.clone(),
                                 });
                                 new_target_grid_pos.as_mut().unwrap().inc_y();
-                                new_selected_grid_rect.as_mut().unwrap().top_left_mut().inc_y();
+                                new_selected_grid_rect
+                                    .as_mut()
+                                    .unwrap()
+                                    .top_left_mut()
+                                    .inc_y();
                             }
                         }
                         if ui.button("Clone Step").clicked() {
@@ -154,7 +160,11 @@ impl Window for FlowWindow {
                                     overwrite: false,
                                 });
                                 new_target_grid_pos.as_mut().unwrap().inc_y();
-                                new_selected_grid_rect.as_mut().unwrap().top_left_mut().inc_y();
+                                new_selected_grid_rect
+                                    .as_mut()
+                                    .unwrap()
+                                    .top_left_mut()
+                                    .inc_y();
                             }
                         }
 
@@ -170,21 +180,24 @@ impl Window for FlowWindow {
                             grid.add_cell(gp.x(), gp.y(), UiGridCell::new(String::from(s)));
                         }
 
-                        grid.select_cell(self.selected_grid_rect.as_ref().map( |gr| gr.top_left() ) );
+                        // grid.select_cell(self.selected_grid_rect.as_ref().map( |gr| gr.top_left() ) );
+                        grid.select_rect(self.selected_grid_rect.as_ref());
                         if let Some(target_grid_pos) = &self.target_grid_pos {
                             grid.highlight_cell(&target_grid_pos);
                         }
 
                         let gr = grid.show(ui);
 
-                        if let Some(gp) = gr.selected_grid_pos() {
+                        if let Some(gr) = gr.selected_grid_rect() {
                             // :TODO: only clear on change
                             //if self.selected_grid_pos != Some( *gp ) {
                             state.step_editor_scratch_mut().clear();
+                            /*
                             let mut gr = GridRect::default();
                             gr.set_top_left( gp );
                             gr.set_size( &GridPos::new( 1, 1 ));
-                            self.selected_grid_rect = Some(gr);
+                            */
+                            self.selected_grid_rect = Some(gr.clone());
 
                             //}
                         }

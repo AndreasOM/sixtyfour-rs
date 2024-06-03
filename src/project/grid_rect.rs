@@ -8,12 +8,15 @@ pub struct GridRect {
 
 impl GridRect {
     pub fn new(top_left: GridPos, bottom_right: GridPos) -> Self {
-        Self { top_left, bottom_right }
+        Self {
+            top_left,
+            bottom_right,
+        }
     }
     pub fn set_top_left(&mut self, top_left: &GridPos) {
         self.top_left = *top_left;
     }
-    pub fn set_size( &mut self, size: &GridPos ) {
+    pub fn set_size(&mut self, size: &GridPos) {
         self.bottom_right = &self.top_left + size;
     }
     pub fn top_left(&self) -> &GridPos {

@@ -7,6 +7,10 @@ pub struct GridPos {
 }
 
 impl GridPos {
+    pub const fn ONE() -> &'static Self {
+        &Self { x: 1, y: 1 }
+    }
+
     pub fn new(x: u16, y: u16) -> Self {
         Self { x, y }
     }
