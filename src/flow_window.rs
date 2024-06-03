@@ -1,3 +1,4 @@
+use crate::project::GridRect;
 use crate::command_queue::COMMAND_QUEUE;
 use crate::project::GridPos;
 use crate::project::Step;
@@ -12,7 +13,7 @@ use std::collections::HashMap;
 #[derive(Debug, Default)]
 pub struct FlowWindow {
     is_open: bool,
-    selected_grid_pos: Option<GridPos>,
+    selected_grid_rect: Option<GridRect>,
     target_grid_pos: Option<GridPos>,
     target_step_type: String,
 
@@ -59,20 +60,20 @@ impl Window for FlowWindow {
                     //.min_height(32.0)
                     .exact_height(128.0)
                     .show_inside(ui, |ui| {
-                        if let Some(selected_grid_pos) = &self.selected_grid_pos {
+                        if let Some(selected_grid_rect) = &self.selected_grid_rect {
                             //ui.label(format!("Selected {}-{}", selected_step.0, selected_step.1));
                             let project = &mut state.project;
                             // let step_editor_scratch = &mut state.step_editor_scratch_mut();
                             let step_editor_scratch = &mut state.step_editor_scratch;
                             let (project, step_editor_scratch) =
                                 state.project_and_step_editor_scratch_mut();
-                            if let Some(s) = project.flow().get_step_at(selected_grid_pos) {
+                            if let Some(s) = project.flow().get_step_at(selected_grid_rect.top_left()) {
                                 self.step_editor_ui.update(
                                     ui,
                                     project,
                                     step_editor_scratch,
                                     s,
-                                    selected_grid_pos,
+                                    selected_grid_rect.top_left(),
                                 );
                             }
                         }
@@ -113,7 +114,7 @@ impl Window for FlowWindow {
                             });
 
                         let mut new_target_grid_pos = self.target_grid_pos.clone();
-                        let mut new_selected_grid_pos = self.selected_grid_pos.clone();
+                        let mut new_selected_grid_rect = self.selected_grid_rect.clone();
                         if ui.button("Add Step").clicked() {
                             if let Some(target_grid_pos) = &self.target_grid_pos {
                                 let _ = COMMAND_QUEUE.send(Command::HackAddStepToFlow {
@@ -132,33 +133,33 @@ impl Window for FlowWindow {
                             }
                         }
                         if ui.button("Move Step").clicked() {
-                            if let (Some(target_grid_pos), Some(selected_grid_pos)) =
-                                (&self.target_grid_pos, &self.selected_grid_pos)
+                            if let (Some(target_grid_pos), Some(selected_grid_rect)) =
+                                (&self.target_grid_pos, &self.selected_grid_rect)
                             {
                                 let _ = COMMAND_QUEUE.send(Command::HackMoveStepInFlow {
-                                    source_grid_pos: selected_grid_pos.clone(),
+                                    source_grid_pos: selected_grid_rect.top_left().clone(),
                                     target_grid_pos: target_grid_pos.clone(),
                                 });
                                 new_target_grid_pos.as_mut().unwrap().inc_y();
-                                new_selected_grid_pos.as_mut().unwrap().inc_y();
+                                new_selected_grid_rect.as_mut().unwrap().top_left_mut().inc_y();
                             }
                         }
                         if ui.button("Clone Step").clicked() {
-                            if let (Some(target_grid_pos), Some(selected_grid_pos)) =
-                                (&self.target_grid_pos, &self.selected_grid_pos)
+                            if let (Some(target_grid_pos), Some(selected_grid_rect)) =
+                                (&self.target_grid_pos, &self.selected_grid_rect)
                             {
                                 let _ = COMMAND_QUEUE.send(Command::HackCloneStepInFlow {
-                                    source_grid_pos: selected_grid_pos.clone(),
+                                    source_grid_pos: selected_grid_rect.top_left().clone(),
                                     target_grid_pos: target_grid_pos.clone(),
                                     overwrite: false,
                                 });
                                 new_target_grid_pos.as_mut().unwrap().inc_y();
-                                new_selected_grid_pos.as_mut().unwrap().inc_y();
+                                new_selected_grid_rect.as_mut().unwrap().top_left_mut().inc_y();
                             }
                         }
 
                         self.target_grid_pos = new_target_grid_pos;
-                        self.selected_grid_pos = new_selected_grid_pos;
+                        self.selected_grid_rect = new_selected_grid_rect;
                     });
                 egui::CentralPanel::default().show_inside(ui, |ui| {
                     egui::ScrollArea::both().show(ui, |ui| {
@@ -169,7 +170,7 @@ impl Window for FlowWindow {
                             grid.add_cell(gp.x(), gp.y(), UiGridCell::new(String::from(s)));
                         }
 
-                        grid.select_cell(self.selected_grid_pos.as_ref());
+                        grid.select_cell(self.selected_grid_rect.as_ref().map( |gr| gr.top_left() ) );
                         if let Some(target_grid_pos) = &self.target_grid_pos {
                             grid.highlight_cell(&target_grid_pos);
                         }
@@ -180,7 +181,10 @@ impl Window for FlowWindow {
                             // :TODO: only clear on change
                             //if self.selected_grid_pos != Some( *gp ) {
                             state.step_editor_scratch_mut().clear();
-                            self.selected_grid_pos = Some(gp.clone());
+                            let mut gr = GridRect::default();
+                            gr.set_top_left( gp );
+                            gr.set_size( &GridPos::new( 1, 1 ));
+                            self.selected_grid_rect = Some(gr);
 
                             //}
                         }

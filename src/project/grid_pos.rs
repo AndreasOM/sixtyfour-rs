@@ -1,4 +1,6 @@
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize, Clone, PartialEq)]
+use core::ops::Add;
+
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize, Copy, Clone, PartialEq)]
 pub struct GridPos {
     x: u16,
     y: u16,
@@ -22,5 +24,16 @@ impl GridPos {
     }
     pub fn inc_y(&mut self) {
         self.y += 1;
+    }
+}
+
+impl Add for &GridPos {
+    type Output = GridPos;
+
+    fn add(self, other: Self) -> Self::Output {
+        GridPos {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
     }
 }

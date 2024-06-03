@@ -29,6 +29,9 @@ impl StepRunnerSetUniformF32 {
                         gl.glGetIntegerv(GL_CURRENT_PROGRAM, &mut program);
                         let l = gl.glGetUniformLocation(program as u32, n.as_ptr());
                         eprintln!("Location for {name} -> {l} in {program}");
+                        if l < 0 {
+                            //panic!("");
+                        }
                         data.location = l;
                     }
                 }
@@ -67,6 +70,8 @@ impl StepRunnerSetUniformF32 {
                             //data.value = value;
                             gl.glProgramUniform1f(program as u32, data.location, value);
                             //}
+                        } else {
+                            eprintln!("Data location for {name} is ZERO");
                         }
                     }
                 }

@@ -23,3 +23,5 @@ mod resource_manager;
 pub use resource_manager::ResourceManager;
 mod grid_pos;
 pub use grid_pos::GridPos;
+mod grid_rect;
+pub use grid_rect::GridRect;

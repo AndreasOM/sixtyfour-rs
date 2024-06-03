@@ -3,6 +3,7 @@
 
 ## In Progress
 
+- [ ] Allow multiselect in flow window
 
 
 ## ToDo
