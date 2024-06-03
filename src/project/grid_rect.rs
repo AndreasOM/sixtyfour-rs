@@ -28,4 +28,16 @@ impl GridRect {
     pub fn bottom_right(&self) -> &GridPos {
         &self.bottom_right
     }
+
+    pub fn union_with_pos(&self, pos: &GridPos) -> GridRect {
+        let min_x = self.top_left.x().min(pos.x());
+        let min_y = self.top_left.y().min(pos.y());
+        let max_x = self.bottom_right.x().max(pos.x());
+        let max_y = self.bottom_right.y().max(pos.y());
+
+        Self {
+            top_left: GridPos::new(min_x, min_y),
+            bottom_right: GridPos::new(max_x, max_y),
+        }
+    }
 }

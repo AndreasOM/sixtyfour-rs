@@ -102,6 +102,23 @@ impl UiGrid {
         ui.painter()
             .rect_stroke(rect, 0.125 * rect.height(), *stroke);
     }
+    fn paint_highlight_rect(&self, ui: &mut Ui, stroke: &egui::Stroke, rect: &GridRect) {
+        let min = ui.min_rect().min
+            + self.cell_size
+                * egui::Vec2::new(
+                    rect.top_left().x() as f32 - 0.0,
+                    rect.top_left().y() as f32 - 0.0,
+                );
+        let max = ui.min_rect().min
+            + self.cell_size
+                * egui::Vec2::new(
+                    rect.bottom_right().x() as f32 + 1.0,
+                    rect.bottom_right().y() as f32 + 1.0,
+                );
+        let rect = Rect::from_min_max(min, max);
+        ui.painter()
+            .rect_stroke(rect, 0.125 * self.cell_size.y, *stroke);
+    }
 
     fn screen_pos_to_grid_pos(&self, ul: &egui::Pos2, screen_pos: &egui::Pos2) -> GridPos {
         let p = *screen_pos - *ul;
@@ -161,16 +178,10 @@ impl UiGrid {
             // paint highlights
 
             if let Some(rect) = &self.selected_rect {
+                let stroke = egui::Stroke::new(15.25, egui::Color32::from_rgb(175, 150, 50));
+                self.paint_highlight_rect(ui, &stroke, &rect);
                 let stroke = egui::Stroke::new(5.25, egui::Color32::from_rgb(75, 50, 50));
                 self.paint_highlight_cell(ui, &stroke, rect.top_left());
-                /*
-                let pos = ui.min_rect().min
-                    + self.cell_size * egui::Vec2::new(pos.x() as f32 + 0.5, pos.y() as f32 + 0.5);
-                let rect = Rect::from_center_size(pos, self.cell_size);
-                ui.painter()
-                    .rect_stroke(rect, 0.125 * rect.height(), stroke);
-                eprintln!("Highlight Rect: {rect:?}");
-                */
             }
             let stroke = egui::Stroke::new(2.0, egui::Color32::from_rgb(75, 100, 50));
             for hp in self.highlighted_cells.iter() {
@@ -195,12 +206,21 @@ impl UiGrid {
                     let r = ui.put(cell_rect, content);
 
                     if r.clicked() {
+                        let clicked_gp = GridPos::new(x as u16, y as u16);
                         if ui.ctx().input(|i| i.modifiers.shift) {
-                            // :TODO:
+                            if let Some(selected_rect) = &self.selected_rect {
+                                // selected_grid_rect == None!
+                                assert_eq!(selected_grid_rect, None);
+                                let r = selected_rect.union_with_pos(&clicked_gp);
+                                eprintln!("Shift Clicked {clicked_gp:?} -> {r:?}");
+                                selected_grid_rect = Some(r);
+                            } else {
+                                // :TODO:
+                            }
                         } else {
                             let mut r = GridRect::default();
-                            r.set_top_left(&GridPos::new(x as u16, y as u16));
-                            r.set_size(GridPos::ONE());
+                            r.set_top_left(&clicked_gp);
+                            r.set_size(GridPos::zero());
                             selected_grid_rect = Some(r);
                             //selected_grid_pos = Some(GridPos::new(x as u16, y as u16));
                         }

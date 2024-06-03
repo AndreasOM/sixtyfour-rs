@@ -56,14 +56,14 @@ impl FlowVm {
             }
         }) {
             let (_s, pos) = start_step;
-            eprintln!("Starting at {pos:?}");
+            // eprintln!("Starting at {pos:?}");
             let mut pos = pos.clone();
             let mut s_idx = 0;
             let mut srd_block = Vec::with_capacity(self.flow.steps().len());
             srd_block.resize_with(self.flow.steps().len(), Default::default);
 
             while let Some(step) = self.flow.get_step_at(&pos) {
-                eprintln!("Setup {s_idx} {step:?}");
+                // eprintln!("Setup {s_idx} {step:?}");
                 match step {
                     Step::Program { .. } => {
                         let sr = StepRunnerProgram::default();
@@ -108,7 +108,7 @@ impl FlowVm {
             }
         }) {
             let (_s, pos) = start_step;
-            eprintln!("Starting at {pos:?}");
+            // eprintln!("Starting at {pos:?}");
             let mut pos = pos.clone();
             let mut s_idx = 0;
             let srd_block = self
@@ -117,7 +117,7 @@ impl FlowVm {
                 .ok_or(eyre!("Data for block `start` not found"))?;
 
             while let Some(step) = self.flow.get_step_at(&pos) {
-                eprintln!("Setup {s_idx} {step:?}");
+                // eprintln!("Update {s_idx} {step:?}");
                 match step {
                     Step::Program { .. } => {
                         let sr = StepRunnerProgram::default();
