@@ -7,19 +7,12 @@ use egui::Ui;
 use egui::Widget;
 #[derive(Debug)]
 pub struct UiGridOutput {
-    //selected_grid_pos: Option<GridPos>,
     selected_grid_rect: Option<GridRect>,
-    //target_grid_pos: Option<GridPos>,
     target_grid_rect: Option<GridRect>,
     response: Response,
 }
 
 impl UiGridOutput {
-    /*
-    pub fn selected_grid_pos(&self) -> Option<&GridPos> {
-        self.selected_grid_pos.as_ref()
-    }
-    */
     pub fn selected_grid_rect(&self) -> Option<&GridRect> {
         self.selected_grid_rect.as_ref()
     }
@@ -38,13 +31,12 @@ pub struct UiGrid {
     cell_size: egui::Vec2,
     width: u16,
     height: u16,
-    //cells: Vec<Option<String>>, // :HACK: this should be sparse
     cells: Vec<Option<UiGridCell>>, // :HACK: this should be sparse
-    //selected_cell: Option<GridPos>,
     selected_rect: Option<GridRect>,
     highlighted_cells: Vec<GridPos>,
-    //target_grid_pos: Option<GridPos>,
     target_rect: Option<GridRect>,
+    zoom: f32,
+    target_zoom: f32,
 }
 
 impl Default for UiGrid {
@@ -65,6 +57,8 @@ impl Default for UiGrid {
             selected_rect: None,
             highlighted_cells: Vec::default(),
             target_rect: None,
+            zoom: 1.0,
+            target_zoom: 1.0,
         }
     }
 }
@@ -75,16 +69,8 @@ impl UiGrid {
         self.target_grid_pos.as_ref()
     }
     */
-    pub fn set_target_grid_pos(&mut self, target_grid_pos: Option<&GridPos>) {
-        // :TODO: remove
-        self.target_rect = if let Some(gp) = target_grid_pos {
-            let mut tr = GridRect::default();
-            tr.set_top_left(gp);
-            tr.set_size(GridPos::zero());
-            Some(tr)
-        } else {
-            None
-        }
+    pub fn set_zoom(&mut self, zoom: f32) {
+        self.target_zoom = zoom;
     }
     pub fn set_target_rect(&mut self, target_rect: Option<&GridRect>) {
         self.target_rect = target_rect.cloned();
@@ -119,14 +105,18 @@ impl UiGrid {
         pos: &GridPos,
     ) {
         let pos = ui.min_rect().min
-            + self.cell_size * egui::Vec2::new(pos.x() as f32 + 0.5, pos.y() as f32 + 0.5);
-        let rect = Rect::from_center_size(pos, self.cell_size);
-        let rounding = 0.125 * self.cell_size.y;
+            + self.cell_size
+                * self.zoom
+                * egui::Vec2::new(pos.x() as f32 + 0.5, pos.y() as f32 + 0.5);
+        let rect = Rect::from_center_size(pos, self.cell_size * self.zoom);
+        let rounding = 0.125 * self.cell_size.y * self.zoom;
         if let Some(fill) = fill {
             ui.painter().rect_filled(rect, rounding, *fill);
         }
         if let Some(stroke) = stroke {
-            ui.painter().rect_stroke(rect, rounding, *stroke);
+            let mut stroke = stroke.clone();
+            stroke.width *= self.zoom;
+            ui.painter().rect_stroke(rect, rounding, stroke);
         }
     }
     fn paint_highlight_rect(
@@ -138,37 +128,45 @@ impl UiGrid {
     ) {
         let min = ui.min_rect().min
             + self.cell_size
+                * self.zoom
                 * egui::Vec2::new(
                     rect.top_left().x() as f32 - 0.0,
                     rect.top_left().y() as f32 - 0.0,
                 );
         let max = ui.min_rect().min
             + self.cell_size
+                * self.zoom
                 * egui::Vec2::new(
                     rect.bottom_right().x() as f32 + 1.0,
                     rect.bottom_right().y() as f32 + 1.0,
                 );
         let rect = Rect::from_min_max(min, max);
-        let rounding = 0.125 * self.cell_size.y;
+        let rounding = 0.125 * self.cell_size.y * self.zoom;
         if let Some(fill) = fill {
             ui.painter().rect_filled(rect, rounding, *fill);
         }
         if let Some(stroke) = stroke {
-            ui.painter().rect_stroke(rect, rounding, *stroke);
+            let mut stroke = stroke.clone();
+            stroke.width *= self.zoom;
+            ui.painter().rect_stroke(rect, rounding, stroke);
         }
     }
 
     fn screen_pos_to_grid_pos(&self, ul: &egui::Pos2, screen_pos: &egui::Pos2) -> GridPos {
         let p = *screen_pos - *ul;
-        let p = p / self.cell_size;
+        let p = p / (self.cell_size * self.zoom);
         let p = p.floor();
 
         GridPos::new(p.x as u16, p.y as u16)
     }
     pub fn show(mut self, ui: &mut Ui) -> UiGridOutput {
+        self.zoom =
+            ui.ctx()
+                .animate_value_with_time(egui::Id::new("UiGridZoom"), self.target_zoom, 0.1);
+        //self.zoom = self.target_zoom;
         let desired_size = egui::vec2(
-            self.cell_width * self.width as f32,
-            self.cell_height * self.height as f32,
+            self.cell_width * self.width as f32 * self.zoom,
+            self.cell_height * self.height as f32 * self.zoom,
         );
         let (rect, response) = ui.allocate_exact_size(desired_size, egui::Sense::click());
         //let (rect, response) = ui.allocate_exact_size(desired_size, egui::Sense::click_and_drag());
@@ -177,19 +175,20 @@ impl UiGrid {
             let cell_size = egui::Vec2::new(self.cell_width, self.cell_height);
 
             // paint grid
-            let stroke = egui::Stroke::new(0.25, egui::Color32::from_rgb(50, 50, 50));
+            let stroke = egui::Stroke::new(0.25 * self.zoom, egui::Color32::from_rgb(50, 50, 50));
+            //let stroke = egui::Stroke::new(2.25*self.zoom, egui::Color32::from_rgb(250, 250, 150));
             // let visuals = ui.style().interact_selectable(&response, true);
 
             let vis_r = response.interact_rect; //.translate( ui.min_rect().min.to_vec2() );
-            let c = ((vis_r.width() / self.cell_width).ceil()) as usize;
+            let c = ((vis_r.width() / (self.cell_width * self.zoom)).ceil()) as usize;
             let c = c + 1;
             let ul = ui.min_rect().min; // upper left of "window"
             let lr = ui.min_rect().max; // lower right of "window"
 
             let p = vis_r.min - ul;
-            let p = p / egui::Vec2::new(self.cell_width, self.cell_height);
+            let p = p / (egui::Vec2::new(self.cell_width, self.cell_height) * self.zoom);
             let p = p.floor();
-            let p = p * egui::Vec2::new(self.cell_width, self.cell_height);
+            let p = p * (egui::Vec2::new(self.cell_width, self.cell_height) * self.zoom);
             let mut p = ul + p;
 
             // vertical lines
@@ -199,10 +198,10 @@ impl UiGrid {
                     egui::Rangef::new(ul.y, lr.y),
                     stroke, //visuals.bg_stroke,
                 );
-                p.x += self.cell_width;
+                p.x += self.cell_width * self.zoom;
             }
 
-            let c = ((vis_r.height() / self.cell_height).ceil()) as usize;
+            let c = ((vis_r.height() / self.cell_height / self.zoom).ceil()) as usize;
             let c = c + 1;
             for _ in 0..c {
                 ui.painter().hline(
@@ -210,7 +209,7 @@ impl UiGrid {
                     p.y,
                     stroke, //visuals.bg_stroke,
                 );
-                p.y += self.cell_height;
+                p.y += self.cell_height * self.zoom;
             }
 
             // paint highlights
@@ -235,16 +234,17 @@ impl UiGrid {
                 let y = idx / self.width as usize;
                 let x = idx % self.width as usize;
                 let cell_pos = egui::Pos2::new(
-                    self.cell_width * ((x as f32) + 0.5),
-                    self.cell_height * ((y as f32) + 0.5),
+                    self.cell_width * self.zoom * ((x as f32) + 0.5),
+                    self.cell_height * self.zoom * ((y as f32) + 0.5),
                 );
                 let cell_pos = ui.min_rect().min + cell_pos.to_vec2();
-                let cell_rect = egui::Rect::from_center_size(cell_pos, cell_size);
+                let cell_rect = egui::Rect::from_center_size(cell_pos, cell_size * self.zoom);
                 let cell_rect = cell_rect.shrink(1.0);
 
-                if let Some(content) = content {
+                if let Some(mut content) = content {
                     //let r = ui.put(cell_rect, UiGridCell::new(content.to_string()));
                     //let content = Box::new( egui::Label::new("fii") );
+                    content.set_zoom(self.zoom);
                     let r = ui.put(cell_rect, content);
 
                     if r.clicked() {

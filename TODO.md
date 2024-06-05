@@ -3,13 +3,13 @@
 
 ## In Progress
 
+
 - [ ] Allow multiselect in flow window
 	
 
 
 ## ToDo
 
-- [ ] Make flow grid zoomable
 - [ ] Allow multiselect move, copy, delete, clone, etc
 
 
@@ -43,6 +43,7 @@
 
 ## 2024-06-05
 - [x] Multiselect: Highlight target according to source size
+- [x] Make flow grid zoomable
 
 ## 2024-05-28
 - [x] Set uniform from flow

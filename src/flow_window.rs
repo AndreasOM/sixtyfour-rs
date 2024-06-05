@@ -20,18 +20,23 @@ pub struct FlowWindow {
 
     //#[serde(skip)]
     step_editor_ui: StepEditorUi,
+
+    grid_zoom: f32,
 }
 
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
 struct FlowWindowSave {
     #[serde(default)]
     is_open: bool,
+    #[serde(default)]
+    grid_zoom: f32,
 }
 
 impl From<&FlowWindow> for FlowWindowSave {
     fn from(pw: &FlowWindow) -> Self {
         Self {
             is_open: pw.is_open,
+            grid_zoom: pw.grid_zoom,
         }
     }
 }
@@ -48,6 +53,11 @@ impl Window for FlowWindow {
     }
 
     fn update(&mut self, ctx: &egui::Context, state: &mut State) {
+        // :HACK: Cheat!
+        if self.grid_zoom == 0.0 {
+            self.grid_zoom = 1.0;
+        }
+
         egui::Window::new("Flow")
             .resizable(true)
             .hscroll(false)
@@ -99,6 +109,11 @@ impl Window for FlowWindow {
                     .min_width(128.0)
                     .show_inside(ui, |ui| {
                         ui.label("Grid Stuff");
+                        ui.add(
+                            egui::Slider::new(&mut self.grid_zoom, 0.125..=2.0)
+                                .step_by(0.001)
+                                .text("Grid Zoom"),
+                        );
                         egui::ComboBox::from_label("Step Type")
                             .selected_text(
                                 egui::RichText::new(format!("{}", self.target_step_type))
@@ -175,6 +190,7 @@ impl Window for FlowWindow {
                 egui::CentralPanel::default().show_inside(ui, |ui| {
                     egui::ScrollArea::both().show(ui, |ui| {
                         let mut grid = UiGrid::default();
+                        grid.set_zoom(self.grid_zoom);
                         //grid.set_target_grid_pos(self.target_grid_pos.as_ref());
                         grid.set_target_rect(self.target_grid_rect.as_ref());
 
@@ -219,6 +235,7 @@ impl Window for FlowWindow {
         let save: FlowWindowSave = ron::from_str(&data).unwrap_or_default();
 
         self.is_open = save.is_open;
+        self.grid_zoom = save.grid_zoom;
     }
 }
 
