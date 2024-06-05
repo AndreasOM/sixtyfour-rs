@@ -15,6 +15,7 @@ pub struct FlowWindow {
     is_open: bool,
     selected_grid_rect: Option<GridRect>,
     target_grid_pos: Option<GridPos>,
+    target_grid_rect: Option<GridRect>,
     target_step_type: String,
 
     //#[serde(skip)]
@@ -174,7 +175,8 @@ impl Window for FlowWindow {
                 egui::CentralPanel::default().show_inside(ui, |ui| {
                     egui::ScrollArea::both().show(ui, |ui| {
                         let mut grid = UiGrid::default();
-                        grid.set_target_grid_pos(self.target_grid_pos.as_ref());
+                        //grid.set_target_grid_pos(self.target_grid_pos.as_ref());
+                        grid.set_target_rect(self.target_grid_rect.as_ref());
 
                         for (s, gp) in state.project.flow().steps().iter() {
                             grid.add_cell(gp.x(), gp.y(), UiGridCell::new(String::from(s)));
@@ -203,6 +205,7 @@ impl Window for FlowWindow {
                         }
 
                         self.target_grid_pos = gr.target_grid_pos().cloned();
+                        self.target_grid_rect = gr.target_grid_rect().cloned();
                     });
                 });
             });

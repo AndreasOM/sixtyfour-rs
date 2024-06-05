@@ -9,7 +9,8 @@ use egui::Widget;
 pub struct UiGridOutput {
     //selected_grid_pos: Option<GridPos>,
     selected_grid_rect: Option<GridRect>,
-    target_grid_pos: Option<GridPos>,
+    //target_grid_pos: Option<GridPos>,
+    target_grid_rect: Option<GridRect>,
     response: Response,
 }
 
@@ -22,8 +23,11 @@ impl UiGridOutput {
     pub fn selected_grid_rect(&self) -> Option<&GridRect> {
         self.selected_grid_rect.as_ref()
     }
+    pub fn target_grid_rect(&self) -> Option<&GridRect> {
+        self.target_grid_rect.as_ref()
+    }
     pub fn target_grid_pos(&self) -> Option<&GridPos> {
-        self.target_grid_pos.as_ref()
+        self.target_grid_rect.as_ref().map(|gr| gr.top_left())
     }
 }
 
@@ -39,7 +43,8 @@ pub struct UiGrid {
     //selected_cell: Option<GridPos>,
     selected_rect: Option<GridRect>,
     highlighted_cells: Vec<GridPos>,
-    target_grid_pos: Option<GridPos>,
+    //target_grid_pos: Option<GridPos>,
+    target_rect: Option<GridRect>,
 }
 
 impl Default for UiGrid {
@@ -59,7 +64,7 @@ impl Default for UiGrid {
             //selected_cell: None,
             selected_rect: None,
             highlighted_cells: Vec::default(),
-            target_grid_pos: None,
+            target_rect: None,
         }
     }
 }
@@ -71,7 +76,18 @@ impl UiGrid {
     }
     */
     pub fn set_target_grid_pos(&mut self, target_grid_pos: Option<&GridPos>) {
-        self.target_grid_pos = target_grid_pos.cloned();
+        // :TODO: remove
+        self.target_rect = if let Some(gp) = target_grid_pos {
+            let mut tr = GridRect::default();
+            tr.set_top_left(gp);
+            tr.set_size(GridPos::zero());
+            Some(tr)
+        } else {
+            None
+        }
+    }
+    pub fn set_target_rect(&mut self, target_rect: Option<&GridRect>) {
+        self.target_rect = target_rect.cloned();
     }
     pub fn add_cell(&mut self, x: u16, y: u16, content: UiGridCell) {
         let offset = (y * self.width + x) as usize;
@@ -95,14 +111,31 @@ impl UiGrid {
         self.highlighted_cells.push(pos.to_owned());
     }
 
-    fn paint_highlight_cell(&self, ui: &mut Ui, stroke: &egui::Stroke, pos: &GridPos) {
+    fn paint_highlight_cell(
+        &self,
+        ui: &mut Ui,
+        stroke: Option<&egui::Stroke>,
+        fill: Option<&egui::Color32>,
+        pos: &GridPos,
+    ) {
         let pos = ui.min_rect().min
             + self.cell_size * egui::Vec2::new(pos.x() as f32 + 0.5, pos.y() as f32 + 0.5);
         let rect = Rect::from_center_size(pos, self.cell_size);
-        ui.painter()
-            .rect_stroke(rect, 0.125 * rect.height(), *stroke);
+        let rounding = 0.125 * self.cell_size.y;
+        if let Some(fill) = fill {
+            ui.painter().rect_filled(rect, rounding, *fill);
+        }
+        if let Some(stroke) = stroke {
+            ui.painter().rect_stroke(rect, rounding, *stroke);
+        }
     }
-    fn paint_highlight_rect(&self, ui: &mut Ui, stroke: &egui::Stroke, rect: &GridRect) {
+    fn paint_highlight_rect(
+        &self,
+        ui: &mut Ui,
+        stroke: Option<&egui::Stroke>,
+        fill: Option<&egui::Color32>,
+        rect: &GridRect,
+    ) {
         let min = ui.min_rect().min
             + self.cell_size
                 * egui::Vec2::new(
@@ -116,8 +149,13 @@ impl UiGrid {
                     rect.bottom_right().y() as f32 + 1.0,
                 );
         let rect = Rect::from_min_max(min, max);
-        ui.painter()
-            .rect_stroke(rect, 0.125 * self.cell_size.y, *stroke);
+        let rounding = 0.125 * self.cell_size.y;
+        if let Some(fill) = fill {
+            ui.painter().rect_filled(rect, rounding, *fill);
+        }
+        if let Some(stroke) = stroke {
+            ui.painter().rect_stroke(rect, rounding, *stroke);
+        }
     }
 
     fn screen_pos_to_grid_pos(&self, ul: &egui::Pos2, screen_pos: &egui::Pos2) -> GridPos {
@@ -178,14 +216,18 @@ impl UiGrid {
             // paint highlights
 
             if let Some(rect) = &self.selected_rect {
-                let stroke = egui::Stroke::new(15.25, egui::Color32::from_rgb(175, 150, 50));
-                self.paint_highlight_rect(ui, &stroke, &rect);
-                let stroke = egui::Stroke::new(5.25, egui::Color32::from_rgb(75, 50, 50));
-                self.paint_highlight_cell(ui, &stroke, rect.top_left());
+                let stroke = egui::Stroke::new(9.0, egui::Color32::from_rgb(175, 150, 50));
+                let fill = egui::Color32::from_rgba_unmultiplied(175, 150, 50, 16);
+                self.paint_highlight_rect(ui, Some(&stroke), Some(&fill), &rect);
+                let stroke = egui::Stroke::new(5.0, egui::Color32::from_rgb(75, 50, 50));
+                self.paint_highlight_cell(ui, Some(&stroke), None, rect.top_left());
             }
-            let stroke = egui::Stroke::new(2.0, egui::Color32::from_rgb(75, 100, 50));
-            for hp in self.highlighted_cells.iter() {
-                self.paint_highlight_cell(ui, &stroke, hp);
+            if let Some(rect) = &self.target_rect {
+                let stroke = egui::Stroke::new(9.0, egui::Color32::from_rgb(95, 105, 55));
+                let fill = egui::Color32::from_rgba_unmultiplied(95, 105, 55, 16);
+                self.paint_highlight_rect(ui, Some(&stroke), Some(&fill), &rect);
+                let stroke = egui::Stroke::new(2.0, egui::Color32::from_rgb(75, 100, 50));
+                self.paint_highlight_cell(ui, Some(&stroke), None, rect.top_left());
             }
             let cells = core::mem::take(&mut self.cells);
 
@@ -228,10 +270,13 @@ impl UiGrid {
                     if r.secondary_clicked() {
                         if let Some(cp) = r.interact_pointer_pos() {
                             let ghp = self.screen_pos_to_grid_pos(&ui.min_rect().min, &cp);
-                            let stroke =
-                                egui::Stroke::new(2.25, egui::Color32::from_rgb(250, 150, 100));
-                            self.paint_highlight_cell(ui, &stroke, &ghp);
-                            self.target_grid_pos = Some(ghp);
+                            //let stroke =
+                            //    egui::Stroke::new(2.25, egui::Color32::from_rgb(250, 150, 100));
+                            //self.paint_highlight_cell(ui, &stroke, &ghp);
+                            let mut r = GridRect::default();
+                            r.set_top_left(&ghp);
+                            r.set_size(GridPos::zero());
+                            self.target_rect = Some(r);
                         }
                     }
                 } else {
@@ -242,22 +287,33 @@ impl UiGrid {
         if let Some(hp) = response.hover_pos() {
             let ghp = self.screen_pos_to_grid_pos(&ui.min_rect().min, &hp);
             let stroke = egui::Stroke::new(2.25, egui::Color32::from_rgb(50, 150, 200));
-            self.paint_highlight_cell(ui, &stroke, &ghp);
+            let fill = egui::Color32::from_rgba_unmultiplied(25, 75, 100, 16);
+            self.paint_highlight_cell(ui, Some(&stroke), Some(&fill), &ghp);
         }
 
         if response.secondary_clicked() {
             if let Some(cp) = response.interact_pointer_pos() {
                 let ghp = self.screen_pos_to_grid_pos(&ui.min_rect().min, &cp);
-                let stroke = egui::Stroke::new(2.25, egui::Color32::from_rgb(250, 150, 100));
-                self.paint_highlight_cell(ui, &stroke, &ghp);
-                self.target_grid_pos = Some(ghp);
+                //let stroke = egui::Stroke::new(2.25, egui::Color32::from_rgb(250, 150, 100));
+                //self.paint_highlight_cell(ui, &stroke, &ghp);
+                let mut r = GridRect::default();
+                r.set_top_left(&ghp);
+                r.set_size(GridPos::zero());
+                self.target_rect = Some(r);
             }
         }
+
+        match (self.selected_rect, &mut self.target_rect) {
+            (Some(sgr), Some(tr)) => {
+                tr.set_size(&sgr.size());
+            }
+            _ => {}
+        };
 
         UiGridOutput {
             selected_grid_rect,
             response,
-            target_grid_pos: self.target_grid_pos,
+            target_grid_rect: self.target_rect,
         }
     }
 }

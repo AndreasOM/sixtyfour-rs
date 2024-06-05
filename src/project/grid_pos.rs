@@ -1,4 +1,5 @@
 use core::ops::Add;
+use core::ops::Sub;
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize, Copy, Clone, PartialEq)]
 pub struct GridPos {
@@ -41,6 +42,17 @@ impl Add for &GridPos {
         GridPos {
             x: self.x + other.x,
             y: self.y + other.y,
+        }
+    }
+}
+
+impl Sub for &GridPos {
+    type Output = GridPos;
+
+    fn sub(self, other: Self) -> Self::Output {
+        GridPos {
+            x: self.x.saturating_sub(other.x),
+            y: self.y.saturating_sub(other.y),
         }
     }
 }

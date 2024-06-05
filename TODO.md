@@ -4,10 +4,13 @@
 ## In Progress
 
 - [ ] Allow multiselect in flow window
+	
 
 
 ## ToDo
 
+- [ ] Make flow grid zoomable
+- [ ] Allow multiselect move, copy, delete, clone, etc
 
 
 - [ ] Make ShaderWindow autoselect a shader if needed/possible
@@ -37,6 +40,9 @@
 - [ ] Decide on default on windows
 
 ## Done
+
+## 2024-06-05
+- [x] Multiselect: Highlight target according to source size
 
 ## 2024-05-28
 - [x] Set uniform from flow

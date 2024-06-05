@@ -12,7 +12,6 @@ use crate::shaders_window::ShadersWindow;
 use crate::state::State;
 use crate::Command;
 use crate::WindowManager;
-use crate::WindowsMenu;
 use color_eyre::Result;
 use egui::Color32;
 use egui::RichText;

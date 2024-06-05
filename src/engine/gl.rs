@@ -1,5 +1,5 @@
+#![allow(dead_code)]
 use super::gl_wrapper_macro::*;
-#[allow(dead_code)]
 use color_eyre::eyre::eyre;
 use color_eyre::Result;
 use core::ffi::*;
@@ -124,7 +124,7 @@ struct Glfps {
 
 impl Gl {
     pub fn check_gl_error(&self, file: &str, line: u32) -> bool {
-        let error = unsafe { self.glGetError() };
+        let error = self.glGetError();
         match error {
             0 => {
                 return false;

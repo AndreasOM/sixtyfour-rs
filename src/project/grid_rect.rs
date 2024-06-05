@@ -19,6 +19,9 @@ impl GridRect {
     pub fn set_size(&mut self, size: &GridPos) {
         self.bottom_right = &self.top_left + size;
     }
+    pub fn size(&self) -> GridPos {
+        &self.bottom_right - &self.top_left
+    }
     pub fn top_left(&self) -> &GridPos {
         &self.top_left
     }
