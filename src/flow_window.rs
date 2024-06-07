@@ -22,6 +22,8 @@ pub struct FlowWindow {
     step_editor_ui: StepEditorUi,
 
     grid_zoom: f32,
+    prevent_moving: bool,
+    fixed_pos: Option<egui::Pos2>,
 }
 
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
@@ -58,7 +60,15 @@ impl Window for FlowWindow {
             self.grid_zoom = 1.0;
         }
 
-        egui::Window::new("Flow")
+        let mut w = egui::Window::new("Flow");
+        if self.prevent_moving {
+            if let Some(p) = self.fixed_pos {
+                w = w.fixed_pos(p);
+            }
+        }
+
+        if let Some(ir) = w
+            .drag_to_scroll(!self.prevent_moving)
             .resizable(true)
             .hscroll(false)
             .vscroll(false)
@@ -188,43 +198,51 @@ impl Window for FlowWindow {
                         self.selected_grid_rect = new_selected_grid_rect;
                     });
                 egui::CentralPanel::default().show_inside(ui, |ui| {
-                    egui::ScrollArea::both().show(ui, |ui| {
-                        let mut grid = UiGrid::default();
-                        grid.set_zoom(self.grid_zoom);
-                        //grid.set_target_grid_pos(self.target_grid_pos.as_ref());
-                        grid.set_target_rect(self.target_grid_rect.as_ref());
+                    egui::ScrollArea::both()
+                        .drag_to_scroll(!self.prevent_moving)
+                        .show(ui, |ui| {
+                            let mut grid = UiGrid::default();
+                            grid.set_id(egui::Id::new("FlowGrid"));
+                            grid.set_zoom(self.grid_zoom);
+                            //grid.set_target_grid_pos(self.target_grid_pos.as_ref());
+                            grid.set_target_rect(self.target_grid_rect.as_ref());
 
-                        for (s, gp) in state.project.flow().steps().iter() {
-                            grid.add_cell(gp.x(), gp.y(), UiGridCell::new(String::from(s)));
-                        }
+                            for (s, gp) in state.project.flow().steps().iter() {
+                                grid.add_cell(gp.x(), gp.y(), UiGridCell::new(String::from(s)));
+                            }
 
-                        // grid.select_cell(self.selected_grid_rect.as_ref().map( |gr| gr.top_left() ) );
-                        grid.select_rect(self.selected_grid_rect.as_ref());
-                        if let Some(target_grid_pos) = &self.target_grid_pos {
-                            grid.highlight_cell(&target_grid_pos);
-                        }
+                            // grid.select_cell(self.selected_grid_rect.as_ref().map( |gr| gr.top_left() ) );
+                            grid.select_rect(self.selected_grid_rect.as_ref());
+                            if let Some(target_grid_pos) = &self.target_grid_pos {
+                                grid.highlight_cell(&target_grid_pos);
+                            }
 
-                        let gr = grid.show(ui);
+                            let gr = grid.show(ui);
+                            self.prevent_moving = gr.prevent_moving();
+                            if gr.prevent_moving() {}
 
-                        if let Some(gr) = gr.selected_grid_rect() {
-                            // :TODO: only clear on change
-                            //if self.selected_grid_pos != Some( *gp ) {
-                            state.step_editor_scratch_mut().clear();
-                            /*
-                            let mut gr = GridRect::default();
-                            gr.set_top_left( gp );
-                            gr.set_size( &GridPos::new( 1, 1 ));
-                            */
-                            self.selected_grid_rect = Some(gr.clone());
+                            if let Some(gr) = gr.selected_grid_rect() {
+                                // :TODO: only clear on change
+                                //if self.selected_grid_pos != Some( *gp ) {
+                                state.step_editor_scratch_mut().clear();
+                                /*
+                                let mut gr = GridRect::default();
+                                gr.set_top_left( gp );
+                                gr.set_size( &GridPos::new( 1, 1 ));
+                                */
+                                self.selected_grid_rect = Some(gr.clone());
 
-                            //}
-                        }
+                                //}
+                            }
 
-                        self.target_grid_pos = gr.target_grid_pos().cloned();
-                        self.target_grid_rect = gr.target_grid_rect().cloned();
-                    });
+                            self.target_grid_pos = gr.target_grid_pos().cloned();
+                            self.target_grid_rect = gr.target_grid_rect().cloned();
+                        });
                 });
-            });
+            })
+        {
+            self.fixed_pos = Some(ir.response.rect.min.clone());
+        }
     }
     fn serialize(&self) -> String {
         let save: FlowWindowSave = self.into();

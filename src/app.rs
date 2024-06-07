@@ -181,7 +181,7 @@ impl eframe::App for TemplateApp {
                     pm.ensure_all_properties_from_uniforms(mg.uniform_manager());
                 });
                 */
-                let t = self.start_time.elapsed().as_secs_f32();
+                let t = self.start_time.elapsed().as_secs_f64();
                 mg.set_time(t);
             }
         }
@@ -416,6 +416,30 @@ impl eframe::App for TemplateApp {
                             let new_value = &value;
                             match s {
                                 Step::SetUniformF32 {
+                                    name,
+                                    value,
+                                    version,
+                                } => {
+                                    *name = new_name.to_string();
+                                    *value = new_value.to_string();
+                                    *version += 1;
+                                }
+                                _ => {}
+                            }
+                        })
+                    });
+                }
+                Command::HackStepSetUniformF64SetNameAndValue {
+                    grid_pos,
+                    name,
+                    value,
+                } => {
+                    self.state.project.with_flow_mut(|f| {
+                        f.with_step_at_mut(&grid_pos, |s| {
+                            let new_name = &name;
+                            let new_value = &value;
+                            match s {
+                                Step::SetUniformF64 {
                                     name,
                                     value,
                                     version,

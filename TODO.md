@@ -5,6 +5,7 @@
 
 
 - [ ] Allow multiselect in flow window
+	- [x] Drag selection box in grid with primary mouse button, but allow secondary to drag grid and/or window
 	
 
 
@@ -30,6 +31,7 @@
 - [ ] Find better name for `Flow`
 
 ## Later
+- [ ] Rethink time handling, and resolution when implementing the timeline
 - [ ] Look into _off by one_ width for window size restore after fullscreen
 - [ ] Block quit when dirty and auto save on quit is off
 - [ ] Fix Quit in File dialog crash
@@ -40,6 +42,12 @@
 - [ ] Decide on default on windows
 
 ## Done
+
+## 2024-06-07
+- [x] Replace fTime with dTime for better precision, and reset after X hours
+	Notes:
+		- You still have to handle resets of absolute time when using fTime or dTime
+		- Don't use dTime at all ;) -> due to double performance in shaders
 
 ## 2024-06-05
 - [x] Multiselect: Highlight target according to source size

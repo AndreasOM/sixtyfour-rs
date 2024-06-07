@@ -5,6 +5,7 @@ use crate::state::State;
 use crate::step_editor_label::StepEditorLabel;
 use crate::step_editor_program::StepEditorProgram;
 use crate::step_editor_set_uniform_f32::StepEditorSetUniformF32;
+use crate::step_editor_set_uniform_f64::StepEditorSetUniformF64;
 use crate::StepEditor;
 use crate::StepEditorScratch;
 
@@ -18,6 +19,7 @@ impl Default for StepEditorUi {
         let mut step_editors: Vec<Box<dyn StepEditor>> = Vec::default();
         step_editors.push(Box::new(StepEditorProgram::default()));
         step_editors.push(Box::new(StepEditorSetUniformF32::default()));
+        step_editors.push(Box::new(StepEditorSetUniformF64::default()));
         step_editors.push(Box::new(StepEditorLabel::default()));
 
         Self { step_editors }

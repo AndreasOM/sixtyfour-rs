@@ -11,6 +11,7 @@ pub type GLint = core::ffi::c_int;
 pub type GLsizei = core::ffi::c_int;
 pub type GLchar = core::ffi::c_char;
 pub type GLfloat = core::ffi::c_float;
+pub type GLdouble = core::ffi::c_double;
 
 pub const GL_CURRENT_PROGRAM: GLenum = 0x8B8D;
 pub const GL_ARRAY_BUFFER: GLenum = 0x8892;
@@ -116,6 +117,7 @@ struct Glfps {
     glProgramUniform1f: GlFunctionPointer,
     glProgramUniform2fv: GlFunctionPointer,
     glProgramUniform3fv: GlFunctionPointer,
+    glProgramUniform1d: GlFunctionPointer,
 
     glGetActiveUniform: GlFunctionPointer,
     glFinish: GlFunctionPointer,
@@ -220,6 +222,9 @@ impl Gl {
         self.glfps
             .glProgramUniform3fv
             .load(get_proc_address, c"glProgramUniform3fv")?;
+        self.glfps
+            .glProgramUniform1d
+            .load(get_proc_address, c"glProgramUniform1d")?;
 
         self.glfps
             .glGetActiveUniform
@@ -253,6 +258,7 @@ impl Gl {
     create_gl_wrapper!(void glProgramUniform1f( GLuint program, GLint location, GLfloat v0));
     create_gl_wrapper!(void glProgramUniform2fv( GLuint program, GLint location, GLsizei count, const GLfloat *value));
     create_gl_wrapper!(void glProgramUniform3fv( GLuint program, GLint location, GLsizei count, const GLfloat *value));
+    create_gl_wrapper!(void glProgramUniform1d( GLuint program, GLint location, GLdouble v0));
     create_gl_wrapper!(void glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *ttype, GLchar *name));
     create_gl_wrapper!(void glFinish( void ));
     create_gl_wrapper!(void glGetIntegerv( GLenum pname, GLint * data ));

@@ -8,21 +8,21 @@ use core::any::Any;
 use std::ffi::CString;
 
 #[derive(Debug, Default)]
-pub struct StepRunnerSetUniformF32 {}
+pub struct StepRunnerSetUniformF64 {}
 
-impl StepRunnerSetUniformF32 {
+impl StepRunnerSetUniformF64 {
     pub fn create_data(&self) -> Option<Box<dyn StepRunnerData>> {
-        let d = StepRunnerDataSetUniformF32::default();
+        let d = StepRunnerDataSetUniformF64::default();
         Some(Box::new(d))
     }
     pub fn run_setup(&self, gl: &Gl, step: &Step, data: &mut Option<Box<dyn StepRunnerData>>) {
         if let Some(data) = data {
             match data
                 .as_any_mut()
-                .downcast_mut::<StepRunnerDataSetUniformF32>()
+                .downcast_mut::<StepRunnerDataSetUniformF64>()
             {
                 Some(data) => {
-                    if let Step::SetUniformF32 { name, .. } = step {
+                    if let Step::SetUniformF64 { name, .. } = step {
                         let n =
                             CString::new(String::from(name)).expect("can convert name to CString"); // what the elf?
                         let mut program: GLint = 0;
@@ -52,26 +52,27 @@ impl StepRunnerSetUniformF32 {
         data: &Option<Box<dyn StepRunnerData>>,
     ) {
         if let Some(data) = data {
-            match data.as_any().downcast_ref::<StepRunnerDataSetUniformF32>() {
+            match data.as_any().downcast_ref::<StepRunnerDataSetUniformF64>() {
                 Some(data) => {
-                    if let Step::SetUniformF32 { value, name, .. } = step {
+                    if let Step::SetUniformF64 { value, name, .. } = step {
                         if data.location >= 0 {
                             let mut program: GLint = 0;
                             gl.glGetIntegerv(GL_CURRENT_PROGRAM, &mut program);
                             let value =
                                 value
-                                    .parse::<f32>()
+                                    .parse::<f64>()
                                     .unwrap_or_else(|_| match value.as_ref() {
-                                        "${TIME}" => (flow_vm.time().rem_euclid(2048.0)) as f32, // wrap to avoid precision issues, will _jerk_ after ~4.5h
+                                        "${TIME}" => flow_vm.time(),
                                         _ => 0.0,
                                     });
                             //if value != data.value {
                             //eprintln!("Value changed to {value} for {name}");
                             //data.value = value;
-                            gl.glProgramUniform1f(program as u32, data.location, value);
-                            //}
+                            gl.glProgramUniform1d(program as u32, data.location, value);
+                        // :TODO:
+                        //}
                         } else {
-                            eprintln!("Data location for {name}[f32] is ZERO");
+                            eprintln!("Data location for {name}[f64] is ZERO");
                         }
                     }
                 }
@@ -86,12 +87,12 @@ impl StepRunnerSetUniformF32 {
 }
 
 #[derive(Debug, Default)]
-struct StepRunnerDataSetUniformF32 {
+struct StepRunnerDataSetUniformF64 {
     location: GLint,
-    value: f32,
+    value: f64,
 }
 
-impl StepRunnerData for StepRunnerDataSetUniformF32 {
+impl StepRunnerData for StepRunnerDataSetUniformF64 {
     fn as_any(&self) -> &dyn Any {
         self
     }

@@ -41,6 +41,11 @@ pub enum Command {
         name: String,
         value: String,
     },
+    HackStepSetUniformF64SetNameAndValue {
+        grid_pos: GridPos,
+        name: String,
+        value: String,
+    },
     HackMoveStepInFlow {
         source_grid_pos: GridPos,
         target_grid_pos: GridPos,

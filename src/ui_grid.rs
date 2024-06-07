@@ -10,6 +10,7 @@ pub struct UiGridOutput {
     selected_grid_rect: Option<GridRect>,
     target_grid_rect: Option<GridRect>,
     response: Response,
+    prevent_moving: bool,
 }
 
 impl UiGridOutput {
@@ -22,10 +23,14 @@ impl UiGridOutput {
     pub fn target_grid_pos(&self) -> Option<&GridPos> {
         self.target_grid_rect.as_ref().map(|gr| gr.top_left())
     }
+    pub fn prevent_moving(&self) -> bool {
+        self.prevent_moving
+    }
 }
 
 //#[derive(Debug)]
 pub struct UiGrid {
+    id: egui::Id,
     cell_width: f32,
     cell_height: f32,
     cell_size: egui::Vec2,
@@ -39,6 +44,38 @@ pub struct UiGrid {
     target_zoom: f32,
 }
 
+#[derive(Debug, Default, Clone)]
+pub enum State {
+    Selecting {
+        start: egui::Pos2,
+    },
+    #[default]
+    Normal,
+}
+
+impl State {
+    pub fn prevent_moving(&self) -> bool {
+        match self {
+            Self::Selecting { .. } => true,
+            _ => false,
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+struct UiGridTemp {
+    state: State,
+}
+
+impl UiGridTemp {
+    pub fn state(&self) -> &State {
+        &self.state
+    }
+    pub fn set_state(&mut self, state: State) {
+        self.state = state;
+    }
+}
+
 impl Default for UiGrid {
     fn default() -> Self {
         let width = 32u16;
@@ -47,6 +84,7 @@ impl Default for UiGrid {
         cells.resize_with((width * height).into(), Default::default);
 
         Self {
+            id: egui::Id::NULL,
             cell_width: 128.0,
             cell_height: 32.0,
             cell_size: egui::Vec2::new(128.0, 32.0),
@@ -69,6 +107,9 @@ impl UiGrid {
         self.target_grid_pos.as_ref()
     }
     */
+    pub fn set_id(&mut self, id: egui::Id) {
+        self.id = id;
+    }
     pub fn set_zoom(&mut self, zoom: f32) {
         self.target_zoom = zoom;
     }
@@ -160,6 +201,13 @@ impl UiGrid {
         GridPos::new(p.x as u16, p.y as u16)
     }
     pub fn show(mut self, ui: &mut Ui) -> UiGridOutput {
+        let mut temp = ui.data(|d| {
+            if let Some(t) = d.get_temp::<UiGridTemp>(self.id) {
+                t
+            } else {
+                UiGridTemp::default()
+            }
+        });
         self.zoom =
             ui.ctx()
                 .animate_value_with_time(egui::Id::new("UiGridZoom"), self.target_zoom, 0.1);
@@ -272,6 +320,7 @@ impl UiGrid {
                             let ghp = self.screen_pos_to_grid_pos(&ui.min_rect().min, &cp);
                             //let stroke =
                             //    egui::Stroke::new(2.25, egui::Color32::from_rgb(250, 150, 100));
+
                             //self.paint_highlight_cell(ui, &stroke, &ghp);
                             let mut r = GridRect::default();
                             r.set_top_left(&ghp);
@@ -289,6 +338,49 @@ impl UiGrid {
             let stroke = egui::Stroke::new(2.25, egui::Color32::from_rgb(50, 150, 200));
             let fill = egui::Color32::from_rgba_unmultiplied(25, 75, 100, 16);
             self.paint_highlight_cell(ui, Some(&stroke), Some(&fill), &ghp);
+        }
+
+        // response.paint_debug_info();
+
+        /*
+        if response.is_pointer_button_down_on() {
+            eprintln!("Button down!");
+        }
+        */
+
+        let mut rect = None;
+        if response.contains_pointer() {
+            ui.ctx().input_mut(|i| {
+                //eprintln!("{:#?}", i.pointer );
+                match temp.state() {
+                    State::Normal => {
+                        if i.pointer.button_pressed(egui::PointerButton::Primary) {
+                            if let Some(p) = i.pointer.interact_pos() {
+                                eprintln!("Start selection");
+                                temp.set_state(State::Selecting { start: p.clone() });
+                            }
+                        }
+                    }
+                    State::Selecting { start } => {
+                        if let Some(current) = i.pointer.interact_pos() {
+                            rect = Some(egui::Rect::from_two_pos(*start, current));
+                        }
+                        if i.pointer.button_released(egui::PointerButton::Primary) {
+                            eprintln!("End selection");
+                            temp.set_state(State::Normal);
+                        }
+                    }
+                    _ => {
+                        eprintln!("State: {:?}", temp.state());
+                    }
+                }
+            });
+        }
+
+        if let Some(rect) = rect {
+            let rounding = 0.0;
+            let stroke = egui::Stroke::new(2.25, egui::Color32::from_rgb(250, 150, 100));
+            ui.painter().rect_stroke(rect, rounding, stroke);
         }
 
         if response.secondary_clicked() {
@@ -310,10 +402,16 @@ impl UiGrid {
             _ => {}
         };
 
+        let temp2 = temp.clone();
+        ui.data_mut(|d| {
+            d.insert_temp(self.id, temp2);
+        });
+
         UiGridOutput {
             selected_grid_rect,
             response,
             target_grid_rect: self.target_rect,
+            prevent_moving: temp.state().prevent_moving(),
         }
     }
 }

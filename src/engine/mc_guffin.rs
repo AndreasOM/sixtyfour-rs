@@ -16,6 +16,7 @@ pub struct McGuffin {
 
     //pipeline: Pipeline,
     properties_f32: HashMap<String, f32>,
+    properties_f64: HashMap<String, f64>,
     properties_vec2_f32: HashMap<String, [f32; 2]>,
     properties_vec3_f32: HashMap<String, [f32; 3]>,
     properties_vec3_f32_size4: HashMap<String, [f32; 3 * 4]>,
@@ -117,6 +118,9 @@ impl McGuffin {
     fn set_property_f32(&mut self, name: &str, value: f32) {
         self.properties_f32.insert(name.into(), value);
     }
+    fn set_property_f64(&mut self, name: &str, value: f64) {
+        self.properties_f64.insert(name.into(), value);
+    }
     fn set_property_vec2_f32(&mut self, name: &str, values: &[f32; 2]) {
         self.properties_vec2_f32.insert(name.into(), *values);
     }
@@ -163,7 +167,8 @@ impl McGuffin {
         });
     }
 
-    pub fn set_time(&mut self, time: f32) {
-        self.set_property_f32("fTime", time);
+    pub fn set_time(&mut self, time: f64) {
+        self.set_property_f32("fTime", time as f32); // :(
+        self.set_property_f64("fTime", time as f64); // :(
     }
 }

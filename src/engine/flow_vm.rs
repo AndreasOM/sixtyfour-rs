@@ -4,6 +4,7 @@ use crate::engine::StepRunnerData;
 use crate::engine::StepRunnerFullscreenQuad;
 use crate::engine::StepRunnerProgram;
 use crate::engine::StepRunnerSetUniformF32;
+use crate::engine::StepRunnerSetUniformF64;
 use crate::project::Flow;
 use crate::project::Project;
 use crate::project::Step;
@@ -16,7 +17,7 @@ pub struct FlowVm {
     flow: Flow,
     step_runner_data: HashMap<String, Vec<Option<Box<dyn StepRunnerData>>>>,
     start_time: std::time::Instant,
-    time: f32,
+    time: f64,
 }
 
 impl Default for FlowVm {
@@ -25,13 +26,13 @@ impl Default for FlowVm {
             flow: Flow::default(),
             step_runner_data: HashMap::default(),
             start_time: std::time::Instant::now(),
-            time: f32::default(),
+            time: f64::default(),
         }
     }
 }
 
 impl FlowVm {
-    pub fn time(&self) -> f32 {
+    pub fn time(&self) -> f64 {
         self.time
     }
     pub fn load(&mut self, flow: &Flow) -> Result<()> {
@@ -63,7 +64,7 @@ impl FlowVm {
             srd_block.resize_with(self.flow.steps().len(), Default::default);
 
             while let Some(step) = self.flow.get_step_at(&pos) {
-                // eprintln!("Setup {s_idx} {step:?}");
+                eprintln!("Setup [{pos:?}] {s_idx} {step:?}");
                 match step {
                     Step::Program { .. } => {
                         let sr = StepRunnerProgram::default();
@@ -73,6 +74,12 @@ impl FlowVm {
                     }
                     Step::SetUniformF32 { .. } => {
                         let sr = StepRunnerSetUniformF32::default();
+                        let mut srd = sr.create_data();
+                        sr.run_setup(gl, step, &mut srd);
+                        srd_block[s_idx] = srd;
+                    }
+                    Step::SetUniformF64 { .. } => {
+                        let sr = StepRunnerSetUniformF64::default();
                         let mut srd = sr.create_data();
                         sr.run_setup(gl, step, &mut srd);
                         srd_block[s_idx] = srd;
@@ -98,7 +105,12 @@ impl FlowVm {
         // update time
         let now = std::time::Instant::now();
         let t = now - self.start_time;
-        self.time = t.as_secs_f32();
+
+        // self.time = t.as_secs_f64() + 16374.0;// + 1000000.0;
+        //self.time = t.as_secs_f64() + 8192.0 - 10.0;// + 1000000.0;
+        //self.time = t.as_secs_f64() + 4096.0 - 10.0;// + 1000000.0;
+        //self.time = t.as_secs_f64() + 2048.0 - 10.0;// + 1000000.0;
+        self.time = t.as_secs_f64(); // + 1000000.0;
 
         if let Some(start_step) = self.flow.steps().iter().find(|(s, _gp)| {
             if let Step::Label { name, .. } = s {
@@ -127,6 +139,12 @@ impl FlowVm {
                     }
                     Step::SetUniformF32 { .. } => {
                         let sr = StepRunnerSetUniformF32::default();
+
+                        let srd = &srd_block[s_idx];
+                        sr.run_render(gl, &self, step, srd);
+                    }
+                    Step::SetUniformF64 { .. } => {
+                        let sr = StepRunnerSetUniformF64::default();
 
                         let srd = &srd_block[s_idx];
                         sr.run_render(gl, &self, step, srd);
