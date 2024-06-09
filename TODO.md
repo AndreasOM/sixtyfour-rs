@@ -8,12 +8,17 @@
 	- [x] Drag selection box in grid with primary mouse button, but allow secondary to drag grid and/or window
 	- [x] Dim old selection frame while selecting
 	- [x] Support grid scrolling (e.g. via mouse wheel) while selecting
+	- [x] Shrink selection to minimum
+	- [ ] Eye candy ;)
 	
 
 
 ## ToDo
 
 - [ ] Allow multiselect move, copy, delete, clone, etc
+
+- [ ] Refactor: Extract UiGrid storage into it's own file
+- [ ] Refactor: Clean up selection shrinking for UI grid
 
 
 - [ ] Make ShaderWindow autoselect a shader if needed/possible

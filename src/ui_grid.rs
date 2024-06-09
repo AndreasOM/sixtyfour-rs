@@ -37,6 +37,7 @@ pub struct UiGrid {
     width: u16,
     height: u16,
     cells: Vec<Option<UiGridCell>>, // :HACK: this should be sparse
+    used_cells: Vec<Option<()>>,
     selected_rect: Option<GridRect>,
     highlighted_cells: Vec<GridPos>,
     target_rect: Option<GridRect>,
@@ -84,6 +85,8 @@ impl Default for UiGrid {
         let height = 32u16;
         let mut cells = Vec::with_capacity((width * height).into());
         cells.resize_with((width * height).into(), Default::default);
+        let mut used_cells = Vec::with_capacity((width * height).into());
+        used_cells.resize_with((width * height).into(), Default::default);
 
         Self {
             id: egui::Id::NULL,
@@ -93,6 +96,7 @@ impl Default for UiGrid {
             width,
             height,
             cells,
+            used_cells,
             //selected_cell: None,
             selected_rect: None,
             highlighted_cells: Vec::default(),
@@ -124,6 +128,21 @@ impl UiGrid {
             return;
         }
         self.cells[offset] = Some(content);
+        self.used_cells[offset] = Some(());
+    }
+
+    fn is_cell_empty(&self, x: u16, y: u16) -> bool {
+        let offset = (y * self.width + x) as usize;
+        if offset > self.used_cells.capacity() {
+            eprintln!(
+                "Out of range {x} {y} {offset} <? {}",
+                self.used_cells.capacity()
+            );
+            true
+        } else {
+            //eprintln!("{offset}, {:?}", self.used_cells[offset]);
+            self.used_cells[offset].is_none()
+        }
     }
 
     /*
@@ -180,8 +199,8 @@ impl UiGrid {
             + self.cell_size
                 * self.zoom
                 * egui::Vec2::new(
-                    rect.bottom_right().x() as f32 + 1.0,
-                    rect.bottom_right().y() as f32 + 1.0,
+                    rect.bottom_right_exclusive().x() as f32, // + 1.0,
+                    rect.bottom_right_exclusive().y() as f32, // + 1.0,
                 );
         let rect = Rect::from_min_max(min, max);
         let rounding = 0.125 * self.cell_size.y * self.zoom;
@@ -404,16 +423,115 @@ impl UiGrid {
                             let r = egui::Rect::from_two_pos(delta_start, current);
                             // calculate potential new selection
                             let mut gtl = self.screen_pos_to_grid_pos(&ui.min_rect().min, &r.min);
-                            let mut gbr = self.screen_pos_to_grid_pos(&ui.min_rect().min, &r.max);
+                            let gbr = self.screen_pos_to_grid_pos(&ui.min_rect().min, &r.max);
 
                             gtl.inc_x();
                             gtl.inc_y();
-                            gbr.dec_x();
-                            gbr.dec_y();
+                            //gbr.dec_x();
+                            //gbr.dec_y();
 
                             //eprintln!("{gtl:?} {gbr:?}");
-                            let gr = GridRect::new(gtl, gbr);
-                            // eprintln!("{gr:?} Size {:?}", gr.size());
+                            let mut gr = GridRect::new(gtl, gbr);
+                            // shrink to minum needed
+                            // cut of top
+                            let mut first_non_empty_row = u16::MAX;
+
+                            'scan_rows: for gy in gr.top_left().y()..gr.bottom_right_exclusive().y()
+                            {
+                                //eprintln!("gy: {gy}");
+                                for gx in gr.top_left().x()..gr.bottom_right_exclusive().x() {
+                                    //eprintln!("gx: {gx}");
+                                    if !self.is_cell_empty(gx, gy) {
+                                        first_non_empty_row = gy;
+                                        eprintln!("Non empty cell at {gx} {gy}");
+                                        break 'scan_rows;
+                                    }
+                                }
+                            }
+
+                            if first_non_empty_row < u16::MAX {
+                                gr.set_top(first_non_empty_row);
+                            } else {
+                                // rect is empty
+                                gr.set_size(GridPos::zero());
+                            }
+                            // cut of bottom
+                            let mut last_non_empty_row = u16::MIN;
+
+                            'scan_rows: for gy in (gr.top_left().y()
+                                ..gr.bottom_right_exclusive().y())
+                                .into_iter()
+                                .rev()
+                            {
+                                eprintln!("gy: {gy} [bottom]");
+                                for gx in gr.top_left().x()..gr.bottom_right_exclusive().x() {
+                                    //eprintln!("gx: {gx}");
+                                    if !self.is_cell_empty(gx, gy) {
+                                        last_non_empty_row = gy;
+                                        eprintln!("Non empty cell at {gx} {gy} [bottom]");
+                                        break 'scan_rows;
+                                    }
+                                }
+                            }
+
+                            if last_non_empty_row > u16::MIN {
+                                gr.set_bottom_inclusive(last_non_empty_row);
+                            } else {
+                                // rect is empty
+                                eprintln!("Rect is empty! [bottom] {last_non_empty_row}");
+                                gr.set_size(GridPos::zero());
+                            }
+                            // cut of left
+                            let mut first_non_empty_col = u16::MAX;
+
+                            'scan_cols: for gx in gr.top_left().x()..gr.bottom_right_exclusive().x()
+                            {
+                                for gy in gr.top_left().y()..gr.bottom_right_exclusive().y() {
+                                    if !self.is_cell_empty(gx, gy) {
+                                        first_non_empty_col = gx;
+                                        eprintln!("Non empty cell at {gx} {gy}");
+                                        break 'scan_cols;
+                                    }
+                                }
+                            }
+                            eprintln!(
+                                "{gr:?} Size {:?} | before cutting {first_non_empty_col}",
+                                gr.size()
+                            );
+
+                            if first_non_empty_col < u16::MAX {
+                                gr.set_left(first_non_empty_col);
+                            } else {
+                                // rect is empty
+                                gr.set_size(GridPos::zero());
+                            }
+
+                            // cut of right
+                            let mut last_non_empty_col = u16::MIN;
+
+                            'scan_cols: for gx in (gr.top_left().x()
+                                ..gr.bottom_right_exclusive().x())
+                                .into_iter()
+                                .rev()
+                            {
+                                for gy in gr.top_left().y()..gr.bottom_right_exclusive().y() {
+                                    if !self.is_cell_empty(gx, gy) {
+                                        last_non_empty_col = gx;
+                                        eprintln!("Non empty cell at {gx} {gy} [right]");
+                                        break 'scan_cols;
+                                    }
+                                }
+                            }
+
+                            if last_non_empty_col > u16::MIN {
+                                gr.set_right_inclusive(last_non_empty_col);
+                            } else {
+                                // rect is empty
+                                eprintln!("Rect is empty! [right] {last_non_empty_col}");
+                                gr.set_size(GridPos::zero());
+                            }
+
+                            eprintln!("{gr:?} Size {:?}", gr.size());
                             let sr = if gr.size().x() == 0 || gr.size().y() == 0 {
                                 None
                             } else {
