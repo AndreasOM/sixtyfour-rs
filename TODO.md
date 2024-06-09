@@ -7,7 +7,7 @@
 - [ ] Allow multiselect in flow window
 	- [x] Drag selection box in grid with primary mouse button, but allow secondary to drag grid and/or window
 	- [x] Dim old selection frame while selecting
-	- [ ] Support grid scrolling (e.g. via mouse wheel) while selecting
+	- [x] Support grid scrolling (e.g. via mouse wheel) while selecting
 	
 
 

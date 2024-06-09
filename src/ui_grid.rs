@@ -48,6 +48,7 @@ pub struct UiGrid {
 pub enum State {
     Selecting {
         start: egui::Pos2,
+        top_left_at_start: egui::Pos2,
         rect: Option<GridRect>,
     },
     #[default]
@@ -380,6 +381,7 @@ impl UiGrid {
                                 eprintln!("Start selection");
                                 temp.set_state(State::Selecting {
                                     start: p.clone(),
+                                    top_left_at_start: ui.min_rect().min.clone(),
                                     rect: None,
                                 });
                             }
@@ -387,10 +389,19 @@ impl UiGrid {
                     }
                     State::Selecting {
                         start,
+                        top_left_at_start,
                         rect: new_selection_gr,
                     } => {
                         if let Some(current) = i.pointer.interact_pos() {
-                            let r = egui::Rect::from_two_pos(*start, current);
+                            let delta = ui.min_rect().min - *top_left_at_start;
+                            /*
+                            eprintln!(
+                                "Top Left at start {top_left_at_start:?} current {:?} -> {delta:?}",
+                                ui.min_rect().min
+                            );
+                            */
+                            let delta_start = *start + delta;
+                            let r = egui::Rect::from_two_pos(delta_start, current);
                             // calculate potential new selection
                             let mut gtl = self.screen_pos_to_grid_pos(&ui.min_rect().min, &r.min);
                             let mut gbr = self.screen_pos_to_grid_pos(&ui.min_rect().min, &r.max);
@@ -402,7 +413,7 @@ impl UiGrid {
 
                             //eprintln!("{gtl:?} {gbr:?}");
                             let gr = GridRect::new(gtl, gbr);
-                            eprintln!("{gr:?} Size {:?}", gr.size());
+                            // eprintln!("{gr:?} Size {:?}", gr.size());
                             let sr = if gr.size().x() == 0 || gr.size().y() == 0 {
                                 None
                             } else {
@@ -410,13 +421,14 @@ impl UiGrid {
                             };
                             temp.set_state(State::Selecting {
                                 start: *start,
+                                top_left_at_start: *top_left_at_start,
                                 rect: sr,
                             });
                             rect = Some(r);
                         }
                         if i.pointer.button_released(egui::PointerButton::Primary) {
                             //let new_selection_gr = new_selection_gr.clone();
-                            eprintln!("End selection - {new_selection_gr:?}");
+                            // eprintln!("End selection - {new_selection_gr:?}");
                             temp.set_state(State::Normal);
                             if selected_grid_rect.is_none() {
                                 selected_grid_rect = new_selection_gr.take();
