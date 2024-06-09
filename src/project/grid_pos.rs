@@ -30,8 +30,17 @@ impl GridPos {
     pub fn y_mut(&mut self) -> &mut u16 {
         &mut self.y
     }
+    pub fn inc_x(&mut self) {
+        self.x += 1;
+    }
     pub fn inc_y(&mut self) {
         self.y += 1;
+    }
+    pub fn dec_x(&mut self) {
+        self.x = self.x.saturating_sub(1);
+    }
+    pub fn dec_y(&mut self) {
+        self.y = self.y.saturating_sub(1);
     }
 }
 

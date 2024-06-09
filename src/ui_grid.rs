@@ -48,6 +48,7 @@ pub struct UiGrid {
 pub enum State {
     Selecting {
         start: egui::Pos2,
+        rect: Option<GridRect>,
     },
     #[default]
     Normal,
@@ -262,11 +263,30 @@ impl UiGrid {
 
             // paint highlights
 
+            let dim = if let State::Selecting { ref rect, .. } = temp.state {
+                if let Some(r) = rect {
+                    let stroke = egui::Stroke::new(
+                        9.0,
+                        egui::Color32::from_rgba_unmultiplied(125, 125, 50, 255),
+                    );
+                    let fill = egui::Color32::from_rgba_unmultiplied(125, 125, 50, 16);
+                    self.paint_highlight_rect(ui, Some(&stroke), Some(&fill), &r);
+                }
+                0.2
+            } else {
+                1.0
+            };
             if let Some(rect) = &self.selected_rect {
-                let stroke = egui::Stroke::new(9.0, egui::Color32::from_rgb(175, 150, 50));
-                let fill = egui::Color32::from_rgba_unmultiplied(175, 150, 50, 16);
+                let stroke = egui::Stroke::new(
+                    9.0,
+                    egui::Color32::from_rgba_unmultiplied(175, 150, 50, (255.0 * dim) as u8),
+                );
+                let fill = egui::Color32::from_rgba_unmultiplied(175, 150, 50, (16.0 * dim) as u8);
                 self.paint_highlight_rect(ui, Some(&stroke), Some(&fill), &rect);
-                let stroke = egui::Stroke::new(5.0, egui::Color32::from_rgb(75, 50, 50));
+                let stroke = egui::Stroke::new(
+                    5.0,
+                    egui::Color32::from_rgba_unmultiplied(95, 20, 20, (255.0 * dim) as u8),
+                );
                 self.paint_highlight_cell(ui, Some(&stroke), None, rect.top_left());
             }
             if let Some(rect) = &self.target_rect {
@@ -310,7 +330,7 @@ impl UiGrid {
                         } else {
                             let mut r = GridRect::default();
                             r.set_top_left(&clicked_gp);
-                            r.set_size(GridPos::zero());
+                            r.set_size(GridPos::one());
                             selected_grid_rect = Some(r);
                             //selected_grid_pos = Some(GridPos::new(x as u16, y as u16));
                         }
@@ -324,7 +344,7 @@ impl UiGrid {
                             //self.paint_highlight_cell(ui, &stroke, &ghp);
                             let mut r = GridRect::default();
                             r.set_top_left(&ghp);
-                            r.set_size(GridPos::zero());
+                            r.set_size(GridPos::one());
                             self.target_rect = Some(r);
                         }
                     }
@@ -350,24 +370,57 @@ impl UiGrid {
 
         let mut rect = None;
         if response.contains_pointer() {
-            ui.ctx().input_mut(|i| {
+            ui.ctx().input(|i| {
                 //eprintln!("{:#?}", i.pointer );
-                match temp.state() {
+                let mut s = temp.state().clone();
+                match &mut s {
                     State::Normal => {
                         if i.pointer.button_pressed(egui::PointerButton::Primary) {
                             if let Some(p) = i.pointer.interact_pos() {
                                 eprintln!("Start selection");
-                                temp.set_state(State::Selecting { start: p.clone() });
+                                temp.set_state(State::Selecting {
+                                    start: p.clone(),
+                                    rect: None,
+                                });
                             }
                         }
                     }
-                    State::Selecting { start } => {
+                    State::Selecting {
+                        start,
+                        rect: new_selection_gr,
+                    } => {
                         if let Some(current) = i.pointer.interact_pos() {
-                            rect = Some(egui::Rect::from_two_pos(*start, current));
+                            let r = egui::Rect::from_two_pos(*start, current);
+                            // calculate potential new selection
+                            let mut gtl = self.screen_pos_to_grid_pos(&ui.min_rect().min, &r.min);
+                            let mut gbr = self.screen_pos_to_grid_pos(&ui.min_rect().min, &r.max);
+
+                            gtl.inc_x();
+                            gtl.inc_y();
+                            gbr.dec_x();
+                            gbr.dec_y();
+
+                            //eprintln!("{gtl:?} {gbr:?}");
+                            let gr = GridRect::new(gtl, gbr);
+                            eprintln!("{gr:?} Size {:?}", gr.size());
+                            let sr = if gr.size().x() == 0 || gr.size().y() == 0 {
+                                None
+                            } else {
+                                Some(gr)
+                            };
+                            temp.set_state(State::Selecting {
+                                start: *start,
+                                rect: sr,
+                            });
+                            rect = Some(r);
                         }
                         if i.pointer.button_released(egui::PointerButton::Primary) {
-                            eprintln!("End selection");
+                            //let new_selection_gr = new_selection_gr.clone();
+                            eprintln!("End selection - {new_selection_gr:?}");
                             temp.set_state(State::Normal);
+                            if selected_grid_rect.is_none() {
+                                selected_grid_rect = new_selection_gr.take();
+                            }
                         }
                     }
                     _ => {
@@ -390,7 +443,7 @@ impl UiGrid {
                 //self.paint_highlight_cell(ui, &stroke, &ghp);
                 let mut r = GridRect::default();
                 r.set_top_left(&ghp);
-                r.set_size(GridPos::zero());
+                r.set_size(GridPos::one());
                 self.target_rect = Some(r);
             }
         }

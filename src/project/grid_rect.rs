@@ -17,10 +17,10 @@ impl GridRect {
         self.top_left = *top_left;
     }
     pub fn set_size(&mut self, size: &GridPos) {
-        self.bottom_right = &self.top_left + size;
+        self.bottom_right = &self.top_left + &( size - GridPos::one() );
     }
     pub fn size(&self) -> GridPos {
-        &self.bottom_right - &self.top_left
+        &( &self.bottom_right + &GridPos::one() ) - &self.top_left
     }
     pub fn top_left(&self) -> &GridPos {
         &self.top_left
