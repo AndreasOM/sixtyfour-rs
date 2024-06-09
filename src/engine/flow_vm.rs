@@ -106,11 +106,11 @@ impl FlowVm {
         let now = std::time::Instant::now();
         let t = now - self.start_time;
 
-        // self.time = t.as_secs_f64() + 16374.0;// + 1000000.0;
-        //self.time = t.as_secs_f64() + 8192.0 - 10.0;// + 1000000.0;
-        //self.time = t.as_secs_f64() + 4096.0 - 10.0;// + 1000000.0;
-        //self.time = t.as_secs_f64() + 2048.0 - 10.0;// + 1000000.0;
-        self.time = t.as_secs_f64(); // + 1000000.0;
+        self.time = t.as_secs_f64();
+
+        if self.time > 2048.0 {
+            self.start_time = now;
+        }
 
         if let Some(start_step) = self.flow.steps().iter().find(|(s, _gp)| {
             if let Step::Label { name, .. } = s {

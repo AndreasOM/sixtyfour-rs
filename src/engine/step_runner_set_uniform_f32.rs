@@ -62,7 +62,7 @@ impl StepRunnerSetUniformF32 {
                                 value
                                     .parse::<f32>()
                                     .unwrap_or_else(|_| match value.as_ref() {
-                                        "${TIME}" => (flow_vm.time().rem_euclid(2048.0)) as f32, // wrap to avoid precision issues, will _jerk_ after ~4.5h
+                                        "${TIME}" => (flow_vm.time().rem_euclid(2048.0)) as f32, // wrap to avoid precision issues, will _jerk_ after ~0.5h
                                         _ => 0.0,
                                     });
                             //if value != data.value {
