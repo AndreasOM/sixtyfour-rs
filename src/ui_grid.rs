@@ -122,6 +122,18 @@ impl UiGrid {
     pub fn set_target_rect(&mut self, target_rect: Option<&GridRect>) {
         self.target_rect = target_rect.cloned();
     }
+    pub fn set_target_grid_pos(&mut self, target_grid_pos: Option<&GridPos>) {
+        self.target_rect = if let Some(target_grid_pos) = target_grid_pos {
+            if let Some(mut target_rect) = self.target_rect.take() {
+                target_rect.set_top_left(target_grid_pos);
+                Some(target_rect)
+            } else {
+                Some(GridRect::from_top_left_with_size_one(target_grid_pos))
+            }
+        } else {
+            None
+        };
+    }
     pub fn add_cell(&mut self, x: u16, y: u16, content: UiGridCell) {
         let offset = (y * self.width + x) as usize;
         if offset > self.cells.capacity() {
@@ -153,6 +165,14 @@ impl UiGrid {
 
     pub fn select_rect(&mut self, rect: Option<&GridRect>) {
         self.selected_rect = rect.cloned();
+        if let Some(r) = &rect {
+            if let Some(tr) = &mut self.target_rect {
+                let size = r.size();
+                tr.set_size(&size);
+            }
+        } else {
+            self.target_rect = None;
+        }
     }
 
     pub fn highlight_cell(&mut self, pos: &GridPos) {

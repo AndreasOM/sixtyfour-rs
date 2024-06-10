@@ -15,7 +15,6 @@ use std::collections::HashMap;
 pub struct FlowWindow {
     is_open: bool,
     selected_grid_rect: Option<GridRect>,
-    target_grid_pos: Option<GridPos>,
     target_grid_rect: Option<GridRect>,
     target_step_type: String,
 
@@ -70,70 +69,84 @@ impl FlowWindow {
                         }
                     });
 
-                let mut new_target_grid_pos = self.target_grid_pos.clone();
+                //let mut new_target_grid_pos = self.target_grid_pos.clone();
+                let mut new_target_grid_rect = self.target_grid_rect.clone();
                 let mut new_selected_grid_rect = self.selected_grid_rect.clone();
                 if ui.button("Add Step").clicked() {
-                    if let Some(target_grid_pos) = &self.target_grid_pos {
+                    if let Some(target_grid_rect) = &self.target_grid_rect {
                         let _ = COMMAND_QUEUE.send(Command::HackAddStepToFlow {
-                            grid_pos: target_grid_pos.clone(),
+                            grid_pos: target_grid_rect.top_left().clone(),
                             step_type: self.target_step_type.clone(),
                         });
-                        new_target_grid_pos.as_mut().unwrap().inc_y();
-                    }
-                }
-                if ui.button("Remove Step").clicked() {
-                    if let Some(target_grid_pos) = &self.target_grid_pos {
-                        let _ = COMMAND_QUEUE.send(Command::HackRemoveStepFromFlow {
-                            grid_pos: target_grid_pos.clone(),
-                        });
-                        new_target_grid_pos.as_mut().unwrap().inc_y();
-                    }
-                }
-
-                let move_enabled =
-                    self.selected_grid_rect.is_some() && self.target_grid_pos.is_some();
-                if ui
-                    .add_enabled(move_enabled, egui::Button::new("Move Step"))
-                    .clicked()
-                {
-                    if let (Some(target_grid_pos), Some(selected_grid_rect)) =
-                        (&self.target_grid_pos, &self.selected_grid_rect)
-                    {
-                        let _ = COMMAND_QUEUE.send(Command::ChangeFlow {
-                            flow_command: FlowCommand::MoveSteps {
-                                source_grid_rect: selected_grid_rect.clone(),
-                                target_grid_pos: target_grid_pos.clone(),
-                            },
-                        });
-                        // new_target_grid_pos.as_mut().unwrap().inc_y();
-                        let size = new_selected_grid_rect.as_ref().unwrap().size();
-                        new_selected_grid_rect
-                            .as_mut()
-                            .unwrap()
-                            .set_top_left(target_grid_pos);
-                        new_selected_grid_rect.as_mut().unwrap().set_size(&size);
-                    }
-                }
-
-                if ui.button("Clone Step").clicked() {
-                    if let (Some(target_grid_pos), Some(selected_grid_rect)) =
-                        (&self.target_grid_pos, &self.selected_grid_rect)
-                    {
-                        let _ = COMMAND_QUEUE.send(Command::HackCloneStepInFlow {
-                            source_grid_pos: selected_grid_rect.top_left().clone(),
-                            target_grid_pos: target_grid_pos.clone(),
-                            overwrite: false,
-                        });
-                        new_target_grid_pos.as_mut().unwrap().inc_y();
-                        new_selected_grid_rect
+                        let size = new_target_grid_rect.as_ref().unwrap().size();
+                        new_target_grid_rect
                             .as_mut()
                             .unwrap()
                             .top_left_mut()
                             .inc_y();
+                        new_target_grid_rect.as_mut().unwrap().set_size(&size);
                     }
                 }
 
-                self.target_grid_pos = new_target_grid_pos;
+                let remove_enabled = self.selected_grid_rect.is_some();
+                if ui
+                    .add_enabled(remove_enabled, egui::Button::new("Remove Step(s)"))
+                    .clicked()
+                {
+                    if let Some(selected_grid_rect) = &self.selected_grid_rect {
+                        let _ = COMMAND_QUEUE.send(Command::ChangeFlow {
+                            flow_command: FlowCommand::RemoveSteps {
+                                grid_rect: selected_grid_rect.clone(),
+                            },
+                        });
+                        new_selected_grid_rect = None; // maybe?
+                    }
+                }
+
+                let move_enabled =
+                    self.selected_grid_rect.is_some() && self.target_grid_rect.is_some();
+                if ui
+                    .add_enabled(move_enabled, egui::Button::new("Move Step"))
+                    .clicked()
+                {
+                    if let (Some(target_grid_rect), Some(selected_grid_rect)) =
+                        (&self.target_grid_rect, &self.selected_grid_rect)
+                    {
+                        let _ = COMMAND_QUEUE.send(Command::ChangeFlow {
+                            flow_command: FlowCommand::MoveSteps {
+                                source_grid_rect: selected_grid_rect.clone(),
+                                target_grid_pos: target_grid_rect.top_left().clone(),
+                            },
+                        });
+                        let size = new_selected_grid_rect.as_ref().unwrap().size();
+                        new_selected_grid_rect
+                            .as_mut()
+                            .unwrap()
+                            .set_top_left(target_grid_rect.top_left());
+                        new_selected_grid_rect.as_mut().unwrap().set_size(&size);
+                    }
+                }
+
+                let clone_enabled =
+                    self.selected_grid_rect.is_some() && self.target_grid_rect.is_some();
+                if ui
+                    .add_enabled(clone_enabled, egui::Button::new("Clone Step(s)"))
+                    .clicked()
+                {
+                    if let (Some(target_grid_rect), Some(selected_grid_rect)) =
+                        (&self.target_grid_rect, &self.selected_grid_rect)
+                    {
+                        let _ = COMMAND_QUEUE.send(Command::ChangeFlow {
+                            flow_command: FlowCommand::CloneSteps {
+                                source_grid_rect: selected_grid_rect.clone(),
+                                target_grid_pos: target_grid_rect.top_left().clone(),
+                            },
+                        });
+                    }
+                }
+
+                //self.target_grid_pos = new_target_grid_pos;
+                self.target_grid_rect = new_target_grid_rect;
                 self.selected_grid_rect = new_selected_grid_rect;
             });
     }
@@ -218,18 +231,13 @@ impl Window for FlowWindow {
                             let mut grid = UiGrid::default();
                             grid.set_id(egui::Id::new("FlowGrid"));
                             grid.set_zoom(self.grid_zoom);
-                            //grid.set_target_grid_pos(self.target_grid_pos.as_ref());
                             grid.set_target_rect(self.target_grid_rect.as_ref());
 
                             for (s, gp) in state.project.flow().steps().iter() {
                                 grid.add_cell(gp.x(), gp.y(), UiGridCell::new(String::from(s)));
                             }
 
-                            // grid.select_cell(self.selected_grid_rect.as_ref().map( |gr| gr.top_left() ) );
                             grid.select_rect(self.selected_grid_rect.as_ref());
-                            if let Some(target_grid_pos) = &self.target_grid_pos {
-                                grid.highlight_cell(&target_grid_pos);
-                            }
 
                             let gr = grid.show(ui);
                             self.prevent_moving = gr.prevent_moving();
@@ -249,7 +257,7 @@ impl Window for FlowWindow {
                                 //}
                             }
 
-                            self.target_grid_pos = gr.target_grid_pos().cloned();
+                            //self.target_grid_pos = gr.target_grid_pos().cloned();
                             self.target_grid_rect = gr.target_grid_rect().cloned();
                         });
                 });

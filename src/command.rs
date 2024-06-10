@@ -5,10 +5,18 @@ use crate::project::ShaderType;
 
 #[derive(Debug, Default)]
 pub enum FlowCommand {
+    CloneSteps {
+        source_grid_rect: GridRect,
+        target_grid_pos: GridPos,
+    },
     MoveSteps {
         source_grid_rect: GridRect,
         target_grid_pos: GridPos,
     },
+    RemoveSteps {
+        grid_rect: GridRect,
+    },
+
     #[default]
     Nop,
 }
@@ -44,9 +52,6 @@ pub enum Command {
         grid_pos: GridPos,
         step_type: String,
     },
-    HackRemoveStepFromFlow {
-        grid_pos: GridPos,
-    },
     HackStepSetUniformF32SetNameAndValue {
         grid_pos: GridPos,
         name: String,
@@ -56,15 +61,6 @@ pub enum Command {
         grid_pos: GridPos,
         name: String,
         value: String,
-    },
-    HackMoveStepInFlow {
-        source_grid_pos: GridPos,
-        target_grid_pos: GridPos,
-    },
-    HackCloneStepInFlow {
-        source_grid_pos: GridPos,
-        target_grid_pos: GridPos,
-        overwrite: bool,
     },
     HackStepLabelSetName {
         grid_pos: GridPos,

@@ -130,6 +130,74 @@ impl TemplateApp {
 
     fn handle_flow_command(&mut self, flow_command: FlowCommand) {
         match flow_command {
+            FlowCommand::RemoveSteps { grid_rect } => {
+                let tl = grid_rect.top_left();
+                let br = grid_rect.bottom_right_exclusive();
+                let left = tl.x();
+                let right = br.x();
+                let top = tl.y();
+                let bottom = br.y();
+
+                self.state.project.with_flow_mut(|f| {
+                    for gy in top..bottom {
+                        for gx in left..right {
+                            let dst = GridPos::new(gx, gy);
+
+                            let _ = f.remove_step(&dst);
+                        }
+                    }
+                });
+            }
+            FlowCommand::CloneSteps {
+                source_grid_rect,
+                target_grid_pos,
+            } => {
+                //
+                self.state.project.with_flow_mut(|f| {
+                    let tl = source_grid_rect.top_left();
+                    let br = source_grid_rect.bottom_right_exclusive();
+                    let left = tl.x();
+                    let right = br.x();
+                    let top = tl.y();
+                    let bottom = br.y();
+                    let y_iter = (top..bottom).into_iter();
+                    let y_iter: Vec<_> = if top >= target_grid_pos.y() {
+                        y_iter.collect()
+                    } else {
+                        y_iter.rev().collect()
+                    };
+
+                    let x_iter = (left..right).into_iter();
+                    let x_iter: Vec<_> = if left >= target_grid_pos.x() {
+                        x_iter.collect()
+                    } else {
+                        x_iter.rev().collect()
+                    };
+
+                    eprintln!("{y_iter:?}");
+                    eprintln!("{x_iter:?}");
+
+                    //let delta = &target_grid_pos - tl;
+                    for gy in y_iter.iter() {
+                        for gx in x_iter.iter() {
+                            let src = GridPos::new(*gx, *gy);
+                            let delta = &src - &tl;
+                            let dst = &target_grid_pos + &delta;
+                            f.remove_step(&dst);
+                            if let Some(step) = f.get_step_at(&src) {
+                                eprintln!("{src:?} -> {dst:?}: {step:?}");
+                                f.add_step(&dst, step.clone());
+                            }
+                        }
+                    }
+
+                    /*
+                    if let Some(step) = f.remove_step(&source_grid_pos) {
+                        f.add_step(&target_grid_pos, step);
+                    }
+                    */
+                });
+            }
             FlowCommand::MoveSteps {
                 source_grid_rect,
                 target_grid_pos,
@@ -433,39 +501,6 @@ impl eframe::App for TemplateApp {
                     self.state.project.with_flow_mut(|f| {
                         let step = Step::from(step_type.as_ref());
                         f.add_step(&grid_pos, step);
-                    });
-                }
-                Command::HackRemoveStepFromFlow { grid_pos } => {
-                    //
-                    self.state.project.with_flow_mut(|f| {
-                        f.remove_step(&grid_pos);
-                    });
-                }
-                Command::HackMoveStepInFlow {
-                    source_grid_pos,
-                    target_grid_pos,
-                } => {
-                    //
-                    self.state.project.with_flow_mut(|f| {
-                        if let Some(step) = f.remove_step(&source_grid_pos) {
-                            f.add_step(&target_grid_pos, step);
-                        }
-                    });
-                }
-                Command::HackCloneStepInFlow {
-                    source_grid_pos,
-                    target_grid_pos,
-                    overwrite,
-                } => {
-                    //
-                    self.state.project.with_flow_mut(|f| {
-                        if let Some(step) = f.get_step_at(&source_grid_pos) {
-                            if !overwrite & f.get_step_at(&target_grid_pos).is_some() {
-                                eprintln!("Copy target already in use");
-                            } else {
-                                f.add_step(&target_grid_pos, step.clone());
-                            }
-                        }
                     });
                 }
                 Command::HackStepSetUniformF32SetNameAndValue {

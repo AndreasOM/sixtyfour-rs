@@ -3,7 +3,6 @@
 
 ## In Progress
 
-	
 
 
 ## ToDo
@@ -45,6 +44,9 @@
 
 ## 2024-06-10
 - [x] Fixup "move step" for rect selection
+- [x] Fixup "remove step(s)" for rect selection
+- [x] Fixup "clone step(s)" for rect selection
+- [x] Fixup "add step" for rect selection
 
 ## 2024-06-09
 - [x] Some progress on grid selection via dragging

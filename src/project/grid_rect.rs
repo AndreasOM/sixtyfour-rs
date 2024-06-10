@@ -13,6 +13,14 @@ impl GridRect {
             bottom_right,
         }
     }
+
+    pub fn from_top_left_with_size_one(top_left: &GridPos) -> Self {
+        Self {
+            top_left: top_left.clone(),
+            bottom_right: top_left + GridPos::one(),
+        }
+    }
+
     pub fn is_empty(&self) -> bool {
         self.top_left.x() >= self.bottom_right.x() || self.top_left.y() >= self.bottom_right.y()
     }
