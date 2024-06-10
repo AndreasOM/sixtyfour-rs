@@ -3,13 +3,6 @@
 
 ## In Progress
 
-
-- [ ] Allow multiselect in flow window
-	- [x] Drag selection box in grid with primary mouse button, but allow secondary to drag grid and/or window
-	- [x] Dim old selection frame while selecting
-	- [x] Support grid scrolling (e.g. via mouse wheel) while selecting
-	- [x] Shrink selection to minimum
-	- [ ] Eye candy ;)
 	
 
 
@@ -50,8 +43,16 @@
 
 ## Done
 
+## 2024-06-10
+- [x] Fixup "move step" for rect selection
+
 ## 2024-06-09
 - [x] Some progress on grid selection via dragging
+- [x] Allow multiselect in flow window
+	- [x] Drag selection box in grid with primary mouse button, but allow secondary to drag grid and/or window
+	- [x] Dim old selection frame while selecting
+	- [x] Support grid scrolling (e.g. via mouse wheel) while selecting
+	- [x] Shrink selection to minimum
 
 ## 2024-06-07
 - [x] Replace fTime with dTime for better precision, and reset after X hours

@@ -1,8 +1,10 @@
+use crate::command::FlowCommand;
 use crate::command_queue::COMMAND_QUEUE;
 use crate::flow_window::FlowWindow;
 use crate::mc_guffin_container::McGuffinContainer;
 use crate::mc_guffin_window::McGuffinWindow;
 use crate::performance_window::PerformanceWindow;
+use crate::project::GridPos;
 use crate::project::Resource;
 use crate::project::Step;
 use crate::project_window::ProjectWindow;
@@ -124,6 +126,67 @@ impl TemplateApp {
         app_save.window_manager = self.window_manager.serialize();
 
         Ok(app_save)
+    }
+
+    fn handle_flow_command(&mut self, flow_command: FlowCommand) {
+        match flow_command {
+            FlowCommand::MoveSteps {
+                source_grid_rect,
+                target_grid_pos,
+            } => {
+                //
+                self.state.project.with_flow_mut(|f| {
+                    let tl = source_grid_rect.top_left();
+                    let br = source_grid_rect.bottom_right_exclusive();
+                    let left = tl.x();
+                    let right = br.x();
+                    let top = tl.y();
+                    let bottom = br.y();
+                    let y_iter = (top..bottom).into_iter();
+                    let y_iter: Vec<_> = if top >= target_grid_pos.y() {
+                        y_iter.collect()
+                    } else {
+                        y_iter.rev().collect()
+                    };
+
+                    let x_iter = (left..right).into_iter();
+                    let x_iter: Vec<_> = if left >= target_grid_pos.x() {
+                        x_iter.collect()
+                    } else {
+                        x_iter.rev().collect()
+                    };
+
+                    eprintln!("{y_iter:?}");
+                    eprintln!("{x_iter:?}");
+
+                    //let delta = &target_grid_pos - tl;
+                    for gy in y_iter.iter() {
+                        for gx in x_iter.iter() {
+                            let src = GridPos::new(*gx, *gy);
+                            let delta = &src - &tl;
+                            let dst = &target_grid_pos + &delta;
+                            if let Some(step) = f.remove_step(&src) {
+                                eprintln!("{src:?} -> {dst:?}: {step:?}");
+                                f.add_step(&dst, step);
+                            } else {
+                                // :TODO: decide if we want to merge instead
+                                eprintln!("{src:?} -> {dst:?}: EMPTY");
+                                f.remove_step(&dst);
+                            }
+                        }
+                    }
+
+                    /*
+                    if let Some(step) = f.remove_step(&source_grid_pos) {
+                        f.add_step(&target_grid_pos, step);
+                    }
+                    */
+                });
+            }
+            o => {
+                eprintln!("Warning unhandled FlowCommand {o:?}")
+            }
+        }
     }
 }
 impl eframe::App for TemplateApp {
@@ -466,6 +529,9 @@ impl eframe::App for TemplateApp {
                             }
                         })
                     });
+                }
+                Command::ChangeFlow { flow_command } => {
+                    self.handle_flow_command(flow_command);
                 }
                 o => {
                     eprintln!("Unhandled command {o:?}");

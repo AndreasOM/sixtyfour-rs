@@ -1,6 +1,17 @@
 use crate::project::GridPos;
+use crate::project::GridRect;
 use crate::project::ResourceId;
 use crate::project::ShaderType;
+
+#[derive(Debug, Default)]
+pub enum FlowCommand {
+    MoveSteps {
+        source_grid_rect: GridRect,
+        target_grid_pos: GridPos,
+    },
+    #[default]
+    Nop,
+}
 
 #[derive(Debug, Default)]
 pub enum Command {
@@ -59,11 +70,9 @@ pub enum Command {
         grid_pos: GridPos,
         name: String,
     },
-    /*
     ChangeFlow {
         flow_command: FlowCommand,
-    }
-    */
+    },
     #[default]
     Nop,
 }

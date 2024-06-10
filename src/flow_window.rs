@@ -1,3 +1,4 @@
+use crate::command::FlowCommand;
 use crate::command_queue::COMMAND_QUEUE;
 use crate::project::GridPos;
 use crate::project::GridRect;
@@ -43,6 +44,100 @@ impl From<&FlowWindow> for FlowWindowSave {
     }
 }
 
+impl FlowWindow {
+    fn update_sidepanel(&mut self, ui: &mut egui::Ui, _state: &mut State) {
+        egui::SidePanel::left("left_panel")
+            .resizable(false)
+            //.exact_height(16.0)
+            .min_width(128.0)
+            .show_inside(ui, |ui| {
+                ui.label("Grid Stuff");
+                ui.add(
+                    egui::Slider::new(&mut self.grid_zoom, 0.125..=2.0)
+                        .step_by(0.001)
+                        .text("Grid Zoom"),
+                );
+                egui::ComboBox::from_label("Step Type")
+                    .selected_text(
+                        egui::RichText::new(format!("{}", self.target_step_type))
+                            .monospace()
+                            .strong(),
+                    )
+                    .width(128.0)
+                    .show_ui(ui, |ui| {
+                        for t in Step::types() {
+                            ui.selectable_value(&mut self.target_step_type, String::from(*t), *t);
+                        }
+                    });
+
+                let mut new_target_grid_pos = self.target_grid_pos.clone();
+                let mut new_selected_grid_rect = self.selected_grid_rect.clone();
+                if ui.button("Add Step").clicked() {
+                    if let Some(target_grid_pos) = &self.target_grid_pos {
+                        let _ = COMMAND_QUEUE.send(Command::HackAddStepToFlow {
+                            grid_pos: target_grid_pos.clone(),
+                            step_type: self.target_step_type.clone(),
+                        });
+                        new_target_grid_pos.as_mut().unwrap().inc_y();
+                    }
+                }
+                if ui.button("Remove Step").clicked() {
+                    if let Some(target_grid_pos) = &self.target_grid_pos {
+                        let _ = COMMAND_QUEUE.send(Command::HackRemoveStepFromFlow {
+                            grid_pos: target_grid_pos.clone(),
+                        });
+                        new_target_grid_pos.as_mut().unwrap().inc_y();
+                    }
+                }
+
+                let move_enabled =
+                    self.selected_grid_rect.is_some() && self.target_grid_pos.is_some();
+                if ui
+                    .add_enabled(move_enabled, egui::Button::new("Move Step"))
+                    .clicked()
+                {
+                    if let (Some(target_grid_pos), Some(selected_grid_rect)) =
+                        (&self.target_grid_pos, &self.selected_grid_rect)
+                    {
+                        let _ = COMMAND_QUEUE.send(Command::ChangeFlow {
+                            flow_command: FlowCommand::MoveSteps {
+                                source_grid_rect: selected_grid_rect.clone(),
+                                target_grid_pos: target_grid_pos.clone(),
+                            },
+                        });
+                        // new_target_grid_pos.as_mut().unwrap().inc_y();
+                        let size = new_selected_grid_rect.as_ref().unwrap().size();
+                        new_selected_grid_rect
+                            .as_mut()
+                            .unwrap()
+                            .set_top_left(target_grid_pos);
+                        new_selected_grid_rect.as_mut().unwrap().set_size(&size);
+                    }
+                }
+
+                if ui.button("Clone Step").clicked() {
+                    if let (Some(target_grid_pos), Some(selected_grid_rect)) =
+                        (&self.target_grid_pos, &self.selected_grid_rect)
+                    {
+                        let _ = COMMAND_QUEUE.send(Command::HackCloneStepInFlow {
+                            source_grid_pos: selected_grid_rect.top_left().clone(),
+                            target_grid_pos: target_grid_pos.clone(),
+                            overwrite: false,
+                        });
+                        new_target_grid_pos.as_mut().unwrap().inc_y();
+                        new_selected_grid_rect
+                            .as_mut()
+                            .unwrap()
+                            .top_left_mut()
+                            .inc_y();
+                    }
+                }
+
+                self.target_grid_pos = new_target_grid_pos;
+                self.selected_grid_rect = new_selected_grid_rect;
+            });
+    }
+}
 impl Window for FlowWindow {
     fn name(&self) -> &str {
         "Flow"
@@ -67,6 +162,8 @@ impl Window for FlowWindow {
             }
         }
 
+        let mut is_open = self.is_open;
+
         if let Some(ir) = w
             .drag_to_scroll(!self.prevent_moving)
             .resizable(true)
@@ -74,7 +171,7 @@ impl Window for FlowWindow {
             .vscroll(false)
             .collapsible(false)
             //.title_bar(false)
-            .open(&mut self.is_open)
+            .open(&mut is_open)
             .show(ctx, |ui| {
                 egui::TopBottomPanel::top("flow_top_panel")
                     //.resizable(true)
@@ -113,90 +210,7 @@ impl Window for FlowWindow {
                         }
                         */
                     });
-                egui::SidePanel::left("left_panel")
-                    .resizable(false)
-                    //.exact_height(16.0)
-                    .min_width(128.0)
-                    .show_inside(ui, |ui| {
-                        ui.label("Grid Stuff");
-                        ui.add(
-                            egui::Slider::new(&mut self.grid_zoom, 0.125..=2.0)
-                                .step_by(0.001)
-                                .text("Grid Zoom"),
-                        );
-                        egui::ComboBox::from_label("Step Type")
-                            .selected_text(
-                                egui::RichText::new(format!("{}", self.target_step_type))
-                                    .monospace()
-                                    .strong(),
-                            )
-                            .width(128.0)
-                            .show_ui(ui, |ui| {
-                                for t in Step::types() {
-                                    ui.selectable_value(
-                                        &mut self.target_step_type,
-                                        String::from(*t),
-                                        *t,
-                                    );
-                                }
-                            });
-
-                        let mut new_target_grid_pos = self.target_grid_pos.clone();
-                        let mut new_selected_grid_rect = self.selected_grid_rect.clone();
-                        if ui.button("Add Step").clicked() {
-                            if let Some(target_grid_pos) = &self.target_grid_pos {
-                                let _ = COMMAND_QUEUE.send(Command::HackAddStepToFlow {
-                                    grid_pos: target_grid_pos.clone(),
-                                    step_type: self.target_step_type.clone(),
-                                });
-                                new_target_grid_pos.as_mut().unwrap().inc_y();
-                            }
-                        }
-                        if ui.button("Remove Step").clicked() {
-                            if let Some(target_grid_pos) = &self.target_grid_pos {
-                                let _ = COMMAND_QUEUE.send(Command::HackRemoveStepFromFlow {
-                                    grid_pos: target_grid_pos.clone(),
-                                });
-                                new_target_grid_pos.as_mut().unwrap().inc_y();
-                            }
-                        }
-                        if ui.button("Move Step").clicked() {
-                            if let (Some(target_grid_pos), Some(selected_grid_rect)) =
-                                (&self.target_grid_pos, &self.selected_grid_rect)
-                            {
-                                let _ = COMMAND_QUEUE.send(Command::HackMoveStepInFlow {
-                                    source_grid_pos: selected_grid_rect.top_left().clone(),
-                                    target_grid_pos: target_grid_pos.clone(),
-                                });
-                                new_target_grid_pos.as_mut().unwrap().inc_y();
-                                new_selected_grid_rect
-                                    .as_mut()
-                                    .unwrap()
-                                    .top_left_mut()
-                                    .inc_y();
-                            }
-                        }
-                        if ui.button("Clone Step").clicked() {
-                            if let (Some(target_grid_pos), Some(selected_grid_rect)) =
-                                (&self.target_grid_pos, &self.selected_grid_rect)
-                            {
-                                let _ = COMMAND_QUEUE.send(Command::HackCloneStepInFlow {
-                                    source_grid_pos: selected_grid_rect.top_left().clone(),
-                                    target_grid_pos: target_grid_pos.clone(),
-                                    overwrite: false,
-                                });
-                                new_target_grid_pos.as_mut().unwrap().inc_y();
-                                new_selected_grid_rect
-                                    .as_mut()
-                                    .unwrap()
-                                    .top_left_mut()
-                                    .inc_y();
-                            }
-                        }
-
-                        self.target_grid_pos = new_target_grid_pos;
-                        self.selected_grid_rect = new_selected_grid_rect;
-                    });
+                self.update_sidepanel(ui, state);
                 egui::CentralPanel::default().show_inside(ui, |ui| {
                     egui::ScrollArea::both()
                         .drag_to_scroll(!self.prevent_moving)
@@ -243,6 +257,7 @@ impl Window for FlowWindow {
         {
             self.fixed_pos = Some(ir.response.rect.min.clone());
         }
+        self.is_open = is_open;
     }
     fn serialize(&self) -> String {
         let save: FlowWindowSave = self.into();
