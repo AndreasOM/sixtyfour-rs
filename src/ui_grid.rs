@@ -1,6 +1,7 @@
 use crate::project::GridPos;
 use crate::project::GridRect;
 use crate::UiGridCell;
+use egui::Key;
 use egui::Rect;
 use egui::Response;
 use egui::Ui;
@@ -475,7 +476,10 @@ impl UiGrid {
                         target,
                         do_copy,
                     } => {
-                        if i.pointer.button_released(egui::PointerButton::Primary) {
+                        if i.key_pressed(Key::Escape) {
+                            eprintln!("Dragging - cancelled");
+                            temp.set_state(State::Normal);
+                        } else if i.pointer.button_released(egui::PointerButton::Primary) {
                             // :TODO: end dragging
                             eprintln!("Dragging - button released");
                             temp.set_state(State::Normal);
