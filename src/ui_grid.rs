@@ -68,7 +68,8 @@ pub enum State {
         start: egui::Pos2,
         top_left_at_start: egui::Pos2,
         target: egui::Pos2,
-        rect: Option<GridRect>,
+        //rect: Option<GridRect>,
+        rect: GridRect,
         do_copy: bool,
     },
     Selecting {
@@ -435,6 +436,7 @@ impl UiGrid {
         */
 
         let mut rect = None;
+        let selected_rect = self.selected_rect.clone();
         if response.contains_pointer() {
             ui.ctx().input(|i| {
                 //eprintln!("{:#?}", i.pointer );
@@ -444,8 +446,7 @@ impl UiGrid {
                         if i.pointer.button_pressed(egui::PointerButton::Primary) {
                             if let Some(p) = i.pointer.interact_pos() {
                                 let gp = self.screen_pos_to_grid_pos(&ui.min_rect().min, &p);
-                                let inside_current_selection = self
-                                    .selected_rect
+                                let inside_current_selection = selected_rect
                                     .clone()
                                     .map(|r| r.contains_pos(&gp))
                                     .unwrap_or(false);
@@ -454,7 +455,7 @@ impl UiGrid {
                                     temp.set_state(State::Dragging {
                                         start: p.clone(),
                                         top_left_at_start: ui.min_rect().min.clone(),
-                                        rect: self.selected_rect.clone(),
+                                        rect: selected_rect.unwrap().clone(),
                                         target: p.clone(),
                                         do_copy: false,
                                     });
@@ -483,23 +484,19 @@ impl UiGrid {
                             // :TODO: end dragging
                             eprintln!("Dragging - button released");
                             temp.set_state(State::Normal);
-                            if let Some(rect) = new_dragging_gr {
-                                if *do_copy {
-                                    // :TODO modifier for cloning
-                                    action = Some(UiGridAction::Copy {
-                                        source_rect: rect.clone(),
-                                        target_pos: self
-                                            .screen_pos_to_grid_pos(&ui.min_rect().min, &target),
-                                    });
-                                } else {
-                                    action = Some(UiGridAction::Move {
-                                        source_rect: rect.clone(),
-                                        target_pos: self
-                                            .screen_pos_to_grid_pos(&ui.min_rect().min, &target),
-                                    });
-                                }
+                            if *do_copy {
+                                // :TODO modifier for cloning
+                                action = Some(UiGridAction::Copy {
+                                    source_rect: new_dragging_gr.clone(),
+                                    target_pos: self
+                                        .screen_pos_to_grid_pos(&ui.min_rect().min, &target),
+                                });
                             } else {
-                                // elf?
+                                action = Some(UiGridAction::Move {
+                                    source_rect: new_dragging_gr.clone(),
+                                    target_pos: self
+                                        .screen_pos_to_grid_pos(&ui.min_rect().min, &target),
+                                });
                             }
                         } else {
                             if let Some(p) = i.pointer.interact_pos() {
@@ -673,13 +670,33 @@ impl UiGrid {
             State::Dragging {
                 start,
                 top_left_at_start,
-                rect,
+                rect: grid_rect,
                 target,
                 do_copy,
             } => {
+                let rounding = 0.0;
+                let stroke = egui::Stroke::new(2.25, egui::Color32::from_rgb(250, 150, 100));
+                let dim = 1.0;
+                let fill = egui::Color32::from_rgba_unmultiplied(175, 75, 25, (127.0 * dim) as u8);
+                let rect_size = self.cell_size
+                    * self.zoom
+                    * egui::Vec2::new(grid_rect.size().x() as f32, grid_rect.size().y() as f32);
+                let rect_pos = target; // + p.to_vec2();
+                let rect_pos = rect_pos.to_vec2();
+                let rect_pos = rect_pos - ui.min_rect().min.to_vec2();
+                let rect_pos = rect_pos / (self.cell_size * self.zoom);
+                let rect_pos = rect_pos.floor();
+                let rect_pos = rect_pos * (self.cell_size * self.zoom);
+                let rect_pos = rect_pos.to_pos2();
+                let rect_pos = rect_pos + ui.min_rect().min.to_vec2();
+                let rect = egui::Rect::from_min_size(rect_pos, rect_size);
+                ui.painter().rect_filled(rect, rounding, fill);
+                ui.painter().rect_stroke(rect, rounding, stroke);
                 //let cell_pos = ui.min_rect().min + target.to_vec2(); // + p.to_vec2();
                 let cell_pos = target; // + p.to_vec2();
-                let cell_rect = egui::Rect::from_center_size(*cell_pos, self.cell_size * self.zoom);
+                let cell_pos = *cell_pos - egui::Vec2::new(10.0, 10.0);
+
+                let cell_rect = egui::Rect::from_center_size(cell_pos, self.cell_size * self.zoom);
                 let cell_rect = cell_rect.shrink(1.0);
                 if *do_copy {
                     ui.put(cell_rect, egui::Label::new("Clone"));
@@ -722,7 +739,7 @@ impl UiGrid {
         UiGridOutput {
             selected_grid_rect,
             response,
-            target_grid_rect: self.target_rect,
+            target_grid_rect: self.target_rect.clone(),
             prevent_moving: temp.state().prevent_moving(),
             action,
         }

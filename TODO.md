@@ -3,9 +3,10 @@
 
 ## In Progress
 
-- [ ] Improve grid move & copy preview
 
 ## ToDo
+
+- [ ] Improve grid move & copy preview
 
 - [ ] Allow multiselect move, copy, delete, clone, etc
 
@@ -46,6 +47,7 @@
 - [x] Remember non fullscreen McGuffin window size across restarts
 - [x] Allow move, and clone via mouse
 - [x] Cancel grid move & copy with ESCape key
+- [x] Add grid move & copy preview
 
 ## 2024-06-10
 - [x] Fixup "move step" for rect selection
