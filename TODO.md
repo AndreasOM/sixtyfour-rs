@@ -4,7 +4,6 @@
 ## In Progress
 
 
-
 ## ToDo
 
 - [ ] Allow multiselect move, copy, delete, clone, etc
@@ -41,6 +40,9 @@
 - [ ] Decide on default on windows
 
 ## Done
+
+## 2024-06-15
+- [x] Remember non fullscreen McGuffin window size across restarts
 
 ## 2024-06-10
 - [x] Fixup "move step" for rect selection

@@ -25,12 +25,16 @@ impl core::fmt::Debug for McGuffinWindow {
 struct McGuffinWindowSave {
     #[serde(default)]
     is_open: bool,
+
+    #[serde(default)]
+    previous_rect: Option<Rect>,
 }
 
 impl From<&McGuffinWindow> for McGuffinWindowSave {
     fn from(mw: &McGuffinWindow) -> Self {
         Self {
             is_open: mw.is_open,
+            previous_rect: mw.previous_rect.clone(),
         }
     }
 }
@@ -54,6 +58,7 @@ impl Window for McGuffinWindow {
         let mut save: McGuffinWindowSave = ron::from_str(&data).unwrap_or_default();
 
         self.is_open = save.is_open;
+        self.previous_rect = save.previous_rect.take();
     }
 
     fn update(&mut self, ctx: &egui::Context, state: &mut State) {
