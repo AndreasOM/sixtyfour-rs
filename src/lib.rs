@@ -54,5 +54,6 @@ use step_editor_scratch::StepEditorScratch;
 
 mod ui_grid;
 use ui_grid::UiGrid;
+use ui_grid::UiGridAction;
 mod ui_grid_cell;
 use ui_grid_cell::UiGridCell;

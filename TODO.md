@@ -43,6 +43,7 @@
 
 ## 2024-06-15
 - [x] Remember non fullscreen McGuffin window size across restarts
+- [x] Allow move, and clone via mouse
 
 ## 2024-06-10
 - [x] Fixup "move step" for rect selection

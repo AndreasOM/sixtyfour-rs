@@ -81,6 +81,13 @@ impl GridRect {
             bottom_right: GridPos::new(max_x, max_y),
         }
     }
+
+    pub fn contains_pos(&self, pos: &GridPos) -> bool {
+        pos.x() >= self.top_left.x()
+            && pos.x() < self.bottom_right.x()
+            && pos.y() >= self.top_left.y()
+            && pos.y() < self.bottom_right.y()
+    }
 }
 
 #[cfg(test)]

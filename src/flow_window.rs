@@ -8,6 +8,7 @@ use crate::step_editor_ui::StepEditorUi;
 use crate::window::Window;
 use crate::Command;
 use crate::UiGrid;
+use crate::UiGridAction;
 use crate::UiGridCell;
 use std::collections::HashMap;
 
@@ -257,8 +258,47 @@ impl Window for FlowWindow {
                                 //}
                             }
 
-                            //self.target_grid_pos = gr.target_grid_pos().cloned();
-                            self.target_grid_rect = gr.target_grid_rect().cloned();
+                            if let Some(action) = gr.action() {
+                                match action {
+                                    UiGridAction::Move {
+                                        source_rect,
+                                        target_pos,
+                                    } => {
+                                        let _ = COMMAND_QUEUE.send(Command::ChangeFlow {
+                                            flow_command: FlowCommand::MoveSteps {
+                                                source_grid_rect: source_rect.clone(),
+                                                target_grid_pos: target_pos.clone(),
+                                            },
+                                        });
+                                        let size = source_rect.size();
+                                        let mut new_selected_grid_rect = GridRect::default();
+                                        new_selected_grid_rect.set_top_left(target_pos);
+                                        new_selected_grid_rect.set_size(&size);
+                                        //self.target_grid_rect = new_target_grid_rect;
+                                        self.selected_grid_rect = Some(new_selected_grid_rect);
+                                    }
+                                    UiGridAction::Copy {
+                                        source_rect,
+                                        target_pos,
+                                    } => {
+                                        let _ = COMMAND_QUEUE.send(Command::ChangeFlow {
+                                            flow_command: FlowCommand::CloneSteps {
+                                                source_grid_rect: source_rect.clone(),
+                                                target_grid_pos: target_pos.clone(),
+                                            },
+                                        });
+                                        //self.target_grid_pos = gr.target_grid_pos().cloned();
+                                        self.target_grid_rect = gr.target_grid_rect().cloned();
+                                    }
+                                    _ => {
+                                        //self.target_grid_pos = gr.target_grid_pos().cloned();
+                                        self.target_grid_rect = gr.target_grid_rect().cloned();
+                                    }
+                                }
+                            } else {
+                                //self.target_grid_pos = gr.target_grid_pos().cloned();
+                                self.target_grid_rect = gr.target_grid_rect().cloned();
+                            }
                         });
                 });
             })

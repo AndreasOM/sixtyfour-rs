@@ -6,11 +6,24 @@ use egui::Response;
 use egui::Ui;
 use egui::Widget;
 #[derive(Debug)]
+pub enum UiGridAction {
+    Copy {
+        source_rect: GridRect,
+        target_pos: GridPos,
+    },
+    Move {
+        source_rect: GridRect,
+        target_pos: GridPos,
+    },
+}
+
+#[derive(Debug)]
 pub struct UiGridOutput {
     selected_grid_rect: Option<GridRect>,
     target_grid_rect: Option<GridRect>,
     response: Response,
     prevent_moving: bool,
+    action: Option<UiGridAction>,
 }
 
 impl UiGridOutput {
@@ -25,6 +38,9 @@ impl UiGridOutput {
     }
     pub fn prevent_moving(&self) -> bool {
         self.prevent_moving
+    }
+    pub fn action(&self) -> Option<&UiGridAction> {
+        self.action.as_ref()
     }
 }
 
@@ -47,6 +63,13 @@ pub struct UiGrid {
 
 #[derive(Debug, Default, Clone)]
 pub enum State {
+    Dragging {
+        start: egui::Pos2,
+        top_left_at_start: egui::Pos2,
+        target: egui::Pos2,
+        rect: Option<GridRect>,
+        do_copy: bool,
+    },
     Selecting {
         start: egui::Pos2,
         top_left_at_start: egui::Pos2,
@@ -59,6 +82,7 @@ pub enum State {
 impl State {
     pub fn prevent_moving(&self) -> bool {
         match self {
+            Self::Dragging { .. } => true,
             Self::Selecting { .. } => true,
             _ => false,
         }
@@ -257,6 +281,7 @@ impl UiGrid {
             self.cell_width * self.width as f32 * self.zoom,
             self.cell_height * self.height as f32 * self.zoom,
         );
+        let mut action = None;
         let (rect, response) = ui.allocate_exact_size(desired_size, egui::Sense::click());
         //let (rect, response) = ui.allocate_exact_size(desired_size, egui::Sense::click_and_drag());
         let mut selected_grid_rect = None;
@@ -417,12 +442,73 @@ impl UiGrid {
                     State::Normal => {
                         if i.pointer.button_pressed(egui::PointerButton::Primary) {
                             if let Some(p) = i.pointer.interact_pos() {
-                                eprintln!("Start selection");
-                                temp.set_state(State::Selecting {
-                                    start: p.clone(),
-                                    top_left_at_start: ui.min_rect().min.clone(),
-                                    rect: None,
+                                let gp = self.screen_pos_to_grid_pos(&ui.min_rect().min, &p);
+                                let inside_current_selection = self
+                                    .selected_rect
+                                    .clone()
+                                    .map(|r| r.contains_pos(&gp))
+                                    .unwrap_or(false);
+                                if inside_current_selection {
+                                    eprintln!("Start dragging");
+                                    temp.set_state(State::Dragging {
+                                        start: p.clone(),
+                                        top_left_at_start: ui.min_rect().min.clone(),
+                                        rect: self.selected_rect.clone(),
+                                        target: p.clone(),
+                                        do_copy: false,
+                                    });
+                                } else {
+                                    eprintln!("Start selection");
+                                    temp.set_state(State::Selecting {
+                                        start: p.clone(),
+                                        top_left_at_start: ui.min_rect().min.clone(),
+                                        rect: None,
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    State::Dragging {
+                        start,
+                        top_left_at_start,
+                        rect: new_dragging_gr,
+                        target,
+                        do_copy,
+                    } => {
+                        if i.pointer.button_released(egui::PointerButton::Primary) {
+                            // :TODO: end dragging
+                            eprintln!("Dragging - button released");
+                            temp.set_state(State::Normal);
+                            if let Some(rect) = new_dragging_gr {
+                                if *do_copy {
+                                    // :TODO modifier for cloning
+                                    action = Some(UiGridAction::Copy {
+                                        source_rect: rect.clone(),
+                                        target_pos: self
+                                            .screen_pos_to_grid_pos(&ui.min_rect().min, &target),
+                                    });
+                                } else {
+                                    action = Some(UiGridAction::Move {
+                                        source_rect: rect.clone(),
+                                        target_pos: self
+                                            .screen_pos_to_grid_pos(&ui.min_rect().min, &target),
+                                    });
+                                }
+                            } else {
+                                // elf?
+                            }
+                        } else {
+                            if let Some(p) = i.pointer.interact_pos() {
+                                eprintln!("Dragging {p:?}");
+                                temp.set_state(State::Dragging {
+                                    start: *start,
+                                    top_left_at_start: *top_left_at_start,
+                                    rect: new_dragging_gr.clone(),
+                                    target: p.clone(),
+                                    do_copy: i.modifiers.alt,
                                 });
+                            } else {
+                                eprintln!("Dragging - no position");
                             }
                         }
                     }
@@ -463,7 +549,7 @@ impl UiGrid {
                                     //eprintln!("gx: {gx}");
                                     if !self.is_cell_empty(gx, gy) {
                                         first_non_empty_row = gy;
-                                        eprintln!("Non empty cell at {gx} {gy}");
+                                        //eprintln!("Non empty cell at {gx} {gy}");
                                         break 'scan_rows;
                                     }
                                 }
@@ -483,12 +569,12 @@ impl UiGrid {
                                 .into_iter()
                                 .rev()
                             {
-                                eprintln!("gy: {gy} [bottom]");
+                                //eprintln!("gy: {gy} [bottom]");
                                 for gx in gr.top_left().x()..gr.bottom_right_exclusive().x() {
                                     //eprintln!("gx: {gx}");
                                     if !self.is_cell_empty(gx, gy) {
                                         last_non_empty_row = gy;
-                                        eprintln!("Non empty cell at {gx} {gy} [bottom]");
+                                        //eprintln!("Non empty cell at {gx} {gy} [bottom]");
                                         break 'scan_rows;
                                     }
                                 }
@@ -498,7 +584,7 @@ impl UiGrid {
                                 gr.set_bottom_inclusive(last_non_empty_row);
                             } else {
                                 // rect is empty
-                                eprintln!("Rect is empty! [bottom] {last_non_empty_row}");
+                                //eprintln!("Rect is empty! [bottom] {last_non_empty_row}");
                                 gr.set_size(GridPos::zero());
                             }
                             // cut of left
@@ -509,15 +595,12 @@ impl UiGrid {
                                 for gy in gr.top_left().y()..gr.bottom_right_exclusive().y() {
                                     if !self.is_cell_empty(gx, gy) {
                                         first_non_empty_col = gx;
-                                        eprintln!("Non empty cell at {gx} {gy}");
+                                        //eprintln!("Non empty cell at {gx} {gy}");
                                         break 'scan_cols;
                                     }
                                 }
                             }
-                            eprintln!(
-                                "{gr:?} Size {:?} | before cutting {first_non_empty_col}",
-                                gr.size()
-                            );
+                            // eprintln!( "{gr:?} Size {:?} | before cutting {first_non_empty_col}",gr.size());
 
                             if first_non_empty_col < u16::MAX {
                                 gr.set_left(first_non_empty_col);
@@ -537,7 +620,7 @@ impl UiGrid {
                                 for gy in gr.top_left().y()..gr.bottom_right_exclusive().y() {
                                     if !self.is_cell_empty(gx, gy) {
                                         last_non_empty_col = gx;
-                                        eprintln!("Non empty cell at {gx} {gy} [right]");
+                                        // eprintln!("Non empty cell at {gx} {gy} [right]");
                                         break 'scan_cols;
                                     }
                                 }
@@ -547,11 +630,11 @@ impl UiGrid {
                                 gr.set_right_inclusive(last_non_empty_col);
                             } else {
                                 // rect is empty
-                                eprintln!("Rect is empty! [right] {last_non_empty_col}");
+                                //eprintln!("Rect is empty! [right] {last_non_empty_col}");
                                 gr.set_size(GridPos::zero());
                             }
 
-                            eprintln!("{gr:?} Size {:?}", gr.size());
+                            //eprintln!("{gr:?} Size {:?}", gr.size());
                             let sr = if gr.size().x() == 0 || gr.size().y() == 0 {
                                 None
                             } else {
@@ -578,8 +661,30 @@ impl UiGrid {
                     }
                 }
             });
+        } else {
+            // :TODO: handle pointer outside while dragging/selecting
         }
 
+        match temp.state() {
+            State::Dragging {
+                start,
+                top_left_at_start,
+                rect,
+                target,
+                do_copy,
+            } => {
+                //let cell_pos = ui.min_rect().min + target.to_vec2(); // + p.to_vec2();
+                let cell_pos = target; // + p.to_vec2();
+                let cell_rect = egui::Rect::from_center_size(*cell_pos, self.cell_size * self.zoom);
+                let cell_rect = cell_rect.shrink(1.0);
+                if *do_copy {
+                    ui.put(cell_rect, egui::Label::new("Clone"));
+                } else {
+                    ui.put(cell_rect, egui::Label::new("Move"));
+                }
+            }
+            _ => {}
+        }
         if let Some(rect) = rect {
             let rounding = 0.0;
             let stroke = egui::Stroke::new(2.25, egui::Color32::from_rgb(250, 150, 100));
@@ -615,6 +720,7 @@ impl UiGrid {
             response,
             target_grid_rect: self.target_rect,
             prevent_moving: temp.state().prevent_moving(),
+            action,
         }
     }
 }
