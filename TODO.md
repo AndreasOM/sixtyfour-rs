@@ -3,9 +3,6 @@
 
 ## In Progress
 
-- [ ] Improve grid move & copy preview
-
-
 ## ToDo
 
 
@@ -46,6 +43,8 @@
 
 ## 2024-06-17
 - [x] Fix scaling of move/copy mode info box
+- [x] Improve grid move & copy preview
+- [x] Deselect if new selection is empty
 
 ## 2024-06-15
 - [x] Remember non fullscreen McGuffin window size across restarts

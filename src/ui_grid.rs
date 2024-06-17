@@ -8,6 +8,7 @@ use egui::Ui;
 use egui::Widget;
 #[derive(Debug)]
 pub enum UiGridAction {
+    Deselect,
     Copy {
         source_rect: GridRect,
         target_pos: GridPos,
@@ -268,6 +269,100 @@ impl UiGrid {
         GridPos::new(p.x as u16, p.y as u16)
     }
 
+    fn shrink_rect(&self, mut gr: GridRect) -> GridRect {
+        // cut of top
+        let mut first_non_empty_row = u16::MAX;
+
+        'scan_rows: for gy in gr.top_left().y()..gr.bottom_right_exclusive().y() {
+            //eprintln!("gy: {gy}");
+            for gx in gr.top_left().x()..gr.bottom_right_exclusive().x() {
+                //eprintln!("gx: {gx}");
+                if !self.is_cell_empty(gx, gy) {
+                    first_non_empty_row = gy;
+                    //eprintln!("Non empty cell at {gx} {gy}");
+                    break 'scan_rows;
+                }
+            }
+        }
+
+        if first_non_empty_row < u16::MAX {
+            gr.set_top(first_non_empty_row);
+        } else {
+            // rect is empty
+            gr.set_size(GridPos::zero());
+        }
+        // cut of bottom
+        let mut last_non_empty_row = u16::MIN;
+
+        'scan_rows: for gy in (gr.top_left().y()..gr.bottom_right_exclusive().y())
+            .into_iter()
+            .rev()
+        {
+            //eprintln!("gy: {gy} [bottom]");
+            for gx in gr.top_left().x()..gr.bottom_right_exclusive().x() {
+                //eprintln!("gx: {gx}");
+                if !self.is_cell_empty(gx, gy) {
+                    last_non_empty_row = gy;
+                    //eprintln!("Non empty cell at {gx} {gy} [bottom]");
+                    break 'scan_rows;
+                }
+            }
+        }
+
+        if last_non_empty_row > u16::MIN {
+            gr.set_bottom_inclusive(last_non_empty_row);
+        } else {
+            // rect is empty
+            //eprintln!("Rect is empty! [bottom] {last_non_empty_row}");
+            gr.set_size(GridPos::zero());
+        }
+        // cut of left
+        let mut first_non_empty_col = u16::MAX;
+
+        'scan_cols: for gx in gr.top_left().x()..gr.bottom_right_exclusive().x() {
+            for gy in gr.top_left().y()..gr.bottom_right_exclusive().y() {
+                if !self.is_cell_empty(gx, gy) {
+                    first_non_empty_col = gx;
+                    //eprintln!("Non empty cell at {gx} {gy}");
+                    break 'scan_cols;
+                }
+            }
+        }
+        // eprintln!( "{gr:?} Size {:?} | before cutting {first_non_empty_col}",gr.size());
+
+        if first_non_empty_col < u16::MAX {
+            gr.set_left(first_non_empty_col);
+        } else {
+            // rect is empty
+            gr.set_size(GridPos::zero());
+        }
+
+        // cut of right
+        let mut last_non_empty_col = u16::MIN;
+
+        'scan_cols: for gx in (gr.top_left().x()..gr.bottom_right_exclusive().x())
+            .into_iter()
+            .rev()
+        {
+            for gy in gr.top_left().y()..gr.bottom_right_exclusive().y() {
+                if !self.is_cell_empty(gx, gy) {
+                    last_non_empty_col = gx;
+                    // eprintln!("Non empty cell at {gx} {gy} [right]");
+                    break 'scan_cols;
+                }
+            }
+        }
+
+        if last_non_empty_col > u16::MIN {
+            gr.set_right_inclusive(last_non_empty_col);
+        } else {
+            // rect is empty
+            //eprintln!("Rect is empty! [right] {last_non_empty_col}");
+            gr.set_size(GridPos::zero());
+        }
+
+        gr
+    }
     fn show_content(
         &self,
         ui: &mut Ui,
@@ -362,8 +457,6 @@ impl UiGrid {
         let cells2 = cells.clone();
 
         if ui.is_rect_visible(rect) {
-            let cell_size = egui::Vec2::new(self.cell_width, self.cell_height);
-
             // paint grid
             let stroke = egui::Stroke::new(0.25 * self.zoom, egui::Color32::from_rgb(50, 50, 50));
             //let stroke = egui::Stroke::new(2.25*self.zoom, egui::Color32::from_rgb(250, 250, 150));
@@ -565,103 +658,9 @@ impl UiGrid {
                             //gbr.dec_y();
 
                             //eprintln!("{gtl:?} {gbr:?}");
-                            let mut gr = GridRect::new(gtl, gbr);
+                            let gr = GridRect::new(gtl, gbr);
                             // shrink to minum needed
-                            // cut of top
-                            let mut first_non_empty_row = u16::MAX;
-
-                            'scan_rows: for gy in gr.top_left().y()..gr.bottom_right_exclusive().y()
-                            {
-                                //eprintln!("gy: {gy}");
-                                for gx in gr.top_left().x()..gr.bottom_right_exclusive().x() {
-                                    //eprintln!("gx: {gx}");
-                                    if !self.is_cell_empty(gx, gy) {
-                                        first_non_empty_row = gy;
-                                        //eprintln!("Non empty cell at {gx} {gy}");
-                                        break 'scan_rows;
-                                    }
-                                }
-                            }
-
-                            if first_non_empty_row < u16::MAX {
-                                gr.set_top(first_non_empty_row);
-                            } else {
-                                // rect is empty
-                                gr.set_size(GridPos::zero());
-                            }
-                            // cut of bottom
-                            let mut last_non_empty_row = u16::MIN;
-
-                            'scan_rows: for gy in (gr.top_left().y()
-                                ..gr.bottom_right_exclusive().y())
-                                .into_iter()
-                                .rev()
-                            {
-                                //eprintln!("gy: {gy} [bottom]");
-                                for gx in gr.top_left().x()..gr.bottom_right_exclusive().x() {
-                                    //eprintln!("gx: {gx}");
-                                    if !self.is_cell_empty(gx, gy) {
-                                        last_non_empty_row = gy;
-                                        //eprintln!("Non empty cell at {gx} {gy} [bottom]");
-                                        break 'scan_rows;
-                                    }
-                                }
-                            }
-
-                            if last_non_empty_row > u16::MIN {
-                                gr.set_bottom_inclusive(last_non_empty_row);
-                            } else {
-                                // rect is empty
-                                //eprintln!("Rect is empty! [bottom] {last_non_empty_row}");
-                                gr.set_size(GridPos::zero());
-                            }
-                            // cut of left
-                            let mut first_non_empty_col = u16::MAX;
-
-                            'scan_cols: for gx in gr.top_left().x()..gr.bottom_right_exclusive().x()
-                            {
-                                for gy in gr.top_left().y()..gr.bottom_right_exclusive().y() {
-                                    if !self.is_cell_empty(gx, gy) {
-                                        first_non_empty_col = gx;
-                                        //eprintln!("Non empty cell at {gx} {gy}");
-                                        break 'scan_cols;
-                                    }
-                                }
-                            }
-                            // eprintln!( "{gr:?} Size {:?} | before cutting {first_non_empty_col}",gr.size());
-
-                            if first_non_empty_col < u16::MAX {
-                                gr.set_left(first_non_empty_col);
-                            } else {
-                                // rect is empty
-                                gr.set_size(GridPos::zero());
-                            }
-
-                            // cut of right
-                            let mut last_non_empty_col = u16::MIN;
-
-                            'scan_cols: for gx in (gr.top_left().x()
-                                ..gr.bottom_right_exclusive().x())
-                                .into_iter()
-                                .rev()
-                            {
-                                for gy in gr.top_left().y()..gr.bottom_right_exclusive().y() {
-                                    if !self.is_cell_empty(gx, gy) {
-                                        last_non_empty_col = gx;
-                                        // eprintln!("Non empty cell at {gx} {gy} [right]");
-                                        break 'scan_cols;
-                                    }
-                                }
-                            }
-
-                            if last_non_empty_col > u16::MIN {
-                                gr.set_right_inclusive(last_non_empty_col);
-                            } else {
-                                // rect is empty
-                                //eprintln!("Rect is empty! [right] {last_non_empty_col}");
-                                gr.set_size(GridPos::zero());
-                            }
-
+                            let gr = self.shrink_rect(gr);
                             //eprintln!("{gr:?} Size {:?}", gr.size());
                             let sr = if gr.size().x() == 0 || gr.size().y() == 0 {
                                 None
@@ -677,7 +676,10 @@ impl UiGrid {
                         }
                         if i.pointer.button_released(egui::PointerButton::Primary) {
                             //let new_selection_gr = new_selection_gr.clone();
-                            // eprintln!("End selection - {new_selection_gr:?}");
+                            eprintln!("End selection - {new_selection_gr:?}");
+                            if new_selection_gr.is_none() {
+                                action = Some(UiGridAction::Deselect);
+                            }
                             temp.set_state(State::Normal);
                             if selected_grid_rect.is_none() {
                                 selected_grid_rect = new_selection_gr.take();

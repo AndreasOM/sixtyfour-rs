@@ -260,6 +260,9 @@ impl Window for FlowWindow {
 
                             if let Some(action) = gr.action() {
                                 match action {
+                                    UiGridAction::Deselect => {
+                                        self.selected_grid_rect = None;
+                                    }
                                     UiGridAction::Move {
                                         source_rect,
                                         target_pos,
