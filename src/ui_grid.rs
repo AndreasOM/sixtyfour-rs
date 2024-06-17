@@ -267,6 +267,77 @@ impl UiGrid {
 
         GridPos::new(p.x as u16, p.y as u16)
     }
+
+    fn show_content(
+        &self,
+        ui: &mut Ui,
+        pos: egui::Pos2,
+        rect: &GridRect,
+        cells: Vec<Option<UiGridCell>>,
+        selected_grid_rect: &mut Option<GridRect>,
+    ) -> () {
+        let cell_size = egui::Vec2::new(self.cell_width, self.cell_height);
+        for (idx, content) in cells.into_iter().enumerate() {
+            let y = idx / self.width as usize;
+            let x = idx % self.width as usize;
+            if rect.contains_pos(&GridPos::new(x as u16, y as u16)) {
+                let rx = x - rect.top_left().x() as usize;
+                let ry = y - rect.top_left().y() as usize;
+
+                let cell_pos = egui::Pos2::new(
+                    self.cell_width * self.zoom * ((rx as f32) + 0.5),
+                    self.cell_height * self.zoom * ((ry as f32) + 0.5),
+                );
+                let cell_pos = pos + cell_pos.to_vec2();
+                let cell_rect = egui::Rect::from_center_size(cell_pos, cell_size * self.zoom);
+                let cell_rect = cell_rect.shrink(1.0);
+
+                if let Some(mut content) = content {
+                    //let r = ui.put(cell_rect, UiGridCell::new(content.to_string()));
+                    //let content = Box::new( egui::Label::new("fii") );
+                    content.set_zoom(self.zoom);
+                    let r = ui.put(cell_rect, content);
+
+                    if r.clicked() {
+                        let clicked_gp = GridPos::new(x as u16, y as u16);
+                        if ui.ctx().input(|i| i.modifiers.shift) {
+                            if let Some(selected_rect) = &self.selected_rect {
+                                // selected_grid_rect == None!
+                                assert_eq!(*selected_grid_rect, None);
+                                let r = selected_rect.union_with_pos(&clicked_gp);
+                                eprintln!("Shift Clicked {clicked_gp:?} -> {r:?}");
+                                *selected_grid_rect = Some(r);
+                            } else {
+                                // :TODO:
+                            }
+                        } else {
+                            let mut r = GridRect::default();
+                            r.set_top_left(&clicked_gp);
+                            r.set_size(GridPos::one());
+                            *selected_grid_rect = Some(r);
+                            //selected_grid_pos = Some(GridPos::new(x as u16, y as u16));
+                        }
+                    }
+                    /*
+                    if r.secondary_clicked() {
+                        if let Some(cp) = r.interact_pointer_pos() {
+                            let ghp = self.screen_pos_to_grid_pos(&ui.min_rect().min, &cp);
+                            //let stroke =
+                            //    egui::Stroke::new(2.25, egui::Color32::from_rgb(250, 150, 100));
+
+                            //self.paint_highlight_cell(ui, &stroke, &ghp);
+                            let mut r = GridRect::default();
+                            r.set_top_left(&ghp);
+                            r.set_size(GridPos::one());
+                            self.target_rect = Some(r);
+                        }
+                    }
+                    */
+                } else {
+                }
+            }
+        }
+    }
     pub fn show(mut self, ui: &mut Ui) -> UiGridOutput {
         let mut temp = ui.data(|d| {
             if let Some(t) = d.get_temp::<UiGridTemp>(self.id) {
@@ -287,6 +358,9 @@ impl UiGrid {
         let (rect, response) = ui.allocate_exact_size(desired_size, egui::Sense::click());
         //let (rect, response) = ui.allocate_exact_size(desired_size, egui::Sense::click_and_drag());
         let mut selected_grid_rect = None;
+        let cells = core::mem::take(&mut self.cells);
+        let cells2 = cells.clone();
+
         if ui.is_rect_visible(rect) {
             let cell_size = egui::Vec2::new(self.cell_width, self.cell_height);
 
@@ -363,61 +437,14 @@ impl UiGrid {
                 let stroke = egui::Stroke::new(2.0, egui::Color32::from_rgb(75, 100, 50));
                 self.paint_highlight_cell(ui, Some(&stroke), None, rect.top_left());
             }
-            let cells = core::mem::take(&mut self.cells);
 
-            for (idx, content) in cells.into_iter().enumerate() {
-                let y = idx / self.width as usize;
-                let x = idx % self.width as usize;
-                let cell_pos = egui::Pos2::new(
-                    self.cell_width * self.zoom * ((x as f32) + 0.5),
-                    self.cell_height * self.zoom * ((y as f32) + 0.5),
-                );
-                let cell_pos = ui.min_rect().min + cell_pos.to_vec2();
-                let cell_rect = egui::Rect::from_center_size(cell_pos, cell_size * self.zoom);
-                let cell_rect = cell_rect.shrink(1.0);
-
-                if let Some(mut content) = content {
-                    //let r = ui.put(cell_rect, UiGridCell::new(content.to_string()));
-                    //let content = Box::new( egui::Label::new("fii") );
-                    content.set_zoom(self.zoom);
-                    let r = ui.put(cell_rect, content);
-
-                    if r.clicked() {
-                        let clicked_gp = GridPos::new(x as u16, y as u16);
-                        if ui.ctx().input(|i| i.modifiers.shift) {
-                            if let Some(selected_rect) = &self.selected_rect {
-                                // selected_grid_rect == None!
-                                assert_eq!(selected_grid_rect, None);
-                                let r = selected_rect.union_with_pos(&clicked_gp);
-                                eprintln!("Shift Clicked {clicked_gp:?} -> {r:?}");
-                                selected_grid_rect = Some(r);
-                            } else {
-                                // :TODO:
-                            }
-                        } else {
-                            let mut r = GridRect::default();
-                            r.set_top_left(&clicked_gp);
-                            r.set_size(GridPos::one());
-                            selected_grid_rect = Some(r);
-                            //selected_grid_pos = Some(GridPos::new(x as u16, y as u16));
-                        }
-                    }
-                    if r.secondary_clicked() {
-                        if let Some(cp) = r.interact_pointer_pos() {
-                            let ghp = self.screen_pos_to_grid_pos(&ui.min_rect().min, &cp);
-                            //let stroke =
-                            //    egui::Stroke::new(2.25, egui::Color32::from_rgb(250, 150, 100));
-
-                            //self.paint_highlight_cell(ui, &stroke, &ghp);
-                            let mut r = GridRect::default();
-                            r.set_top_left(&ghp);
-                            r.set_size(GridPos::one());
-                            self.target_rect = Some(r);
-                        }
-                    }
-                } else {
-                }
-            }
+            self.show_content(
+                ui,
+                ui.min_rect().min,
+                &GridRect::new(*GridPos::zero(), GridPos::new(self.width, self.height)),
+                cells,
+                &mut selected_grid_rect,
+            );
         }
 
         if let Some(hp) = response.hover_pos() {
@@ -690,6 +717,9 @@ impl UiGrid {
                 let rect_pos = rect_pos.to_pos2();
                 let rect_pos = rect_pos + ui.min_rect().min.to_vec2();
                 let rect = egui::Rect::from_min_size(rect_pos, rect_size);
+
+                self.show_content(ui, rect_pos, grid_rect, cells2, &mut selected_grid_rect);
+
                 ui.painter().rect_filled(rect, rounding, fill);
                 ui.painter().rect_stroke(rect, rounding, stroke);
                 //let cell_pos = ui.min_rect().min + target.to_vec2(); // + p.to_vec2();

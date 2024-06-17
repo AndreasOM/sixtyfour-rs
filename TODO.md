@@ -3,10 +3,11 @@
 
 ## In Progress
 
+- [ ] Improve grid move & copy preview
+
 
 ## ToDo
 
-- [ ] Improve grid move & copy preview
 
 - [ ] Allow multiselect move, copy, delete, clone, etc
 

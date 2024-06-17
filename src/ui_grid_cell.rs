@@ -3,7 +3,7 @@ use egui::Ui;
 
 use egui::Widget;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct UiGridCell {
     content: String,
     zoom: f32,
