@@ -696,7 +696,7 @@ impl UiGrid {
                 let cell_pos = target; // + p.to_vec2();
                 let cell_pos = *cell_pos - egui::Vec2::new(10.0, 10.0);
 
-                let cell_rect = egui::Rect::from_center_size(cell_pos, self.cell_size * self.zoom);
+                let cell_rect = egui::Rect::from_center_size(cell_pos, self.cell_size);
                 let cell_rect = cell_rect.shrink(1.0);
                 if *do_copy {
                     ui.put(cell_rect, egui::Label::new("Clone"));

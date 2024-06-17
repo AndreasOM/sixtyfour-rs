@@ -43,6 +43,9 @@
 
 ## Done
 
+## 2024-06-17
+- [x] Fix scaling of move/copy mode info box
+
 ## 2024-06-15
 - [x] Remember non fullscreen McGuffin window size across restarts
 - [x] Allow move, and clone via mouse
