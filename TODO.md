@@ -6,7 +6,6 @@
 
 ## ToDo
 
-- [ ] Fix offset when starting drag on other than top left cell
 
 - [ ] Allow multiselect move, copy, delete, clone, etc
 
@@ -45,6 +44,7 @@
 
 ## 2024-06-24
 - [x] Allow single cell selection via click
+- [x] Fix offset when starting drag on other than top left cell
 
 ## 2024-06-17
 - [x] Fix scaling of move/copy mode info box

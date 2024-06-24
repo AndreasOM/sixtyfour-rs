@@ -69,6 +69,8 @@ pub enum State {
         start: egui::Pos2,
         top_left_at_start: egui::Pos2,
         target: egui::Pos2,
+        //selection_offset: GridPos,
+        selection_offset: egui::Vec2,
         //rect: Option<GridRect>,
         rect: GridRect,
         do_copy: bool,
@@ -267,6 +269,14 @@ impl UiGrid {
         let p = p.floor();
 
         GridPos::new(p.x as u16, p.y as u16)
+    }
+
+    fn grid_pos_to_screen_pos(&self, ul: &egui::Pos2, grid_pos: &GridPos) -> egui::Pos2 {
+        let p = egui::Vec2::new(grid_pos.x() as f32, grid_pos.y() as f32);
+        let p = p * (self.cell_size * self.zoom);
+        let p = p + ul.to_vec2();
+
+        p.to_pos2()
     }
 
     fn shrink_rect(&self, mut gr: GridRect) -> GridRect {
@@ -571,12 +581,23 @@ impl UiGrid {
                                     .map(|r| r.contains_pos(&gp))
                                     .unwrap_or(false);
                                 if inside_current_selection {
-                                    eprintln!("Start dragging");
+                                    let selection_offset =
+                                        &gp - selected_rect.as_ref().unwrap().top_left();
+                                    let selection_offset = egui::Pos2::new(
+                                        selection_offset.x() as f32,
+                                        selection_offset.y() as f32,
+                                    );
+                                    let selection_offset =
+                                        selection_offset.to_vec2() * self.cell_size * self.zoom;
+                                    //let stl = self.grid_pos_to_screen_pos( &ui.min_rect().min, selected_rect.as_ref().unwrap().top_left() );
+                                    //let selection_offset = ( p - stl ).to_pos2();
+                                    eprintln!("Start dragging {selection_offset:?}");
                                     temp.set_state(State::Dragging {
                                         start: p.clone(),
                                         top_left_at_start: ui.min_rect().min.clone(),
                                         rect: selected_rect.unwrap().clone(),
                                         target: p.clone(),
+                                        selection_offset,
                                         do_copy: false,
                                     });
                                 } else {
@@ -595,6 +616,7 @@ impl UiGrid {
                         top_left_at_start,
                         rect: new_dragging_gr,
                         target,
+                        selection_offset,
                         do_copy,
                     } => {
                         if i.key_pressed(Key::Escape) {
@@ -604,6 +626,8 @@ impl UiGrid {
                             // :TODO: end dragging
                             eprintln!("Dragging - button released");
                             temp.set_state(State::Normal);
+                            let target = *target - *selection_offset;
+
                             if *do_copy {
                                 // :TODO modifier for cloning
                                 action = Some(UiGridAction::Copy {
@@ -620,12 +644,13 @@ impl UiGrid {
                             }
                         } else {
                             if let Some(p) = i.pointer.interact_pos() {
-                                eprintln!("Dragging {p:?}");
+                                eprintln!("Dragging {p:?} {selection_offset:?}");
                                 temp.set_state(State::Dragging {
                                     start: *start,
                                     top_left_at_start: *top_left_at_start,
                                     rect: new_dragging_gr.clone(),
                                     target: p.clone(),
+                                    selection_offset: *selection_offset,
                                     do_copy: i.modifiers.alt,
                                 });
                             } else {
@@ -715,6 +740,7 @@ impl UiGrid {
                 top_left_at_start,
                 rect: grid_rect,
                 target,
+                selection_offset,
                 do_copy,
             } => {
                 let rounding = 0.0;
@@ -726,12 +752,14 @@ impl UiGrid {
                     * egui::Vec2::new(grid_rect.size().x() as f32, grid_rect.size().y() as f32);
                 let rect_pos = target; // + p.to_vec2();
                 let rect_pos = rect_pos.to_vec2();
+                //let rect_pos = rect_pos - selection_offset.to_vec2();
                 let rect_pos = rect_pos - ui.min_rect().min.to_vec2();
                 let rect_pos = rect_pos / (self.cell_size * self.zoom);
                 let rect_pos = rect_pos.floor();
                 let rect_pos = rect_pos * (self.cell_size * self.zoom);
                 let rect_pos = rect_pos.to_pos2();
                 let rect_pos = rect_pos + ui.min_rect().min.to_vec2();
+                let rect_pos = rect_pos - *selection_offset;
                 let rect = egui::Rect::from_min_size(rect_pos, rect_size);
 
                 self.show_content(ui, rect_pos, grid_rect, cells2, &mut selected_grid_rect);
