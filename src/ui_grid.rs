@@ -673,16 +673,30 @@ impl UiGrid {
                                 rect: sr,
                             });
                             rect = Some(r);
-                        }
-                        if i.pointer.button_released(egui::PointerButton::Primary) {
-                            //let new_selection_gr = new_selection_gr.clone();
-                            eprintln!("End selection - {new_selection_gr:?}");
-                            if new_selection_gr.is_none() {
-                                action = Some(UiGridAction::Deselect);
-                            }
-                            temp.set_state(State::Normal);
-                            if selected_grid_rect.is_none() {
-                                selected_grid_rect = new_selection_gr.take();
+                            if i.pointer.button_released(egui::PointerButton::Primary) {
+                                //let new_selection_gr = new_selection_gr.clone();
+                                eprintln!("End selection - {new_selection_gr:?} {r:?}");
+                                if new_selection_gr.is_none() {
+                                    action = Some(UiGridAction::Deselect);
+                                    if r.width() < 0.5 * self.cell_size.x * self.zoom
+                                        && r.height() < 0.5 * self.cell_size.y * self.zoom
+                                    {
+                                        let gds = self.screen_pos_to_grid_pos(
+                                            &ui.min_rect().min,
+                                            &delta_start,
+                                        );
+                                        if !self.is_cell_empty(gds.x(), gds.y()) {
+                                            eprintln!("Consider small drag a click {gds:?}");
+                                            action = None;
+                                            *new_selection_gr =
+                                                Some(GridRect::from_top_left_with_size_one(&gds));
+                                        }
+                                    }
+                                }
+                                temp.set_state(State::Normal);
+                                if selected_grid_rect.is_none() {
+                                    selected_grid_rect = new_selection_gr.take();
+                                }
                             }
                         }
                     }
