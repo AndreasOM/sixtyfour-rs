@@ -18,6 +18,11 @@ pub enum Step {
         value: String,
         version: u32,
     },
+    SetUniformVec3F32 {
+        name: String,
+        values: [String; 3],
+        version: u32,
+    },
     Label {
         name: String,
         version: u32,
@@ -33,6 +38,7 @@ impl Step {
             Self::Program { version, .. } => *version,
             Self::SetUniformF32 { version, .. } => *version,
             Self::SetUniformF64 { version, .. } => *version,
+            Self::SetUniformVec3F32 { version, .. } => *version,
             Self::Label { version, .. } => *version,
             Self::Nop => 0,
         }
@@ -43,6 +49,7 @@ impl Step {
             "Program",
             "SetUniformF32",
             "SetUniformF64",
+            "SetUniformVec3F32",
             "Label",
             "Nop",
         ]
@@ -55,6 +62,7 @@ impl From<&Step> for String {
             Step::Program { .. } => format!("Program"),
             Step::SetUniformF32 { .. } => format!("SetUniformF32"),
             Step::SetUniformF64 { .. } => format!("SetUniformF64"),
+            Step::SetUniformVec3F32 { .. } => format!("SetUniformVecF32"),
             Step::Label { .. } => format!("Label"),
             //Step::Program{ resource_id } => format!("Program {resource_id}"),
             Step::Nop => format!("Nop"),
@@ -78,6 +86,11 @@ impl From<&str> for Step {
             "SetUniformF64" => Step::SetUniformF64 {
                 name: Default::default(),
                 value: Default::default(),
+                version: 1,
+            },
+            "SetUniformVec3F32" => Step::SetUniformVec3F32 {
+                name: Default::default(),
+                values: Default::default(),
                 version: 1,
             },
             "Label" => Step::Label {

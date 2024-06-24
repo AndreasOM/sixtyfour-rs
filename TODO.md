@@ -6,6 +6,7 @@
 
 ## ToDo
 
+- [ ] Add different modes for property editors
 
 - [ ] Allow multiselect move, copy, delete, clone, etc
 
@@ -45,6 +46,7 @@
 ## 2024-06-24
 - [x] Allow single cell selection via click
 - [x] Fix offset when starting drag on other than top left cell
+- [x] Add step to set uniform vec3 f32
 
 ## 2024-06-17
 - [x] Fix scaling of move/copy mode info box

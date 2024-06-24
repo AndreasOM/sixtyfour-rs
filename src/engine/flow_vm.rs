@@ -5,6 +5,7 @@ use crate::engine::StepRunnerFullscreenQuad;
 use crate::engine::StepRunnerProgram;
 use crate::engine::StepRunnerSetUniformF32;
 use crate::engine::StepRunnerSetUniformF64;
+use crate::engine::StepRunnerSetUniformVec3F32;
 use crate::project::Flow;
 use crate::project::Project;
 use crate::project::Step;
@@ -84,6 +85,12 @@ impl FlowVm {
                         sr.run_setup(gl, step, &mut srd);
                         srd_block[s_idx] = srd;
                     }
+                    Step::SetUniformVec3F32 { .. } => {
+                        let sr = StepRunnerSetUniformVec3F32::default();
+                        let mut srd = sr.create_data();
+                        sr.run_setup(gl, step, &mut srd);
+                        srd_block[s_idx] = srd;
+                    }
                     Step::FullscreenQuad => {
                         let sr = StepRunnerFullscreenQuad::default();
                         let mut srd = sr.create_data();
@@ -145,6 +152,12 @@ impl FlowVm {
                     }
                     Step::SetUniformF64 { .. } => {
                         let sr = StepRunnerSetUniformF64::default();
+
+                        let srd = &srd_block[s_idx];
+                        sr.run_render(gl, &self, step, srd);
+                    }
+                    Step::SetUniformVec3F32 { .. } => {
+                        let sr = StepRunnerSetUniformVec3F32::default();
 
                         let srd = &srd_block[s_idx];
                         sr.run_render(gl, &self, step, srd);

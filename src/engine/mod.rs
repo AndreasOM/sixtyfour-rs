@@ -28,6 +28,8 @@ mod step_runner_set_uniform_f32;
 pub use step_runner_set_uniform_f32::StepRunnerSetUniformF32;
 mod step_runner_set_uniform_f64;
 pub use step_runner_set_uniform_f64::StepRunnerSetUniformF64;
+mod step_runner_set_uniform_vec3_f32;
+pub use step_runner_set_uniform_vec3_f32::StepRunnerSetUniformVec3F32;
 
 mod resource_log_manager;
 use resource_log_manager::ResourceLogManager;

@@ -551,6 +551,34 @@ impl eframe::App for TemplateApp {
                         })
                     });
                 }
+                Command::HackStepSetUniformVec3F32SetNameAndValues {
+                    grid_pos,
+                    name,
+                    values,
+                } => {
+                    self.state.project.with_flow_mut(|f| {
+                        f.with_step_at_mut(&grid_pos, |s| {
+                            let new_name = &name;
+                            let new_values: &[String;3] = &values;
+                            match s {
+                                Step::SetUniformVec3F32 {
+                                    name,
+                                    values,
+                                    version,
+                                } => {
+                                    *name = new_name.to_string();
+                                    *values = [
+                                        new_values[ 0 ].to_string(),
+                                        new_values[ 1 ].to_string(),
+                                        new_values[ 2 ].to_string(),
+                                    ];
+                                    *version += 1;
+                                }
+                                _ => {}
+                            }
+                        })
+                    });
+                }
                 Command::HackStepLabelSetName { grid_pos, name } => {
                     self.state.project.with_flow_mut(|f| {
                         f.with_step_at_mut(&grid_pos, |s| {

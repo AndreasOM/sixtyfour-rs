@@ -62,6 +62,11 @@ pub enum Command {
         name: String,
         value: String,
     },
+    HackStepSetUniformVec3F32SetNameAndValues {
+        grid_pos: GridPos,
+        name: String,
+        values: [String;3],
+    },
     HackStepLabelSetName {
         grid_pos: GridPos,
         name: String,

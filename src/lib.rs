@@ -50,6 +50,7 @@ mod step_editor_program;
 mod step_editor_scratch;
 mod step_editor_set_uniform_f32;
 mod step_editor_set_uniform_f64;
+mod step_editor_set_uniform_vec3_f32;
 use step_editor_scratch::StepEditorScratch;
 
 mod ui_grid;
